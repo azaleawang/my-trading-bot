@@ -1,0 +1,6 @@
+*.csv
+*.html
+.vscode
+__pycache__/
+*.py[cod]
+ta-lib/
