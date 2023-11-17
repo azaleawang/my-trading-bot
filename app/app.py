@@ -1,22 +1,57 @@
 from typing import Union
 from pydantic import BaseModel
-from fastapi import FastAPI, Query, HTTPException
-import subprocess
-
+from fastapi import FastAPI, HTTPException
+# import subprocess
+import traceback
+import logging
+from .src.controller.sqs import send_message
 app = FastAPI()
+SQS_URL = "https://sqs.ap-northeast-1.amazonaws.com/958720635143/lambda-queue"
+
+class Backtest_Strategy(BaseModel):
+    name: str = "default_strategy"
+    symbols: list = ['BTC/USDT']
+    t_frame: str = '1h'
+    since: Union[str, None] = '2017-01-01T00:00:00Z'
+    default_type: Union[str, None] = 'future'
+
 
 @app.get("/", tags=['ROOT'])
 def get_root() -> dict:
     return {"Hello": "World"}
 
-@app.get("/api/run-backtest", tags=['backtest'])
-async def run_backtest(strategy: str = "default_strategy"):
+@app.post("/api/backtest", tags=['backtest'])
+def run_backtest(strategy: Backtest_Strategy)-> dict:
+    
     try:
-        # this is sync function (blocking)
-        subprocess.run(["python", "backtest/backetsting-crypto.py"], check=True)
-        return {"message": f"Backtesting script for strategy '{strategy}' executed successfully."}
-    except:
-        raise HTTPException(status_code=500, detail="Error occurred while executing the backtesting script.")
+        print(f"strategy post: {strategy}")
+        # this is sync function (blocking) 
+        # TODO
+        # 從DB中找到策略的位置
+        # 取得策略ID？
+        # subprocess.run(["python", "backtest/backetsting-crypto.py"], check=True)
+        # send message into SQS queue
+        # print(strategy.model_dump_json())
+        # need to fix strategy.model_dump_json()讀到的格式錯誤的問題
+        response = send_message(SQS_URL, {"name":"default_strategy","symbols":["BTC/USDT"],"t_frame":"1h","since":"2017-01-01T00:00:00Z","default_type":"future"})
+        # return {"data": "stat"}
+        return {"message": f"Backtesting '{strategy}' job push into SQS message id {response.get('MessageId')} successfully."}
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+        # raise HTTPException(status_code=500, detail="Error occurred while executing the backtesting script.")
+
+@app.post("/api/backtest/result", tags=['backtest'])
+async def receive_lambda_result(result: dict= {"data": "test"}):
+    try:
+        logging.info(f"Received data from Lambda: {result}")
+        # TODO: Process the result as needed
+
+        return {"message": "Data received successfully"}
+    except Exception as e:
+        logging.error(f"Error in receive_lambda_result: {e}")
+        raise HTTPException(status_code=500, detail="Error processing received data.")
 
 
 # for learning notes

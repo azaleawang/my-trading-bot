@@ -1,16 +1,10 @@
-from backtesting import Backtest, Strategy
-import pandas as pd
-import talib
-import ccxt
+from backtesting import Backtest
 import json
-from datetime import datetime, timedelta
-from backtesting.lib import crossover
 from history import history_data
 from strategy.RsiOscillator import RsiOscillator
 from config import res_attributes
 
-
-df = history_data(symbols=['BTC/USDT'], t_frame='4h', since='2023-01-01T00:00:00Z')
+df = history_data(symbols=['BTC/USDT'], t_frame='1d', since='2018-01-01T00:00:00Z')
 if df.empty:
     raise ValueError("No data found")
     quit()

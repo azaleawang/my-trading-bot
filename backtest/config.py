@@ -5,5 +5,5 @@ res_attributes = [
     "Calmar Ratio", "Max. Drawdown [%]", "Avg. Drawdown [%]", 
     "Max. Drawdown Duration", "Avg. Drawdown Duration", "# Trades", "Win Rate [%]", 
     "Best Trade [%]", "Worst Trade [%]", "Max. Trade Duration", 
-    "Avg. Trade Duration", "Avg. Trade Duration", "Profit Factor", "Expectancy [%]", "SQN"
+    "Avg. Trade Duration", "Avg. Trade Duration", "Profit Factor", "Expectancy [%]", "SQN", "_strategy"
 ]
