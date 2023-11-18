@@ -1,12 +1,13 @@
 from typing import Union
 from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException
+import os
 # import subprocess
 import traceback
 import logging
 from .src.controller.sqs import send_message
 app = FastAPI()
-SQS_URL = "https://sqs.ap-northeast-1.amazonaws.com/958720635143/lambda-queue"
+sqs_url = os.getenv('SQS_URL')
 
 class Backtest_Strategy(BaseModel):
     name: str = "default_strategy"
@@ -31,22 +32,18 @@ def run_backtest(strategy: Backtest_Strategy)-> dict:
         # 取得策略ID？
         # subprocess.run(["python", "backtest/backetsting-crypto.py"], check=True)
         # send message into SQS queue
-        # print(strategy.model_dump_json())
-        # need to fix strategy.model_dump_json()讀到的格式錯誤的問題
-        response = send_message(SQS_URL, {"name":"default_strategy","symbols":["BTC/USDT"],"t_frame":"1h","since":"2017-01-01T00:00:00Z","default_type":"future"})
-        # return {"data": "stat"}
+        response = send_message(sqs_url, strategy.model_dump())
         return {"message": f"Backtesting '{strategy}' job push into SQS message id {response.get('MessageId')} successfully."}
     except Exception as e:
         print(f"An error occurred: {str(e)}")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-        # raise HTTPException(status_code=500, detail="Error occurred while executing the backtesting script.")
 
 @app.post("/api/backtest/result", tags=['backtest'])
 async def receive_lambda_result(result: dict= {"data": "test"}):
     try:
         logging.info(f"Received data from Lambda: {result}")
-        # TODO: Process the result as needed
+        # TODO: Process the result as needed: use graphql or ws to inform client testing result
 
         return {"message": "Data received successfully"}
     except Exception as e:
