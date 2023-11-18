@@ -4,24 +4,30 @@ from history import history_data
 from strategy.RsiOscillator import RsiOscillator
 from config import res_attributes
 
-df = history_data(symbols=['BTC/USDT'], t_frame='1d', since='2018-01-01T00:00:00Z')
-if df.empty:
-    raise ValueError("No data found")
-    quit()
-else:
-    print("Data found")
-    print(df.tail())
-
 def run_strategy(data, strategy):
     bt = Backtest(data, strategy, cash=1_000_000, commission=.002)
     backtest_result = bt.run()
+    try:
+        bt.plot()
+    except Exception as e:
+        print(f"Error when potting: {e}")
     print(backtest_result)
 
     result_dict = {attr: getattr(backtest_result, attr, None) for attr in res_attributes}
     result_json = json.dumps(result_dict, default=str, indent=4)
     return result_json
 
-print("res " + run_strategy(df, RsiOscillator))
+df = history_data(symbols=['MEME/USDT'], t_frame='1h', since='2017-11-01T00:00:00Z')
+if df.empty:
+    raise ValueError("No data found")
+
+else:
+    print("Data found")
+    print(df.tail())
+
+    bt = run_strategy(df, RsiOscillator)
+    print()
+    print("res " + bt)
 
 """" for optimizing the strategy """
 # stats = bt.optimize(
@@ -33,5 +39,4 @@ print("res " + run_strategy(df, RsiOscillator))
 # )
 
 # print(stats)
-# bt.plot()
 

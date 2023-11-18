@@ -2,35 +2,11 @@ import ccxt
 import pandas as pd
 import time
 # https://api.binance.com/api/v3/klines?symbol=ETHUSDT&interval=4h&limit=500
+# https://fapi.binance.com/fapi/v1/klines?symbol=BTCUSDT&interval=1d&startTime=1640966400000&limit=1500
 # default config
 
-
-def fetch_ohlcv(exchange, symbol, t_frame, since):
-    limit = 500  # Maximum number of data points per call
-    ohlcv = []
-    while True:
-        try:
-            new_data = exchange.fetch_ohlcv(symbol, t_frame, since, limit)
-            if len(new_data) == 0:
-                break
-            ohlcv.extend(new_data)
-            since = new_data[-1][0] + 1
-            time.sleep(exchange.rateLimit / 1000)  # Respect rate limit
-        except ccxt.NetworkError as e:
-            print(f'Network error: {e}')
-            time.sleep(1)
-        except ccxt.ExchangeError as e:
-            print(f'Exchange error: {e}')
-            break
-        except Exception as e:
-            print(f'Error: {e}')
-            break
-    return ohlcv
-
-
-
-def history_data(exch='binance', symbols=['ETH/USDT'], t_frame='4h', 
-                    since='2023-01-01T00:00:00Z', default_type='future', sandbox_mode=True):        
+def history_data(exch='binance', symbols=['BTC/USDT'], t_frame='4h', 
+                    since='2017-01-01T00:00:00Z', default_type='future', sandbox_mode=False):        
     
     # Initialize exchange
     try:
@@ -60,34 +36,31 @@ def history_data(exch='binance', symbols=['ETH/USDT'], t_frame='4h',
 
     # Define header for DataFrame
     header = ['Timestamp', 'Open', 'High', 'Low', 'Close', 'Volume']
-    df_all = pd.DataFrame()
-
+    ohlcv_all = pd.DataFrame()
+    from_timestamp = exchange.parse8601(since)
+    now = exchange.milliseconds()
     # Function to fetch OHLCV
 
     # Fetch data for each symbol
     for symbol in symbols:
-        if symbol not in exchange.symbols:
-            print(f'Symbol {symbol} not found in {exch}.')
-            continue
+        while from_timestamp < now:
+            print('Fetching candles starting from', exchange.iso8601(from_timestamp))
+            ohlcvs = exchange.fetch_ohlcv(symbol, t_frame, from_timestamp)
+            if not len(ohlcvs):
+                break
+            ohlcv_all = pd.concat([ohlcv_all, pd.DataFrame(ohlcvs, columns=header).set_index('Timestamp')])
+            from_timestamp = ohlcvs[-1][0] + exchange.parse_timeframe(t_frame) * 1000
 
-        print(f'Fetching historical data for {symbol}...')
-        since_timestamp = exchange.parse8601(since)
-        ohlcv = fetch_ohlcv(exchange, symbol, t_frame, since_timestamp)
-        
-        if ohlcv:
-            symbol_df = pd.DataFrame(ohlcv, columns=header).set_index('Timestamp')
-            symbol_df['Symbol'] = symbol
-            df_all = pd.concat([df_all, symbol_df])
 
     # Convert timestamp to datetime
-    df_all.index = pd.to_datetime(df_all.index, unit='ms')
+    ohlcv_all.index = pd.to_datetime(ohlcv_all.index, unit='ms')
 
     # Save to CSV
     symb = symbols[0].replace('/', '')
     
-    filename = f'{symb}_{exch}_fdata.csv'
-    df_all.to_csv(filename)
+    filename = f'{symb}_{exch}_{t_frame}_fdata.csv'
+    ohlcv_all.to_csv(filename)
     print(f'{symbols} saved to {filename}')
-    return df_all
+    return ohlcv_all
     
-# history_data()
+# history_data(symbols=['BTC/USDT'], t_frame='4h', since='2022-01-01T00:00:00Z')
