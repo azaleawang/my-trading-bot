@@ -1,7 +1,7 @@
 from backtesting import Backtest
 import json
 from history import history_data
-from strategy.RsiOscillator import RsiOscillator
+from strategy.s3mytradingbot.RsiOscillator import RsiOscillator
 from config import res_attributes
 
 def run_strategy(data, strategy):

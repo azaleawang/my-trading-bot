@@ -6,3 +6,7 @@ __pycache__/
 ta-lib/
 .env
 aws/
+test.*
+trade/*/config.py
+*.log
+nohup.out

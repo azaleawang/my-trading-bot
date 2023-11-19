@@ -1,13 +1,22 @@
 from typing import Union
 from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 import os
-# import subprocess
+import subprocess
 import traceback
 import logging
 from .src.controller.sqs import send_message
 app = FastAPI()
-sqs_url = os.getenv('SQS_URL')
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins= ["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class Backtest_Strategy(BaseModel):
     name: str = "default_strategy"
@@ -26,14 +35,20 @@ def run_backtest(strategy: Backtest_Strategy)-> dict:
     
     try:
         print(f"strategy post: {strategy}")
-        # this is sync function (blocking) 
         # TODO
         # 從DB中找到策略的位置
         # 取得策略ID？
-        # subprocess.run(["python", "backtest/backetsting-crypto.py"], check=True)
         # send message into SQS queue
-        response = send_message(sqs_url, strategy.model_dump())
-        return {"message": f"Backtesting '{strategy}' job push into SQS message id {response.get('MessageId')} successfully."}
+        response = send_message(message_body= strategy.model_dump())
+        if 'error' in response:
+            print("Error occurred:", response.get("details"))
+            return JSONResponse(
+                content={"message": f"Backtesting job push into SQS failed. {response.get('details')}"},
+                status_code=500
+            )
+        else:
+            return {"message": f"Backtesting '{strategy}' job push into SQS message id {response.get('MessageId')} successfully."}
+
     except Exception as e:
         print(f"An error occurred: {str(e)}")
         traceback.print_exc()
@@ -50,6 +65,15 @@ async def receive_lambda_result(result: dict= {"data": "test"}):
         logging.error(f"Error in receive_lambda_result: {e}")
         raise HTTPException(status_code=500, detail="Error processing received data.")
 
+@app.post("/api/user/{item_id}/trading-bot", tags=['trade'])
+def start_trading_bot(item_id: Union[int, str] = 1, strategy: Backtest_Strategy = Backtest_Strategy()) -> dict:
+    try:
+        # TODO add trading-bot id and save to db
+        process = subprocess.Popen(["nohup", "python", "trade/supertrend/supertrend.py"])
+        return {"message": f"Trading bot {process.pid} started running"}
+    except Exception as e:
+        # Handle the exception
+        raise HTTPException(status_code=500, detail=str(e))
 
 # for learning notes
 class Item(BaseModel):
