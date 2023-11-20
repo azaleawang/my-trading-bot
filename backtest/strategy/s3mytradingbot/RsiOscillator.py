@@ -17,3 +17,4 @@ class RsiOscillator(Strategy):
             self.position.close()
         elif crossover(self.lower_bound, self.rsi):
             self.buy()
+            
