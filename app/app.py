@@ -1,6 +1,6 @@
 from typing import Union
 from pydantic import BaseModel
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
@@ -8,6 +8,7 @@ import subprocess
 import traceback
 import logging
 from .src.controller.sqs import send_message
+from time import gmtime, strftime
 
 app = FastAPI()
 
@@ -29,11 +30,24 @@ class Backtest_Strategy(BaseModel):
     params: Union[dict, None] = {"rsi_window": 20}
 
 
+class Bot_Info(BaseModel):
+    script_name: str = {"script_name": "supertrend"}
+
+
 @app.get("/", tags=["ROOT"])
 def get_root() -> dict:
     return {"Hello": "World"}
 
-
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            data = await websocket.receive_json()
+            await websocket.send_json(f"Message received")
+    except WebSocketDisconnect:
+        print("Client disconnected")
+        
 @app.post("/api/backtest", tags=["backtest"])
 def run_backtest(strategy: Backtest_Strategy) -> dict:
     try:
@@ -44,7 +58,7 @@ def run_backtest(strategy: Backtest_Strategy) -> dict:
         strategy_config = {"s3_url": os.getenv("S3_BACKTEST_STRATEGY_URL")}
         message_body = dict(**strategy.model_dump(), **strategy_config)
 
-        response = send_message(message_body = message_body)
+        response = send_message(message_body=message_body)
         # response = {}
         if "error" in response:
             print("Error occurred:", response.get("details"))
@@ -77,19 +91,48 @@ async def receive_lambda_result(result: dict = {"data": "test"}):
         raise HTTPException(status_code=500, detail="Error processing received data.")
 
 
-@app.post("/api/user/{user_id}/trading-bot", tags=["trade"])
-def start_trading_bot(
-    user_id: Union[int, str] = 1, strategy: Backtest_Strategy = Backtest_Strategy()
-) -> dict:
+@app.post("/api/user/{user_id}/start-bot", tags=["trade"])
+def start_trading_bot(user_id: Union[int, str], bot_info: Bot_Info) -> dict:
     try:
-        # TODO add trading-bot id and save to db
-        process = subprocess.Popen(
-            ["nohup", "python", "trade/supertrend/supertrend.py"]
+        # load the bot script from ??? the better design may be downloading from s3
+        container_name = f"User{user_id}_{bot_info.script_name}_{strftime('%m%d%H%M%S', gmtime())}"
+        command = [
+            "docker", "run", "-d",
+            "--name", container_name,
+            "-v", "/home/leah/my-trading-bot/trade/supertrend:/app",
+            "py-tradingbot",
+            "python", "-u", f"./{bot_info.script_name}.py",
+        ]
+        # Run the command and capture the output
+        result = subprocess.run(
+            command,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
         )
-        return {"message": f"Trading bot {process.pid} started running"}
-    except Exception as e:
-        # Handle the exception
-        raise HTTPException(status_code=500, detail=str(e))
+
+        # The stdout will contain the container ID
+        container_id = result.stdout.strip()
+        return {
+            "message": "Trading bot started",
+            "container_id": container_id,
+            "container_name": container_name,
+        }
+
+    except subprocess.CalledProcessError as e:
+        # Capture and return any errors
+        error_message = e.stderr or str(e)
+        raise HTTPException(status_code=500, detail=error_message)
+    # try:
+    #     # TODO add trading-bot id and save to db
+    #     process = subprocess.Popen(
+    #         ["nohup", "python", "trade/supertrend/supertrend.py"]
+    #     )
+    #     return {"message": f"Trading bot {process.pid} started running"}
+    # except Exception as e:
+    #     # Handle the exception
+    #     raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/api/user/{user_id}/trading-bot/stop", tags=["trade"])
