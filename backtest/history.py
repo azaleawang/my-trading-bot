@@ -6,7 +6,7 @@ import time
 # default config
 
 def history_data(exch='binance', symbols=['BTC/USDT'], t_frame='4h', 
-                    since='2017-01-01T00:00:00Z', default_type='future', sandbox_mode=False):        
+                    since='2017-01-01T00:00:00Z', default_type='future'):        
     
     # Initialize exchange
     try:
@@ -19,8 +19,8 @@ def history_data(exch='binance', symbols=['BTC/USDT'], t_frame='4h',
             }
         )
 
-        if hasattr(exchange, 'set_sandbox_mode'):
-            exchange.set_sandbox_mode(sandbox_mode)
+        # if hasattr(exchange, 'set_sandbox_mode'):
+        #     exchange.set_sandbox_mode(sandbox_mode)
 
     except AttributeError:
         print(f'Exchange "{exch}" not found.')

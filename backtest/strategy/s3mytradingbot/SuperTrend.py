@@ -40,11 +40,14 @@ def true_range(df):
 class SuperTrend(Strategy):
     period = 7
     multiplier = 3
-
+    params = {"period": period, "multiplier": multiplier}
+    
     def init(self):
         # Calculate True Range and attach it to the dataframe
         self.data.df["TrueRange"] = true_range(self.data.df)
-
+        self.period = self.params.get("period", self.period)
+        self.multiplier = self.params.get("multiplier", self.multiplier)
+        
         # Calculate SuperTrend Bands
         self.data.df["FinalUB"], self.data.df["FinalLB"] = super_trend_band(
             self.data.df, self.period, self.multiplier
