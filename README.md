@@ -53,3 +53,11 @@ def lambda_handler(event, context):
         'body': json.dumps('Hello from Lambda!')
     }
 ```
+## Docker for running Python script
+```bash
+docker build -t py-tradingbot .
+docker images
+# docker run -d py-tradingbot
+# docker run -d --name trading-container -v /home/leah/my-trading-bot/trade/supertrend:/app py-tradingbot python -u ./supertrend.py
+# docker logs -f trading-container (or containerid)
+```

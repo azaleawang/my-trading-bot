@@ -30,13 +30,21 @@ class Backtest_Strategy(BaseModel):
     params: Union[dict, None] = {"rsi_window": 20}
 
 
-class Bot_Info(BaseModel):
-    script_name: str = {"script_name": "supertrend"}
+class Bot_Run_Info(BaseModel):
+    user_id: Union[str, int] = 1
+    script_name: str = "supertrend"
+
+
+class Bot_Stop_Info(BaseModel):
+    user_id: Union[str, int] = 1
+    container_id: Union[str, None]
+    container_name: str
 
 
 @app.get("/", tags=["ROOT"])
 def get_root() -> dict:
     return {"Hello": "World"}
+
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -45,9 +53,11 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             data = await websocket.receive_json()
             await websocket.send_json(f"Message received")
+            print(f"Message received: {data}")
     except WebSocketDisconnect:
         print("Client disconnected")
-        
+
+
 @app.post("/api/backtest", tags=["backtest"])
 def run_backtest(strategy: Backtest_Strategy) -> dict:
     try:
@@ -91,17 +101,25 @@ async def receive_lambda_result(result: dict = {"data": "test"}):
         raise HTTPException(status_code=500, detail="Error processing received data.")
 
 
-@app.post("/api/user/{user_id}/start-bot", tags=["trade"])
-def start_trading_bot(user_id: Union[int, str], bot_info: Bot_Info) -> dict:
+@app.post("/api/start-bot", tags=["trade"])
+def start_trading_bot(bot_info: Bot_Run_Info) -> dict:
     try:
         # load the bot script from ??? the better design may be downloading from s3
-        container_name = f"User{user_id}_{bot_info.script_name}_{strftime('%m%d%H%M%S', gmtime())}"
+        container_name = (
+            f"User{bot_info.user_id}_{bot_info.script_name}_{strftime('%m%d%H%M%S', gmtime())}"
+        )
         command = [
-            "docker", "run", "-d",
-            "--name", container_name,
-            "-v", "/home/leah/my-trading-bot/trade/supertrend:/app",
+            "docker",
+            "run",
+            "-d",
+            "--name",
+            container_name,
+            "-v",
+            "/home/leah/my-trading-bot/trade/supertrend:/app",
             "py-tradingbot",
-            "python", "-u", f"./{bot_info.script_name}.py",
+            "python",
+            "-u",
+            f"./{bot_info.script_name}.py",
         ]
         # Run the command and capture the output
         result = subprocess.run(
@@ -114,6 +132,7 @@ def start_trading_bot(user_id: Union[int, str], bot_info: Bot_Info) -> dict:
 
         # The stdout will contain the container ID
         container_id = result.stdout.strip()
+        # store information into db!
         return {
             "message": "Trading bot started",
             "container_id": container_id,
@@ -135,17 +154,31 @@ def start_trading_bot(user_id: Union[int, str], bot_info: Bot_Info) -> dict:
     #     raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/user/{user_id}/trading-bot/stop", tags=["trade"])
-def stop_trading_bot(user_id: Union[int, str], bot_id: int) -> dict:
+@app.post("/api/stop-bot", tags=["trade"])
+def stop_trading_bot(bot_info: Bot_Stop_Info) -> dict:
+    container = bot_info.container_id or bot_info.container_name
+    command = ["docker", "stop", container]
     try:
-        os.kill(int(bot_id), 0)
-    except OSError:
-        raise HTTPException(status_code=404, detail="Process not found")
-    try:
-        subprocess.run(["kill", str(bot_id)], check=True)
-        return {"message": f"Process with PID {bot_id} has been terminated"}
-    except subprocess.CalledProcessError:
-        raise HTTPException(status_code=500, detail="Failed to terminate process")
+        result = subprocess.run(
+            command,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        return {"message": f"User{bot_info.user_id}'s bot {container} stopped!"}
+    except subprocess.CalledProcessError as e:
+        print(f"Error stopping container: {e.stderr}")
+        return {"message": e.stderr}
+    # try:
+    #     os.kill(int(bot_id), 0)
+    # except OSError:
+    #     raise HTTPException(status_code=404, detail="Process not found")
+    # try:
+    #     subprocess.run(["kill", str(bot_id)], check=True)
+    #     return {"message": f"Process with PID {bot_id} has been terminated"}
+    # except subprocess.CalledProcessError:
+    #     raise HTTPException(status_code=500, detail="Failed to terminate process")
 
 
 # # for learning notes
