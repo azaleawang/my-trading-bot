@@ -1,15 +1,25 @@
-from typing import Union
+from typing import Union, List
 from pydantic import BaseModel
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
-import subprocess
 import traceback
 import logging
+
+from app.src.crud.user import get_user, get_user_by_email, get_users, create_user
+
+from .src.crud.bot import check_container_name, get_bots, create_user_bot, delete_user_bot, get_user_bots, stop_user_bot
 from .src.controller.sqs import send_message
-from time import gmtime, strftime
 import json
+from .src.model import models, schemas
+from .src.config.database import engine
+from sqlalchemy.orm import Session
+from .src.controller.bot import start_bot_container
+from .src.config.database import get_db
+
+
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -31,15 +41,8 @@ class Backtest_Strategy(BaseModel):
     params: Union[dict, None] = {"rsi_window": 20}
 
 
-class Bot_Run_Info(BaseModel):
-    user_id: Union[str, int] = 1
-    script_name: str = "supertrend"
-
-
-class Bot_Stop_Info(BaseModel):
-    user_id: Union[str, int] = 1
-    container_id: Union[str, None]
-    container_name: str
+class Bot_Created_Resp(BaseModel):
+    data: Union[schemas.Bot, List[schemas.Bot]]
 
 
 @app.get("/", tags=["ROOT"])
@@ -58,8 +61,8 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         print("Client disconnected")
 
-# get
-@app.post("/api/backtest", tags=["backtest"])
+
+@app.post("/api/backtest", tags=["Backtest"])
 def run_backtest(strategy: Backtest_Strategy) -> dict:
     try:
         # TODO
@@ -90,165 +93,114 @@ def run_backtest(strategy: Backtest_Strategy) -> dict:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/backtest/result", tags=["backtest"])
-async def receive_lambda_result(data: dict = {"info": {}, "result": "{'json': 'need to parse'}"}):
+@app.post("/api/backtest/result", tags=["Backtest"])
+async def receive_lambda_result(
+    data: dict = {"info": {}, "result": "{'json': 'need to parse'}"}
+):
     try:
         logging.info(f"Received data from Lambda: {data}")
         # TODO: Process the result as needed: use graphql or ws to inform client testing result
-        parsed_result = json.loads(data.get('result'), parse_float=lambda x: None if x == 'NaN' else float(x))
-        if(parsed_result.get("plot")):
+        parsed_result = json.loads(
+            data.get("result"), parse_float=lambda x: None if x == "NaN" else float(x)
+        )
+        if parsed_result.get("plot"):
             parsed_result["plot"] = os.getenv("S3_URL") + parsed_result["plot"]
-        
+
         # store result into database or redis
         # notify frontend to fetch new data or refresh page
-        
-        return {"message": "Data received successfully", "result": parsed_result} # print to examine the format pls del when deployment
+
+        return {
+            "message": "Data received successfully",
+            "result": parsed_result,
+        }  # print to examine the format pls del when deployment
     except Exception as e:
         logging.error(f"Error in receive_lambda_result: {e}")
         raise HTTPException(status_code=500, detail="Error processing received data.")
 
 
-@app.post("/api/bots", tags=["trade"])
-def start_trading_bot(bot_info: Bot_Run_Info) -> dict:
+@app.get("/api/users/{user_id}/bots", response_model=Bot_Created_Resp, tags=["Bot"])
+def get_bot_for_user(user_id: int, db: Session = Depends(get_db)):
     try:
-        # load the bot script from ??? the better design may be downloading from s3
-        container_name = (
-            f"User{bot_info.user_id}_{bot_info.script_name}_{strftime('%m%d%H%M%S', gmtime())}"
-        )
-        command = [
-            "docker",
-            "run",
-            "-d",
-            "--name",
-            container_name,
-            "-v",
-            "/home/leah/my-trading-bot/trade/supertrend:/app",
-            "py-tradingbot",
-            "python",
-            "-u",
-            f"./{bot_info.script_name}.py",
-        ]
-        # Run the command and capture the output
-        result = subprocess.run(
-            command,
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
+        db_bot = get_user_bots(user_id = user_id, db = db)
 
-        # The stdout will contain the container ID
-        container_id = result.stdout.strip()
-        # store information into db!
         return {
-            "message": "Trading bot started",
-            "container_id": container_id,
-            "container_name": container_name,
+            "data": db_bot,
         }
-
-    except subprocess.CalledProcessError as e:
-        # Capture and return any errors
-        error_message = e.stderr or str(e)
-        raise HTTPException(status_code=500, detail=error_message)
-    # try:
-    #     # TODO add trading-bot id and save to db
-    #     process = subprocess.Popen(
-    #         ["nohup", "python", "trade/supertrend/supertrend.py"]
-    #     )
-    #     return {"message": f"Trading bot {process.pid} started running"}
-    # except Exception as e:
-    #     # Handle the exception
-    #     raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException as http_ex:
+        raise http_ex
+    except Exception as e:
+        logging.error(f"Error in get_bot_for_user: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching bots." + str(e))
 
 
-@app.put("/api/bots/{bot_id}", tags=["trade"])
-def stop_trading_bot(bot_name: str) -> dict:
-    container = bot_name
-    command = ["docker", "stop", container]
+@app.post("/api/users/{user_id}/bots", response_model=Bot_Created_Resp, tags=["Bot"])
+def create_bot_for_user(
+    user_id: int, bot: schemas.BotBase, db: Session = Depends(get_db)
+):
     try:
-        result = subprocess.run(
-            command,
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-        return {"message": f"User{bot_info.user_id}'s bot {container} stopped!"}
-    except subprocess.CalledProcessError as e:
-        print(f"Error stopping container: {e.stderr}")
-        return {"message": e.stderr}
-    # try:
-    #     os.kill(int(bot_id), 0)
-    # except OSError:
-    #     raise HTTPException(status_code=404, detail="Process not found")
-    # try:
-    #     subprocess.run(["kill", str(bot_id)], check=True)
-    #     return {"message": f"Process with PID {bot_id} has been terminated"}
-    # except subprocess.CalledProcessError:
-    #     raise HTTPException(status_code=500, detail="Failed to terminate process")
+        container_name = f"User{user_id}_{bot.strategy}_{bot.name}"
+        if check_container_name(db, container_name):
+            raise HTTPException(status_code=400, detail="Container name already exists.")
+        
+        bot_docker_info = start_bot_container(user_id, container_name, bot)
+        # Convert Pydantic model to a dictionary
+        bot_dict = bot.model_dump()
+
+        bot_create = schemas.BotCreate(**bot_dict, **bot_docker_info)
+        db_bot = create_user_bot(db, bot_create)
+        return {
+            "data": db_bot,
+        }
+    except HTTPException as http_ex:
+        raise http_ex
+    except Exception as e:
+        logging.error(f"Error in create_bot_for_user: {e}")
+        raise HTTPException(status_code=500, detail="Error creating bot." + str(e))
 
 
-# # for learning notes
-# class Item(BaseModel):
-#     name: str
-#     price: float
-#     is_offer: Union[bool, None] = None
 
-# @app.get("/items/{item_id}")
-# def get_item(item_id: int, q: Union[str, None] = None):
-#     return {"item_id": item_id, "q": q}
-
-# @app.put("/items/{item_id}")
-# def update_item(item_id: int, item: Item):
-#     return {"item_name": item.name, "item_id": item_id}
-
-# @app.get("/todo", tags=['todos'])
-# async def get_todos() -> dict:
-#     return {
-#         "data": todos
-#     }
-
-# @app.post("/todo", tags=['todos'])
-# async def add_todo(todo: dict) -> dict:
-#     todos.append(todo)
-#     return {
-#         "data": "Add todo done!"
-#     }
-
-# @app.put("/todo/{id}", tags=['todos'])
-# async def update_todo(id: int, body: dict) -> dict:
-#     for todo in todos:
-#         if int(todo["id"]) == id:
-#             todo["description"] = body["description"]
-#             return {
-#                 "data": f"Todo with id {id} has been updated"
-#             }
-#     return {
-#         "data": f"Todo with id {id} not found"
-#     }
-
-# @app.delete("/todo/{id}", tags=['todos'])
-# async def delete_todo(id: int) -> dict:
-#     for todo in todos:
-#         if int(todo["id"] == id):
-#             todos.remove(todo)
-#             return {
-#                 "data": f"Todo with id {id} has been deleted"
-#             }
-#     return {
-#         "data": f"Todo with id {id} not found"
-#     }
+@app.put("/api/users/{user_id}/bots/{bot_id}", tags=["Bot"])
+def stop_bot_for_user(user_id: int, bot_id: int, db: Session = Depends(get_db)) -> dict:
+    try:
+        user_bot = stop_user_bot(user_id, bot_id, db)        
+        print(user_bot)
+        
+        return {"message": f"Bot #{bot_id} {user_bot.name} stopped!"}
+    except HTTPException as http_ex:
+        raise http_ex
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Error stopping bot." + str(e))
+ 
+@app.delete("/api/users/{user_id}/bots/{bot_id}", tags=["Bot"])
+def delete_bot_for_user(user_id: int, bot_id: int, db: Session = Depends(get_db)) -> dict:
+    try:
+        user_bot = delete_user_bot(user_id, bot_id, db)        
+        
+        return {"message": f"Bot #{bot_id} {user_bot.name} removed from Docker containers!"}
+    except HTTPException as http_ex:
+        raise http_ex
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Error stopping bot." + str(e))
+  
+  
+# for learning
+@app.post("/users", response_model=schemas.User, tags=["User"])
+def create_new_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    db_user = get_user_by_email(db, email=user.email)
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    return create_user(db=db, user=user)
 
 
-# todos = [
-#     {
-#         "id": 1,
-#         "title": "First Todo",
-#         "description": "This is my first todo"
-#     },
-#     {
-#         "id": 2,
-#         "title": "Second Todo",
-#         "description": "This is my second todo"
-#     }
-# ]
+@app.get("/users", response_model=List[schemas.User], tags=["User"])
+def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    users = get_users(db, skip=skip, limit=limit)
+    return users
+
+
+@app.get("/users/{user_id}", response_model=schemas.User, tags=["User"])
+def read_user(user_id: int, db: Session = Depends(get_db)):
+    db_user = get_user(db, user_id=user_id)
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return db_user
