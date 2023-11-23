@@ -9,6 +9,7 @@ import traceback
 import logging
 from .src.controller.sqs import send_message
 from time import gmtime, strftime
+import json
 
 app = FastAPI()
 
@@ -57,7 +58,7 @@ async def websocket_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         print("Client disconnected")
 
-
+# get
 @app.post("/api/backtest", tags=["backtest"])
 def run_backtest(strategy: Backtest_Strategy) -> dict:
     try:
@@ -90,18 +91,24 @@ def run_backtest(strategy: Backtest_Strategy) -> dict:
 
 
 @app.post("/api/backtest/result", tags=["backtest"])
-async def receive_lambda_result(result: dict = {"data": "test"}):
+async def receive_lambda_result(data: dict = {"info": {}, "result": "{'json': 'need to parse'}"}):
     try:
-        logging.info(f"Received data from Lambda: {result}")
+        logging.info(f"Received data from Lambda: {data}")
         # TODO: Process the result as needed: use graphql or ws to inform client testing result
-
-        return {"message": "Data received successfully"}
+        parsed_result = json.loads(data.get('result'), parse_float=lambda x: None if x == 'NaN' else float(x))
+        if(parsed_result.get("plot")):
+            parsed_result["plot"] = os.getenv("S3_URL") + parsed_result["plot"]
+        
+        # store result into database or redis
+        # notify frontend to fetch new data or refresh page
+        
+        return {"message": "Data received successfully", "result": parsed_result} # print to examine the format pls del when deployment
     except Exception as e:
         logging.error(f"Error in receive_lambda_result: {e}")
         raise HTTPException(status_code=500, detail="Error processing received data.")
 
 
-@app.post("/api/start-bot", tags=["trade"])
+@app.post("/api/bots", tags=["trade"])
 def start_trading_bot(bot_info: Bot_Run_Info) -> dict:
     try:
         # load the bot script from ??? the better design may be downloading from s3
@@ -154,9 +161,9 @@ def start_trading_bot(bot_info: Bot_Run_Info) -> dict:
     #     raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/stop-bot", tags=["trade"])
-def stop_trading_bot(bot_info: Bot_Stop_Info) -> dict:
-    container = bot_info.container_id or bot_info.container_name
+@app.put("/api/bots/{bot_id}", tags=["trade"])
+def stop_trading_bot(bot_name: str) -> dict:
+    container = bot_name
     command = ["docker", "stop", container]
     try:
         result = subprocess.run(
