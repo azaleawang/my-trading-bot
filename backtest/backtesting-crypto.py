@@ -34,11 +34,14 @@ def run_strategy(data, strategy, params):
     result_dict = {
         attr: getattr(backtest_result, attr, None) for attr in res_attributes
     }
+    result_dict["plot"] = "test"
     result_json = json.dumps(result_dict, default=str, indent=4)
-    return result_json
+    data = {"result": result_json}
+    print(data)
+    return data
 
 
-df = history_data(symbols=["ETH/USDT"], t_frame="1d", since="2017-01-01T00:00:00Z")
+df = history_data(symbols=["ETH/USDT"], t_frame="1d", since="2023-01-01T00:00:00Z")
 if df.empty:
     raise ValueError("No data found")
 
@@ -47,8 +50,7 @@ else:
     print(df.tail())
 
     bt = run_strategy(df, strategy, params)
-    print()
-    print("res " + bt)
+    print("res ", bt)
 
 """" for optimizing the strategy """
 # stats = bt.optimize(
