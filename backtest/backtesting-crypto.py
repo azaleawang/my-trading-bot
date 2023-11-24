@@ -14,13 +14,14 @@ from config import res_attributes
 strategy = RsiOscillator
 
 params = {
-    'rsi_window': 20,
-    'upper_bound': 80,
+    "rsi_window": 20,
+    "upper_bound": 80,
 }
+
 
 def run_strategy(data, strategy, params):
     bt = Backtest(data, strategy, cash=1_000_000, commission=0.002)
-    backtest_result = bt.run(params = params)
+    backtest_result = bt.run(params=params)
     try:
         bt.plot(
             filename=f"backtest/strategy/result/{strategy.__name__}_{strftime('%Y%m%d-%H%M%S', gmtime())}",
@@ -50,8 +51,15 @@ else:
     print(df.tail())
 
     bt = run_strategy(df, strategy, params)
-    print("res ", bt)
-
+    
+    parsed_result = json.loads(
+        bt.get("result"), parse_float=lambda x: None if x == "NaN" else float(x)
+    )
+    # print("parsed_result ", parsed_result)
+    # transform to json again
+    json_result = json.dumps(parsed_result, default=str)
+    print("json_result ", json_result)
+    
 """" for optimizing the strategy """
 # stats = bt.optimize(
 #     upper_bound = range(50, 85, 5),

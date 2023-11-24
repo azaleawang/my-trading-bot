@@ -1,7 +1,7 @@
-from typing import List, Union
+from typing import Any, Union
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, JsonValue
 
 # User schema
 class UserBase(BaseModel):
@@ -40,3 +40,9 @@ class Bot(BotCreate):
 
     class Config:
         from_attributes = True
+      
+# Backtest_result schema  
+class BacktestResultBase(BaseModel):
+    info: dict = {"name": "MaRsi",}
+    result: dict = {"Start": "2023-01-01 00:00:00",}
+    
