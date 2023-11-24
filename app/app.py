@@ -3,25 +3,32 @@ from pydantic import BaseModel
 from fastapi import FastAPI, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi import APIRouter
 import os
 import traceback
 import logging
 
 from app.src.crud.user import get_user, get_user_by_email, get_users, create_user
+from .src.schema import schemas
 
-from .src.crud.bot import check_container_name, get_bots, create_user_bot, delete_user_bot, get_user_bots, stop_user_bot
+from .src.crud.bot import check_container_name, create_user_bot, delete_user_bot, get_user_bots, stop_user_bot
 from .src.controller.sqs import send_message
 import json
-from .src.model import models, schemas
+from .src.models import Base
 from .src.config.database import engine
 from sqlalchemy.orm import Session
 from .src.controller.bot import start_bot_container
 from .src.config.database import get_db
 
 
-models.Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+router = APIRouter()
+
+# API_VER = "v1"
+# app.include_router(users.router, prefix="/users", tags=["Users"]) 
+# app.include_router(items.router, prefix="/items", tags=["Items"])
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,6 +37,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 class Backtest_Strategy(BaseModel):
@@ -117,6 +125,7 @@ async def receive_lambda_result(
         logging.error(f"Error in receive_lambda_result: {e}")
         raise HTTPException(status_code=500, detail="Error processing received data.")
 
+@router.get("/router1")
 
 @app.get("/api/users/{user_id}/bots", response_model=Bot_Created_Resp, tags=["Bot"])
 def get_bot_for_user(user_id: int, db: Session = Depends(get_db)):

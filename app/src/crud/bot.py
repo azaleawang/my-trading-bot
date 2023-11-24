@@ -1,27 +1,28 @@
-from sqlalchemy import and_
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from fastapi import HTTPException
 import logging
 from app.src.controller.bot import delete_bot_container, stop_bot_container
-from app.src.model import models, schemas
+# from app.src.model import models
+from app.src.models.bot import Bot
+from app.src.schema import schemas
 
 def get_bots(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Bot).offset(skip).limit(limit).all()
+    return db.query(Bot).offset(skip).limit(limit).all()
 
 def check_container_name(db: Session, container_name: str):
-    return db.query(models.Bot).filter(models.Bot.container_name == container_name).all()
+    return db.query(Bot).filter(Bot.container_name == container_name).all()
 
 def get_user_bots(db: Session, user_id: int):
-    return db.query(models.Bot).filter(models.Bot.owner_id == user_id).all()
+    return db.query(Bot).filter(Bot.owner_id == user_id).all()
 
 
 def create_user_bot(db: Session, bot: schemas.BotCreate):
     # TODO 儲存失敗但docker已經開起來怎麼辦
     try:
-        db_bot = models.Bot(**bot.model_dump())
+        db_bot = Bot(**bot.model_dump())
         # Check if the bot name registered
-        existed_name = db.query(models.Bot).filter(models.Bot.name == bot.name).first()
+        existed_name = db.query(Bot).filter(Bot.name == bot.name).first()
         if existed_name:
             raise HTTPException(
                 status_code=400, detail="Bot name already registered. Pls rename it!"
@@ -47,7 +48,7 @@ def create_user_bot(db: Session, bot: schemas.BotCreate):
 
 
 def stop_user_bot(user_id: int, bot_id: str, db: Session):
-    bot = db.query(models.Bot).filter(models.Bot.id == bot_id).first()
+    bot = db.query(Bot).filter(Bot.id == bot_id).first()
 
     if bot is None:
         raise HTTPException(status_code=404, detail=f"Bot #{bot_id} Bot not found.")
@@ -78,7 +79,7 @@ def stop_user_bot(user_id: int, bot_id: str, db: Session):
 
 
 def delete_user_bot(user_id: int, bot_id: int, db: Session):
-    bot = db.query(models.Bot).filter(models.Bot.id == bot_id).first()
+    bot = db.query(Bot).filter(Bot.id == bot_id).first()
 
     if bot is None:
         raise HTTPException(status_code=404, detail=f"Bot #{bot_id} Bot not found.")

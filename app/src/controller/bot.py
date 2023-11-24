@@ -2,7 +2,7 @@ import subprocess
 from typing import Union
 from fastapi import HTTPException
 from pydantic import BaseModel
-from app.src.model import schemas
+from app.src.schema import schemas
 
 
 class Bot_Created_Resp(BaseModel):
