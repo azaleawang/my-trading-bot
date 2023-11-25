@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Any, List, Union
 from datetime import datetime
 
 from pydantic import BaseModel, JsonValue
@@ -45,4 +45,15 @@ class Bot(BotCreate):
 class BacktestResultBase(BaseModel):
     info: dict = {"name": "MaRsi",}
     result: dict = {"Start": "2023-01-01 00:00:00",}
+
+class Strategy(BaseModel):
+    id: int
+    name: str
+    file_url: Union[str, None]
+    provider_id: int
+    is_public: bool
     
+    
+# 就是一般的message 回應格式
+class Message_Resp(BaseModel):
+    message: str  = "some message"

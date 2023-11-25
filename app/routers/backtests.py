@@ -8,7 +8,7 @@ import traceback, logging, json
 from app.crud.backtest import insert_backtest_result
 from app.src.config.database import get_db
 from app.src.controller.sqs import send_message
-from app.src.schema.schemas import BacktestResultBase
+from app.src.schema.schemas import BacktestResultBase, Message_Resp
 
 router = APIRouter()
 
@@ -21,17 +21,14 @@ class Backtest_Strategy(BaseModel):
     default_type: Union[str, None] = "future"
     params: Union[dict, None] = {"rsi_window": 20}
 
+
 # TODO 送出之前先檢查要不要從資料庫撈出舊資料
-@router.post("/")
+@router.post("/", response_model=Message_Resp)
 def run_backtest(strategy: Backtest_Strategy) -> dict:
     try:
-        # TODO
-        # 從DB中找到策略的位置
-        # 取得策略ID？
         # send message into SQS queue
         strategy_config = {"s3_url": os.getenv("S3_BACKTEST_STRATEGY_URL")}
         message_body = dict(**strategy.model_dump(), **strategy_config)
-
         response = send_message(message_body=message_body)
         # response = {}
         if "error" in response:
@@ -96,7 +93,7 @@ bt_res = {
 }
     
 
-@router.post("/result")
+@router.post("/result", response_model=Message_Resp)
 async def receive_lambda_result(
     data: BacktestResultBase = bt_res, db: Session = Depends(get_db)
 ):
@@ -117,7 +114,7 @@ async def receive_lambda_result(
 
         return {
             "message": "Data received successfully",
-            "result": inserted,
+            # "result": inserted,
         }  # print to examine the format pls del when deployment
     except HTTPException as http_ex:
         raise http_ex

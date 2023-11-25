@@ -9,7 +9,7 @@ from app.src.schema import schemas
 # check if tested before (暫時先不做時間檢查)
 def check_backtest_result(
     bt_res: schemas.BacktestResultBase, db: Session = Depends(get_db)
-) -> bool:
+):
     try:
         backtest_existed = (
             db.query(Backtest_Result)

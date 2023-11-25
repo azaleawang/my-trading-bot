@@ -11,3 +11,4 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     bots = relationship("Bot", back_populates="owner")
+    strategies = relationship("Strategy", back_populates="provider")

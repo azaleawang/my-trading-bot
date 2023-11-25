@@ -1,7 +1,7 @@
 """Module providing a function of FastAPI and WebSocket."""
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import backtests, users, bots
+from .routers import backtests, users, bots, strategies
 from .src.models import Base
 from .src.config.database import engine
 
@@ -13,6 +13,9 @@ app.include_router(users.router, prefix=f"/api/{API_VER}/users", tags=["User"])
 app.include_router(bots.router, prefix=f"/api/{API_VER}/bots", tags=["Bot"])
 app.include_router(
     backtests.router, prefix=f"/api/{API_VER}/backtests", tags=["Backtest"]
+)
+app.include_router(
+    strategies.router, prefix=f"/api/{API_VER}/strategies", tags=["Strategy"]
 )
 
 app.add_middleware(

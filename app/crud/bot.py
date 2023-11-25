@@ -9,8 +9,14 @@ from app.src.schema import schemas
 def get_bots(db: Session, skip: int = 0, limit: int = 100):
     return db.query(Bot).offset(skip).limit(limit).all()
 
-def check_container_name(db: Session, container_name: str):
-    return db.query(Bot).filter(Bot.container_name == container_name).all()
+def check_name(db: Session, container_name: str, bot_name: str):
+    if db.query(Bot).filter(Bot.name == bot_name).first():
+        raise HTTPException(
+            status_code=400, detail="Bot name already registered. Pls rename it!"
+        )
+    if db.query(Bot).filter(Bot.container_name == container_name).all():
+        raise HTTPException(status_code=400, detail="Container name already exists.")
+
 
 def get_user_bots(db: Session, user_id: int):
     return db.query(Bot).filter(Bot.owner_id == user_id).all()
@@ -21,12 +27,8 @@ def create_user_bot(db: Session, bot: schemas.BotCreate):
     try:
         db_bot = Bot(**bot.model_dump())
         # Check if the bot name registered
-        existed_name = db.query(Bot).filter(Bot.name == bot.name).first()
-        if existed_name:
-            raise HTTPException(
-                status_code=400, detail="Bot name already registered. Pls rename it!"
-            )
-
+      
+        # TODO check if the bot script existed (s3 or local?)
         db.add(db_bot)
         db.commit()
         db.refresh(db_bot)
@@ -41,9 +43,9 @@ def create_user_bot(db: Session, bot: schemas.BotCreate):
     except SQLAlchemyError as e:
         logging.error(f"Error in storing bot creation: {e}")
         raise HTTPException(status_code=400, detail="Database error.")
-    except Exception as e:
-        logging.error(f"Unexpected error in storing bot creation: {e}")
-        raise HTTPException(status_code=500, detail="Unexpected database error.")
+    # except Exception as e:
+    #     logging.error(f"Unexpected error in storing bot creation: {e}")
+    #     raise HTTPException(status_code=500, detail="Unexpected database error.")
 
 
 def stop_user_bot(user_id: int, bot_id: str, db: Session):
