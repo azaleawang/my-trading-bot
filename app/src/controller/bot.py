@@ -3,7 +3,7 @@ from typing import Union
 from fastapi import HTTPException
 from pydantic import BaseModel
 from app.src.schema import schemas
-
+import os
 
 class Bot_Created_Resp(BaseModel):
     data: schemas.Bot
@@ -21,7 +21,7 @@ def start_bot_container(owner_id: str, container_name: str, bot_info: schemas.Bo
             "--name",
             container_name,
             "-v",
-            "/home/leah/my-trading-bot/trade/supertrend:/app",
+            f"{os.getenv('BOT_SCRIPT_PATH')}:/app",
             "py-tradingbot",
             "python",
             "-u",
