@@ -10,8 +10,8 @@ const BotContainer: React.FC = () => {
     const fetchData = async () => {
       try {
         const response = await axios.get(bot_api_base);
-        const bots = response.data.data
-        setBots(bots.filter((bot: Bot) => bot.status == "running"));
+        const bots = response.data.data;
+        setBots(bots.filter((bot: Bot) => bot.status !== "deleted"));
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -20,11 +20,14 @@ const BotContainer: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleStop = async (botId: number) => {
+  const handleStop = async (event: any, botId: number) => {
     try {
-      const resp = await axios.put(`${bot_api_base}/${botId}`);
-      console.log(resp.data);
-      alert("Stop OK!");
+      event.stopPropagation();
+      if (confirm(`Sure to stop bot ${botId} ?`)) {
+        const resp = await axios.put(`${bot_api_base}/${botId}`);
+        console.log(resp.data);
+        alert("Stop OK!");
+      }
       setBots((prevBots) =>
         prevBots.map((bot) =>
           bot.id === botId ? { ...bot, status: "stopped" } : bot
@@ -38,8 +41,9 @@ const BotContainer: React.FC = () => {
     }
   };
 
-  const handleDelete = async (botId: number) => {
+  const handleDelete = async (event: any, botId: number) => {
     try {
+      event.preventDefault();
       const resp = await axios.delete(`${bot_api_base}/${botId}`);
       console.log(resp.data);
       alert("Delete OK!");
@@ -50,10 +54,6 @@ const BotContainer: React.FC = () => {
         error.response.data?.detail || "Something went wrong when deleting bot"
       );
     }
-    const resp = await axios.delete(`${bot_api_base}/${botId}`);
-    console.log(resp);
-
-    // Update state or trigger side effects as necessary
   };
 
   return (
@@ -78,7 +78,7 @@ const BotContainer: React.FC = () => {
           <div className="flex gap-4">
             <button
               className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
-              onClick={() => handleStop(bot.id)}
+              onClick={(event) => handleStop(event, bot.id)}
             >
               {/* <svg
                 className="fill-current w-4 h-4 mr-2"
@@ -92,7 +92,7 @@ const BotContainer: React.FC = () => {
             </button>
             <button
               className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
-              onClick={() => handleDelete(bot.id)}
+              onClick={(event) => handleDelete(event, bot.id)}
             >
               <span>Delete</span>
             </button>
