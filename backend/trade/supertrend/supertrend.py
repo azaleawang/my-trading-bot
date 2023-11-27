@@ -12,13 +12,14 @@ from datetime import datetime
 import asyncio
 import websockets
 
+
 pd.set_option("display.max_rows", None)
 warnings.filterwarnings("ignore")
 start_st = datetime.fromtimestamp(time.time()).strftime("%Y%m%d-%H%M%S")
 
 
 async def send_message(message={"data": "test"}):
-    uri = "ws://host.docker.internal:8000/ws" # Use localhost when test locally; host.docker.internal
+    uri = "ws://host.docker.internal:8000/ws/trade_history"  # Use localhost when test locally; host.docker.internal
     async with websockets.connect(uri) as websocket:
         await websocket.send(json.dumps(message))
         greeting = await websocket.recv()
@@ -26,11 +27,16 @@ async def send_message(message={"data": "test"}):
 
 
 # Set your global variables
-symbol = "ETH/USDT"
-timeframe = "30m"
-limit = 100
-in_position = True
-quantity_buy_sell = 0.1
+# symbol = "ETH/USDT"
+# timeframe = "30m"
+# limit = 100
+# in_position = True
+# quantity_buy_sell = 0.1
+symbol = os.getenv("SYMBOL", "ETH/USDT")
+timeframe = os.getenv("TIMEFRAME", "30m")
+limit = int(os.getenv("LIMIT", "100"))
+in_position = os.getenv("IN_POSITION", "True") == "True"
+quantity_buy_sell = float(os.getenv("QUANTITY_BUY_SELL", "0.1"))
 
 
 exchange_id = "binance"
@@ -125,7 +131,15 @@ def check_buy_sell_signals(df):
             log_write("Changed to uptrend, buy")
             order = exchange.create_market_buy_order(symbol, quantity_buy_sell)
             log_write(order)
-            asyncio.run(send_message(message={"buy": order["info"]}))
+            asyncio.run(
+                send_message(
+                    message={
+                        "container_name": container_name,
+                        "action": "buy",
+                        "data": order["info"],
+                    }
+                )
+            )
             in_position = True
 
             print(df.tail(5))
@@ -141,7 +155,15 @@ def check_buy_sell_signals(df):
             print(order)
             log_write(order)
             in_position = False
-            asyncio.run(send_message(message={"sell": order["info"]}))
+            asyncio.run(
+                send_message(
+                    message={
+                        "container_name": container_name,
+                        "action": "sell",
+                        "data": order["info"],
+                    }
+                )
+            )
             print(df.tail(5))
             log_write(df.tail(5), df=True)
 
@@ -177,13 +199,22 @@ def run_bot():
 schedule.every(60).seconds.do(run_bot)
 
 if __name__ == "__main__":
-    asyncio.run(send_message({"message": "Trading bot start working!"}))
+    container_name = os.getenv("CONTAINER_NAME")
+    log_write("i am at container " + container_name)
+
+    asyncio.run(
+        send_message({"message": f"Trading bot {container_name} start working!"})
+    )
     # Just for testing
     order = exchange.create_market_buy_order(symbol, quantity_buy_sell)
     info = order["info"]
-    asyncio.run(send_message(message={"data": info}))
-    log_write(order)
-    
+    asyncio.run(
+        send_message(
+            message={"container_name": container_name, "action": "test", "data": info}
+        )
+    )
+    log_write(info)
+
     run_bot()
     while True:
         schedule.run_pending()
