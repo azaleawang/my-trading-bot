@@ -125,7 +125,7 @@ def check_buy_sell_signals(df):
             log_write("Changed to uptrend, buy")
             order = exchange.create_market_buy_order(symbol, quantity_buy_sell)
             log_write(order)
-            asyncio.run(send_message("Buy", order))
+            asyncio.run(send_message(message={"buy": order["info"]}))
             in_position = True
 
             print(df.tail(5))
@@ -141,7 +141,7 @@ def check_buy_sell_signals(df):
             print(order)
             log_write(order)
             in_position = False
-            asyncio.run(send_message("Sell", order))
+            asyncio.run(send_message(message={"sell": order["info"]}))
             print(df.tail(5))
             log_write(df.tail(5), df=True)
 
