@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, Union, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -5,10 +6,12 @@ import os
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Json
 import traceback, logging, json
-from app.crud.backtest import insert_backtest_result
+from app.crud.backtest import get_backtest_result, insert_backtest_result
 from app.src.config.database import get_db
-from app.src.controller.sqs import send_message
+from app.src.controller.sqs import send_sqs_message
 from app.src.schema.schemas import BacktestResultBase, Message_Resp
+import websockets
+
 
 router = APIRouter()
 
@@ -29,7 +32,7 @@ def run_backtest(strategy: Backtest_Strategy) -> dict:
         # send message into SQS queue
         strategy_config = {"s3_url": os.getenv("S3_BACKTEST_STRATEGY_URL")}
         message_body = dict(**strategy.model_dump(), **strategy_config)
-        response = send_message(message_body=message_body)
+        response = send_sqs_message(message_body=message_body)
         # response = {}
         if "error" in response:
             print("Error occurred:", response.get("details"))
@@ -61,7 +64,7 @@ bt_res = {
         "s3_url": "https://my-trading-bot.s3.ap-northeast-1.amazonaws.com/backtest/strategy/",
     },
     "result": {
-        "Start": "2023-01-01 00:00:00",
+        "Start": "2022-01-01 00:00:00",
         "End": "2023-11-23 00:00:00",
         "Duration": "326 days 00:00:00",
         "Exposure Time [%]": 66.12161471640266,
@@ -94,30 +97,43 @@ bt_res = {
     
 
 @router.post("/result", response_model=Message_Resp)
-async def receive_lambda_result(
+def receive_lambda_result(
     data: BacktestResultBase = bt_res, db: Session = Depends(get_db)
 ):
     try:
         logging.info(f"Received data from Lambda: {data}")
-        # TODO: Process the result as needed: use graphql or ws to inform client testing result
-        # parsed_result = json.loads(
-        #     data.get("result"), parse_float=lambda x: None if x == "NaN" else float(x)
-        # )
         parsed_result = data.model_dump()
         # if parsed_result.get("plot"):
         #     parsed_result["plot"] = os.getenv("S3_URL") + parsed_result["plot"]
-        print(parsed_result)
+        # print(parsed_result)
         # Let's insert data (or redis)
-        inserted = insert_backtest_result(parsed_result, db)
-
+        bt_res_id = insert_backtest_result(parsed_result, db)
+        print("get backtest result id = ", bt_res_id)
         # notify frontend to fetch new data or refresh page
-
+        asyncio.run(send_message({"id": bt_res_id}))
         return {
             "message": "Data received successfully",
-            # "result": inserted,
-        }  # print to examine the format pls del when deployment
+        } 
     except HTTPException as http_ex:
         raise http_ex
     except Exception as e:
         logging.error(f"Error in receive_lambda_result: {e}")
         raise HTTPException(status_code=500, detail="Error processing received data." + str(e))
+
+# get backtest result by id
+@router.get("/results/{bt_res_id}")
+def get_strategy(bt_res_id: int, db: Session = Depends(get_db)):
+    db_backtest_result = get_backtest_result(db, bt_res_id)
+    return db_backtest_result
+
+# 因為router.post 有資料格式parse的問題＠＠ 所以先用這個測試WS
+# @router.get("/results/test/{id}")
+# def get_strategy(id: int, db: Session = Depends(get_db)):
+#     asyncio.run(send_message({"id": id}))
+    
+async def send_message(message={"data": "test"}):
+    uri = "ws://localhost:8000/ws/backtest_result" # Use localhost when test locally
+    async with websockets.connect(uri) as websocket:
+        await websocket.send(json.dumps(message))
+        greeting = await websocket.recv()
+        print(f"<<< {greeting}")

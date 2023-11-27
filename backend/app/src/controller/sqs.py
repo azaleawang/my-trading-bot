@@ -5,7 +5,7 @@ from botocore.exceptions import ClientError
 
 client = boto3.client('sqs')
 sqs_url = os.getenv('SQS_URL')
-def send_message(sqs_url: str = sqs_url, message_body: dict = {}):
+def send_sqs_message(sqs_url: str = sqs_url, message_body: dict = {}):
     try:
         print("message body", message_body)
         response = client.send_message(

@@ -44,7 +44,7 @@ def create_trade_history_endpoint(trade_data: TradeHistoryCreate, db: Session = 
         return create_trade_history(db, trade_data)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-    
+
 # @app.websocket("/ws")
 # async def websocket_endpoint(websocket: WebSocket):
 #     await websocket.accept()

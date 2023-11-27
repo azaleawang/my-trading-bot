@@ -53,15 +53,17 @@ def insert_backtest_result(
                 )
             )
             db.commit()
+
             if not updated_result:
                 raise HTTPException(
                     status_code=400, detail="Update backtest result failed."
                 )
-            return (
-                db.query(Backtest_Result)
-                .filter(Backtest_Result.id == existed_id)
-                .first()
-            )
+            return existed_id
+            # return (
+            #     db.query(Backtest_Result)
+            #     .filter(Backtest_Result.id == existed_id)
+            #     .first()
+            # )
 
         backtest_result = Backtest_Result(
             strategy_name=bt_res.get("info").get("name"),
@@ -76,9 +78,14 @@ def insert_backtest_result(
         db.add(backtest_result)
         db.commit()
         db.refresh(backtest_result)
-        return backtest_result
+        return backtest_result.id
     except Exception as e:
         logging.error("Error in inserting backtest result: %s", e)
         raise HTTPException(
             status_code=400, detail="Insert backtest result failed."
         ) from e
+
+
+# read backtest result by strategy id
+def get_backtest_result(db: Session, backtest_id: int):
+    return db.query(Backtest_Result).filter(Backtest_Result.id == backtest_id).first()

@@ -5,16 +5,17 @@ import logging
 from app.src.controller.bot import delete_bot_container, stop_bot_container
 from app.src.models.bot import Bot
 from app.src.schema import schemas
+from sqlalchemy.sql import and_
 
 def get_bots(db: Session, skip: int = 0, limit: int = 100):
     return db.query(Bot).offset(skip).limit(limit).all()
 
-def check_name(db: Session, container_name: str, bot_name: str):
-    if db.query(Bot).filter(Bot.name == bot_name).first():
+def check_name(db: Session, container_name: str, bot_name: str, user_id: int):
+    if db.query(Bot).filter(and_(Bot.name == bot_name, Bot.owner_id == user_id, Bot.status != 'deleted')).first():
         raise HTTPException(
             status_code=400, detail="Bot name already registered. Pls rename it!"
         )
-    if db.query(Bot).filter(Bot.container_name == container_name).all():
+    if db.query(Bot).filter(and_(Bot.container_name == container_name, Bot.status != 'deleted')).all():
         raise HTTPException(status_code=400, detail="Container name already exists.")
 
 
