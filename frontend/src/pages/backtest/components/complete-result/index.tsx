@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import BacktestResult from "../data";
+import StrategyForm from "../../../run-backtest/components/strategy-form";
 
 const Backtest = () => {
   const [backtestData, setBacktestData] = useState();
@@ -22,16 +23,7 @@ const Backtest = () => {
 
   //   fetchBacktestData();
   // }, []);
-  const fetchBacktestData = async (backtestId: number) => {
-    try {
-      const response = await axios.get(
-        `/api/v1/backtests/results/${backtestId}`
-      );
-      setBacktestData(response.data);
-    } catch (error) {
-      console.error("Error fetching backtest data:", error);
-    }
-  };
+  
   // handle websocket
   // useEffect(() => {
   //   // Connect to WebSocket server
@@ -75,17 +67,11 @@ const Backtest = () => {
     };
 
     socket.onmessage = (event) => {
-      console.log("Raw message:", event);
-
       try {
         const data = JSON.parse(event.data);
         console.log("Parsed data:", data.id);
+        setBacktestId(data.id);
 
-        // Check if the new ID is different from the current one
-        if (data.id !== backtestId) {
-          setBacktestId(data.id); // Update backtestId state
-          fetchBacktestData(data.id);
-        }
       } catch (error) {
         console.error("Error parsing message:", error);
       }
@@ -102,29 +88,31 @@ const Backtest = () => {
     return () => {
       socket.close();
     };
-  }, [backtestId]); // Add backtestId as a dependency
-  // useEffect(() => {
-  //   // Fetch backtest data when backtestId is available
-  //   if (backtestId) {
-  //     console.log("backtestId:", backtestId); // Log the backtest ID for debugging purposes
-  //     const fetchBacktestData = async () => {
-  //       try {
-  //         const response = await axios.get(
-  //           `/api/v1/backtests/results/${backtestId}`
-  //         );
-  //         setBacktestData(response.data);
-  //       } catch (error) {
-  //         console.error("Error fetching backtest data:", error);
-  //       }
-  //     };
+  }, []);
 
-  //     fetchBacktestData();
-  //   }
-  // }, [backtestId]);
+  useEffect(() => {
+    // Fetch backtest data when backtestId is available
+    if (backtestId) {
+      console.log("backtestId:", backtestId); // Log the backtest ID for debugging purposes
+      const fetchBacktestData = async (backtestId: number) => {
+        try {
+          const response = await axios.get(
+            `/api/v1/backtests/results/${backtestId}`
+          );
+          setBacktestData(response.data);
+        } catch (error) {
+          console.error("Error fetching backtest data:", error);
+        }
+      };
+
+      fetchBacktestData(backtestId);
+    }
+  }, [backtestId]);
 
   return (
     <div>
       {/* Render BacktestResults only if backtestData is available */}
+      <StrategyForm />
       {backtestData ? (
         <BacktestResult backtestData={backtestData} />
       ) : (
