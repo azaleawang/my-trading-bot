@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 const CreateBotForm: React.FC = () => {
   const [botData, setBotData] = useState({
@@ -10,7 +10,7 @@ const CreateBotForm: React.FC = () => {
     description: "",
   });
   const navigate = useNavigate();
-  const userId = 1;
+  const { userId } = useParams<{ userId: string }>();
   const strategies = ["supertrend"]; // only accept this strategy for now
   const symbols = ["ETH/USDT", "BTC/USDT", "BNB/USDT"]; // still hard-coded
 
@@ -36,7 +36,7 @@ const CreateBotForm: React.FC = () => {
       );
       console.log(response.data);
       if (confirm(`Bot ${response.data.data.name} created successfully! 交易對: ${response.data.data.symbol}`)) {
-        navigate("/trading-bots");
+        navigate(`/user/${userId}/trading-bots`);
       }
 
       // Handle the success (e.g., showing a notification, clearing the form, etc.)

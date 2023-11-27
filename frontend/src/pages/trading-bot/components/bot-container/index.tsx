@@ -1,11 +1,20 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Bot } from "../../models";
+import { useNavigate, useParams } from "react-router-dom";
 
 const BotContainer: React.FC = () => {
   const [bots, setBots] = useState<Bot[]>([]);
-  const userId = 1;
+  // const userId = 1;
+  const { userId } = useParams<{ userId: string }>();
+
   const bot_api_base = `/api/v1/bots/users/${userId}/bots`;
+  const navigate = useNavigate();
+
+  const handleBotClick = (botId: number) => {
+    navigate(`/user/${userId}/trading-bots/${botId}`);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -61,6 +70,7 @@ const BotContainer: React.FC = () => {
       {bots.map((bot) => (
         <div
           key={bot.id}
+          onClick={() => handleBotClick(bot.id)}
           className="bg-gray-800 p-6 rounded-lg shadow-lg flex justify-between items-center text-white"
         >
           <div className="flex flex-col">
