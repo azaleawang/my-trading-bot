@@ -4,7 +4,7 @@ import { useState } from "react";
 const StrategyForm = () => {
   const bot_api_base = `/api/v1/backtests/`;
   const [strategy, setStrategy] = useState({
-    name: "MaRSI",
+    name: "MaRsi",
     symbols: ["BTC/USDT"], // TODO fix this (use string not list)
     t_frame: "1h",
     since: "2023-01-01",
@@ -67,7 +67,7 @@ const StrategyForm = () => {
             className="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           >
-            <option value="MaRsi">MaRSI</option>
+            <option value="MaRsi">MaRsi</option>
             <option value="MaCrossover">MaCrossover</option>
             <option value="SuperTrend">SuperTrend</option>
             <option value="RsiOscillator">RsiOscillator</option>
