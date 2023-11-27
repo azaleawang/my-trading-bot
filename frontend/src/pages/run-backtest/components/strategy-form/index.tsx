@@ -1,8 +1,8 @@
 import axios from "axios";
-import React, { useState } from "react";
+import { useState } from "react";
 
 const StrategyForm = () => {
-  const bot_api_base = `/api/v1/backtests`;
+  const bot_api_base = `/api/v1/backtests/`;
   const [strategy, setStrategy] = useState({
     name: "MaRSI",
     symbols: ["BTC/USDT"], // TODO fix this (use string not list)

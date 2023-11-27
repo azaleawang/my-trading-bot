@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import BacktestResult from "../data";
 import StrategyForm from "../../../run-backtest/components/strategy-form";

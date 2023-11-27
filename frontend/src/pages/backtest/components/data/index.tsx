@@ -52,13 +52,13 @@ const BacktestResult: React.FC<{ backtestData: BacktestData }> = ({
   backtestData,
 }) => {
   const {
-    id,
+    // id,
     strategy_name,
     symbol,
     t_frame,
-    since,
-    type,
-    params,
+    // since,
+    // type,
+    // params,
     plot_url,
     details,
   } = backtestData;
