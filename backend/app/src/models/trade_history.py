@@ -4,6 +4,7 @@ from sqlalchemy import Column, ForeignKey, TIMESTAMP, Integer, String, BIGINT, F
 from sqlalchemy.dialects.postgresql import JSONB
 from .base import Base
 from datetime import datetime
+from sqlalchemy.orm import relationship
 
 
 class Trade_History(Base):
@@ -16,6 +17,8 @@ class Trade_History(Base):
     avg_price = Column(Float, nullable=False)
     info = Column(JSONB, nullable=False)
     timestamp = Column(BIGINT, nullable=False)
+    
+    bot = relationship("Bot", back_populates="trade_history")
     # time = Column(
     #     TIMESTAMP(timezone=True),
     #     default=lambda: datetime.now(pytz.timezone("Asia/Taipei")),
@@ -24,5 +27,4 @@ class Trade_History(Base):
     # 成交率
     # 手續費
     # 已實現盈虧
-  
 # {'orderId': '1211943298', 'symbol': 'ETHUSDT', 'status': 'FILLED', 'clientOrderId': 'x-xcKtGhcue8a91b792898fa6e749e21', 'price': '0.00', 'avgPrice': '2052.43000', 'origQty': '0.100', 'executedQty': '0.100', 'cumQty': '0.100', 'cumQuote': '205.24300', 'timeInForce': 'GTC', 'type': 'MARKET', 'reduceOnly': False, 'closePosition': False, 'side': 'BUY', 'positionSide': 'BOTH', 'stopPrice': '0.00', 'workingType': 'CONTRACT_PRICE', 'priceProtect': False, 'origType': 'MARKET', 'priceMatch': 'NONE', 'selfTradePreventionMode': 'NONE', 'goodTillDate': '0', 'updateTime': '1701054107239'}

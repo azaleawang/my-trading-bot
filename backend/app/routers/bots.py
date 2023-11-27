@@ -14,6 +14,7 @@ from app.crud.bot import (
 )
 from app.src.schema import schemas
 from app.src.config.database import get_db
+from app.crud.trade_history import get_bot_trade_history
 
 router = APIRouter()
 
@@ -25,6 +26,8 @@ class Bot_Resp(BaseModel):
 class Bot_Created_Resp(BaseModel):
     data: schemas.Bot
 
+class Bot_History_Resp(BaseModel):
+    data: List[schemas.TradeHistory_Resp]
 
 @router.get("/users/{user_id}/bots", response_model=Bot_Resp)
 def get_bot_for_user(user_id: int, db: Session = Depends(get_db)):
@@ -47,7 +50,7 @@ def create_bot_for_user(
 ):
     try:
         container_name = f"User{user_id}_{bot.strategy}_{bot.name}"
-        check_name(db, container_name, bot.name)
+        check_name(db, container_name, bot.name, user_id)
         bot_docker_info = start_bot_container(user_id, container_name, bot)
         # Convert Pydantic model to a dictionary
         bot_dict = bot.model_dump()
@@ -91,3 +94,11 @@ def delete_bot_for_user(
         raise http_ex
     except Exception as e:
         raise HTTPException(status_code=500, detail="Error stopping bot." + str(e))
+
+
+@router.get("/users/{user_id}/bots/{bot_id}/trade-history", response_model=Bot_History_Resp)
+def read_user(user_id: int, bot_id: int, db: Session = Depends(get_db)):
+    db_bot_history = get_bot_trade_history(db, user_id, bot_id)
+    if db_bot_history is None:
+        raise HTTPException(status_code=404, detail="Trading bot not found")
+    return {"data": db_bot_history}

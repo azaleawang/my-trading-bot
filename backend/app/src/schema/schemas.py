@@ -102,3 +102,37 @@ class TradeHistoryCreate(BaseModel):
         "goodTillDate": "0",
         "updateTime": "1701054107239",
     }
+
+class TradeHistory_Resp(BaseModel):
+    id: int = 5
+    container_name: str = "User1_supertrend_cool_bot"
+    
+    action: str = "buy"
+    avg_price: float = 2052.43
+    info: dict = {
+        "orderId": "1211943298",
+        "symbol": "ETHUSDT",
+        "status": "FILLED",
+        "clientOrderId": "x-xcKtGhcue8a91b792898fa6e749e21",
+        "price": "0.00",
+        "avgPrice": "2052.43000",
+        "origQty": "0.100",
+        "executedQty": "0.100",
+        "cumQty": "0.100",
+        "cumQuote": "205.24300",
+        "timeInForce": "GTC",
+        "type": "MARKET",
+        "reduceOnly": False,
+        "closePosition": False,
+        "side": "BUY",
+        "positionSide": "BOTH",
+        "stopPrice": "0.00",
+        "workingType": "CONTRACT_PRICE",
+        "priceProtect": False,
+        "origType": "MARKET",
+        "priceMatch": "NONE",
+        "selfTradePreventionMode": "NONE",
+        "goodTillDate": "0",
+        "updateTime": "1701054107239",
+    }
+    timestamp: int = 1701071929040
