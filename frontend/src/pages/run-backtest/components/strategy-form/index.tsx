@@ -67,7 +67,7 @@ const StrategyForm = () => {
             className="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           >
-            <option value="MaRSI">MaRSI</option>
+            <option value="MaRsi">MaRSI</option>
             <option value="MaCrossover">MaCrossover</option>
             <option value="SuperTrend">SuperTrend</option>
             <option value="RsiOscillator">RsiOscillator</option>
