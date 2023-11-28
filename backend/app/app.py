@@ -1,8 +1,8 @@
 """Module providing a function of FastAPI and WebSocket."""
 from app.crud.trade_history import create_trade_history
-from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.staticfiles import StaticFiles
 from app.src.schema.schemas import TradeHistoryCreate
 from .routers import backtests, users, bots, strategies
 from .src.models import Base
@@ -11,7 +11,10 @@ from starlette.websockets import WebSocketDisconnect
 from typing import List
 import logging
 from sqlalchemy.orm import Session
-
+from starlette.responses import FileResponse
+import os
+current_dir = os.path.dirname(os.path.abspath(__file__))
+frontend_dir = os.path.join(current_dir, '../dist')
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -24,6 +27,7 @@ app.include_router(
 app.include_router(
     strategies.router, prefix=f"/api/{API_VER}/strategies", tags=["Strategy"]
 )
+app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
 
 app.add_middleware(
     CORSMiddleware,
@@ -34,16 +38,16 @@ app.add_middleware(
 )
 
 
-@app.get("/", tags=["ROOT"])
-def get_root() -> dict:
-    return {"Hello": "World"}
+# @app.get("/", tags=["ROOT"])
+# def get_root() -> dict:
+#     return {"Hello": "World"}
 
-@app.post("/trade-history")
-def create_trade_history_endpoint(trade_data: TradeHistoryCreate, db: Session = Depends(get_db)):
-    try:
-        return create_trade_history(db, trade_data)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+# @app.post("/trade-history")
+# def create_trade_history_endpoint(trade_data: TradeHistoryCreate, db: Session = Depends(get_db)):
+#     try:
+#         return create_trade_history(db, trade_data)
+#     except Exception as e:
+#         raise HTTPException(status_code=400, detail=str(e))
 
 # @app.websocket("/ws")
 # async def websocket_endpoint(websocket: WebSocket):
@@ -57,6 +61,16 @@ def create_trade_history_endpoint(trade_data: TradeHistoryCreate, db: Session = 
 #     except WebSocketDisconnect:
 #         print("Client disconnected")
 
+@app.get("/{full_path:path}")
+async def serve_frontend(full_path: str, request: Request):
+    # Check if the file exists in the static directory
+    static_file_path = os.path.join(frontend_dir, full_path)
+    if os.path.isfile(static_file_path):
+        return FileResponse(static_file_path)
+    print(static_file_path)
+    # Fallback to serving index.html for SPA routing
+    index_file = os.path.join(frontend_dir, 'index.html')
+    return FileResponse(index_file)
 
 @app.websocket("/ws/trade_history")
 async def websocket_endpoint(websocket: WebSocket):

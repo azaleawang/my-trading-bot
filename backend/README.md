@@ -29,30 +29,6 @@ https://www.youtube.com/watch?v=AQFZMvYp2KA
 ## Start server
 `python main.py`
 
-## AWS
-- ap-northeast-1
-
-##
-```python
-pip install --target ./package ta-lib backtesting ccxt pandas
-
-```
-
-
-```python
-import json
-
-def lambda_handler(event, context):
-    print(event)
-    records = event['Records']
-    for record in records:
-        body = record['body']
-        print(body)
-    return {
-        'statusCode': 200,
-        'body': json.dumps('Hello from Lambda!')
-    }
-```
 ## Docker for running Python script
 ```bash
 docker build -t py-tradingbot .
@@ -61,3 +37,5 @@ docker images
 # docker run -d --name trading-container -v /home/leah/my-trading-bot/trade/supertrend:/app py-tradingbot python -u ./supertrend.py
 # docker logs -f trading-container (or containerid)
 ```
+### 要加上自己的密碼
+`backend/trade/supertrend/config.py`
