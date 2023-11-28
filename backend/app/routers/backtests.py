@@ -96,7 +96,7 @@ bt_res = {
 }
     
 
-@router.post("/result", response_model=Message_Resp)
+@router.post("/result/", response_model=Message_Resp)
 def receive_lambda_result(
     data: BacktestResultBase = bt_res, db: Session = Depends(get_db)
 ):
