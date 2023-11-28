@@ -4,7 +4,39 @@ from fastapi import Depends, HTTPException
 from app.src.config.database import get_db
 from app.src.models.backtest import Backtest_Result
 from app.src.schema import schemas
+from sqlalchemy import text, func
 
+# If the strategy has been tested before, return the strategy backtest result
+def check_backtest_strategy(
+    strategy, db: Session = Depends(get_db)):
+    try:
+        backtest_existed = (
+            db.query(Backtest_Result)
+            .filter(
+                Backtest_Result.strategy_name == strategy.get('name'),
+                Backtest_Result.symbol == strategy.get('symbols')[0],
+                Backtest_Result.t_frame == strategy.get('t_frame'),
+                Backtest_Result.since == strategy.get('since'),
+                Backtest_Result.type == strategy.get('default_type'),
+                Backtest_Result.params == strategy.get('params'),
+                Backtest_Result.updated_at + text("'1 day'::interval") > func.now(),
+            )
+            .first()
+        )
+        if backtest_existed:
+            print("find backtest: id = ", backtest_existed.id)
+            return backtest_existed.id  # strategy backtest existed
+        else:
+            return None  # strategy not existed
+    except Exception as e:
+        logging.error("Error in checking backtest strategy history: %s", e)
+        raise HTTPException(
+            status_code=500, detail="Check backtest strategy history failed."
+        ) from e
+    
+    # return backtest_existed.id  # strategy existed
+    # return None  # strategy not existed
+    
 
 # check if tested before (暫時先不做時間檢查)
 def check_backtest_result(

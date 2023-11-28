@@ -26,5 +26,6 @@ class Backtest_Result(Base):
     )
     updated_at = Column(
         TIMESTAMP(timezone=True),
+        default=lambda: datetime.now(pytz.timezone("Asia/Taipei")),
         onupdate=lambda: datetime.now(pytz.timezone("Asia/Taipei")),
     )

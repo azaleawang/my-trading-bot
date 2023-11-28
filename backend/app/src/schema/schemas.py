@@ -132,3 +132,12 @@ class TradeHistory_Resp(BaseModel):
         "updateTime": "1701054107239",
     }
     timestamp: int = 1701071929040
+
+# req body of posting backtest
+class Backtest_Strategy(BaseModel):
+    name: str = "MaRsi"
+    symbols: list = ["BTC/USDT"]
+    t_frame: str = "1h"
+    since: Union[str, None] = "2017-01-01T00:00:00Z"
+    default_type: Union[str, None] = "future"
+    params: Union[dict, None] = {"rsi_window": 20}

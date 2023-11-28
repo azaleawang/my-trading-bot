@@ -19,7 +19,7 @@ start_st = datetime.fromtimestamp(time.time()).strftime("%Y%m%d-%H%M%S")
 
 
 async def send_message(message={"data": "test"}):
-    uri = "ws://host.docker.internal:8000/ws/trade_history"  # Use localhost when test locally; host.docker.internal
+    uri = f"{config.WS_HOST}/ws/trade_history"  # Use localhost when test locally; host.docker.internal
     async with websockets.connect(uri) as websocket:
         await websocket.send(json.dumps(message))
         greeting = await websocket.recv()
