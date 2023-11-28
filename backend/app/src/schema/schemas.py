@@ -52,12 +52,8 @@ class Bot(BotCreate):
 
 # Backtest_result schema
 class BacktestResultBase(BaseModel):
-    info: dict = {
-        "name": "MaRsi",
-    }
-    result: dict = {
-        "Start": "2023-01-01 00:00:00",
-    }
+    info: dict
+    result: Any
 
 
 class Strategy(BaseModel):
