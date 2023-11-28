@@ -63,38 +63,9 @@ bt_res = {
         "params": {"rsi_window": 20},
         "s3_url": "https://my-trading-bot.s3.ap-northeast-1.amazonaws.com/backtest/strategy/",
     },
-    "result": {
-        "Start": "2022-01-01 00:00:00",
-        "End": "2023-11-23 00:00:00",
-        "Duration": "326 days 00:00:00",
-        "Exposure Time [%]": 66.12161471640266,
-        "Equity Final [$]": 1120859.2821999998,
-        "Equity Peak [$]": 1234099.6822,
-        "Return [%]": 12.085928219999978,
-        "Buy & Hold Return [%]": 125.99323625319887,
-        "Return (Ann.) [%]": 13.581950832484303,
-        "Volatility (Ann.) [%]": 39.260540400055056,
-        "Sharpe Ratio": 0.3459440622591445,
-        "Sortino Ratio": 0.6533733876824362,
-        "Calmar Ratio": 0.6484981002786342,
-        "Max. Drawdown [%]": -20.943701803673243,
-        "Avg. Drawdown [%]": -7.801029779525336,
-        "Max. Drawdown Duration": "132 days 08:00:00",
-        "Avg. Drawdown Duration": "31 days 09:00:00",
-        "# Trades": 3,
-        "Win Rate [%]": 66.66666666666666,
-        "Best Trade [%]": 14.558902955652231,
-        "Worst Trade [%]": -2.079730036644434,
-        "Max. Trade Duration": "183 days 08:00:00",
-        "Avg. Trade Duration": "131 days 07:00:00",
-        "Profit Factor": 8.920607883214219,
-        "Expectancy [%]": 5.490908707734432,
-        "SQN": 0.7778559670931925,
-        "_strategy": "MaRsi(params=)",
-        "plot": "backtest/result/MaRsi_BTC-USDT_4h_20231123-021346.html",
-    },
+    "result": '{\n    "Start": "2023-01-01 00:00:00",\n    "End": "2023-11-28 08:00:00",\n    "Duration": "331 days 08:00:00",\n    "Exposure Time [%]": 82.08223311957752,\n    "Equity Final [$]": 1355324.8288,\n    "Equity Peak [$]": 1517576.6848,\n    "Return [%]": 35.532482879999996,\n    "Buy & Hold Return [%]": 124.00617171900525,\n    "Return (Ann.) [%]": 39.69092387742143,\n    "Volatility (Ann.) [%]": 57.32197021057216,\n    "Sharpe Ratio": 0.6924207896486616,\n    "Sortino Ratio": 1.6752137367792543,\n    "Calmar Ratio": 1.8197071583421327,\n    "Max. Drawdown [%]": -21.811709480542106,\n    "Avg. Drawdown [%]": -3.649393432304394,\n    "Max. Drawdown Duration": "137 days 13:00:00",\n    "Avg. Drawdown Duration": "8 days 05:00:00",\n    "# Trades": 2,\n    "Win Rate [%]": 50.0,\n    "Best Trade [%]": 36.58727154426143,\n    "Worst Trade [%]": -0.763650456607301,\n    "Max. Trade Duration": "270 days 20:00:00",\n    "Avg. Trade Duration": "135 days 23:00:00",\n    "Profit Factor": 47.91101901098716,\n    "Expectancy [%]": 17.911810543827063,\n    "SQN": 0.9453312864480757,\n    "_strategy": "MaRsi(params=)",\n    "plot": "backtest/result/MaRsi_BTC-USDT_1h_20231128-082333.html"\n}',
 }
-    
+
 
 @router.post("/result/", response_model=Message_Resp)
 def receive_lambda_result(
@@ -103,6 +74,10 @@ def receive_lambda_result(
     try:
         logging.info(f"Received data from Lambda: {data}")
         parsed_result = data.model_dump()
+        print(parsed_result)
+        parsed_result["result"] = json.loads(parsed_result["result"])
+        print(parsed_result)
+
         # if parsed_result.get("plot"):
         #     parsed_result["plot"] = os.getenv("S3_URL") + parsed_result["plot"]
         # print(parsed_result)
@@ -113,12 +88,15 @@ def receive_lambda_result(
         asyncio.run(send_message({"id": bt_res_id}))
         return {
             "message": "Data received successfully",
-        } 
+        }
     except HTTPException as http_ex:
         raise http_ex
     except Exception as e:
         logging.error(f"Error in receive_lambda_result: {e}")
-        raise HTTPException(status_code=500, detail="Error processing received data." + str(e))
+        raise HTTPException(
+            status_code=500, detail="Error processing received data." + str(e)
+        )
+
 
 # get backtest result by id
 @router.get("/results/{bt_res_id}")
@@ -126,13 +104,15 @@ def get_strategy(bt_res_id: int, db: Session = Depends(get_db)):
     db_backtest_result = get_backtest_result(db, bt_res_id)
     return db_backtest_result
 
+
 # 因為router.post 有資料格式parse的問題＠＠ 所以先用這個測試WS
 # @router.get("/results/test/{id}")
 # def get_strategy(id: int, db: Session = Depends(get_db)):
 #     asyncio.run(send_message({"id": id}))
-    
+
+
 async def send_message(message={"data": "test"}):
-    uri = "ws://localhost:8000/ws/backtest_result" # Use localhost when test locally
+    uri = "ws://localhost:8000/ws/backtest_result"  # Use localhost when test locally
     async with websockets.connect(uri) as websocket:
         await websocket.send(json.dumps(message))
         greeting = await websocket.recv()
