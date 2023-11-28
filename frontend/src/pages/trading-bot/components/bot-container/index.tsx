@@ -70,10 +70,9 @@ const BotContainer: React.FC = () => {
       {bots.map((bot) => (
         <div
           key={bot.id}
-          onClick={() => handleBotClick(bot.id)}
           className="bg-gray-800 p-6 rounded-lg shadow-lg flex justify-between items-center text-white"
         >
-          <div className="flex flex-col">
+          <div className="flex flex-col" onClick={() => handleBotClick(bot.id)}>
             <span className="text-xl font-semibold">{bot.name}</span>
             <span className="text-gray-400">{bot.symbol}</span>
           </div>

@@ -4,11 +4,13 @@ import Footer from "./footer";
 
 const Layout: React.FC = () => {
   return (
-    <>
+    <div className="flex flex-col min-h-screen">
       <MenuBar />
-      <Outlet />
+      <div className="flex-grow">
+        <Outlet />
+      </div>
       <Footer />
-    </>
+    </div>
   );
 };
 
