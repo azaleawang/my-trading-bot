@@ -36,7 +36,7 @@ def start_bot_container(
             "QUANTITY_BUY_SELL=0.1",
             "-v",
             f"{os.getenv('BOT_SCRIPT_PATH')}:/app",
-            "py-tradingbot",
+            "yayin494/trading-bot:tagname",
             "python",
             "-u",
             f"./{bot_info.strategy}.py",

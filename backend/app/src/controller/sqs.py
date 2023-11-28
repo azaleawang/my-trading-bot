@@ -3,7 +3,12 @@ import json
 import os
 from botocore.exceptions import ClientError
 
-client = boto3.client('sqs')
+client = boto3.client(
+    'sqs',
+    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+    region_name=os.getenv('AWS_REGION')
+)
 sqs_url = os.getenv('SQS_URL')
 def send_sqs_message(sqs_url: str = sqs_url, message_body: dict = {}):
     try:
