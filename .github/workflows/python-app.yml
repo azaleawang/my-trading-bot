@@ -22,6 +22,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             echo "Hello from github action, start deploy main to ec2"
+            source ~/trading-bot-env/bin/activate
             cd /home/ubuntu/my-trading-bot/backend
             git switch develop
             git pull
