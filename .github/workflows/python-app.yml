@@ -26,4 +26,4 @@ jobs:
             cd /home/ubuntu/my-trading-bot
             git switch develop
             git pull
-            pm2 reload "my-trading-bot" || pm2 start "my-trading-bot"
+            pm2 reload ecosystem.config.js
