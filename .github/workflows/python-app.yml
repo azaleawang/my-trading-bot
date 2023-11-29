@@ -26,5 +26,4 @@ jobs:
             cd /home/ubuntu/my-trading-bot/backend
             git switch develop
             git pull
-            pip install -r requirements.txt
             pm2 restart "my-trading-bot" 
