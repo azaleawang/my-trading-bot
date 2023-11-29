@@ -7,7 +7,7 @@ const Backtest = () => {
   const [backtestData, setBacktestData] = useState();
   const [backtestId, setBacktestId] = useState(null);
   useEffect(() => {
-    const socket = new WebSocket(`ws://${import.meta.env.VITE_HOST}/ws/backtest_result`);
+    const socket = new WebSocket(`${import.meta.env.VITE_WS_HOST}/ws/backtest_result`);
 
     socket.onopen = () => {
       console.log("WebSocket Connected");
