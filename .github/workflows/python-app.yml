@@ -1,0 +1,29 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Deploy Python fastapi server application to ec2
+
+on:
+  push:
+    branches: [ "develop" ]
+permissions:
+  contents: read
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: "${{ secrets.HOST_DNS }}"
+          username: "${{ secrets.EC2_USERNAME }}"
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "Hello from github action, start deploy main to ec2"
+            cd /home/ubuntu/my-trading-bot/backend
+            git switch develop
+            git pull
+            pip install -r requirements.txt
+            pm2 restart "my-trading-bot" 
