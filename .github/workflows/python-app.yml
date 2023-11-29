@@ -23,7 +23,7 @@ jobs:
           script: |
             echo "Hello from github action, start deploy main to ec2"
             source ~/trading-bot-env/bin/activate
-            cd /home/ubuntu/my-trading-bot/backend
+            cd /home/ubuntu/my-trading-bot
             git switch develop
             git pull
-            pm2 restart "my-trading-bot" 
+            pm2 reload "my-trading-bot" || pm2 start "my-trading-bot"
