@@ -8,6 +8,8 @@ const CreateBotForm: React.FC = () => {
     strategy: "",
     symbol: "",
     description: "",
+    t_frame: "30m",
+    quantity: 0.1
   });
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
@@ -103,6 +105,35 @@ const CreateBotForm: React.FC = () => {
               </option>
             ))}
           </select>
+        </div>
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">Time Frame:</label>
+          <select
+            name="t_frame"
+            value={botData.t_frame}
+            onChange={handleInputChange}
+            className="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          >
+            <option value="1d">1 day</option>
+            <option value="4h">4 hours</option>
+            <option value="1h">1 hour</option>
+            <option value="30m">30 mins</option>
+          </select>
+        </div>
+        <div className="mb-4">
+          <label htmlFor="quantity" className="block text-sm font-medium mb-2">
+            Quantity
+          </label>
+          <input
+            type="number"
+            id="quantity"
+            name="quantity"
+            value={botData.quantity}
+            onChange={handleInputChange}
+            className="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required
+          />
         </div>
         <div className="mb-6">
           <label

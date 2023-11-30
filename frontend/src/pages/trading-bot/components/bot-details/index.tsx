@@ -6,7 +6,10 @@ interface BotDetailsProps {
   id: number;
   container_name: string;
   action: string;
+  order_id: number;
+  qty: number;
   avg_price: number;
+  realizedPnl: number;
   info: {
     side: string;
     type: string;
@@ -57,6 +60,28 @@ const BotDetails: React.FC = () => {
           <h1 className="text-xl font-bold mb-2">
             Bot Details: {botData[0].container_name}
           </h1>
+          <div className="mb-4">
+            <strong>Symbol:</strong> {botData[0].info.symbol}
+          </div>
+          <div className="mb-4">
+            <strong>Total Realized Pnl:</strong>{" "}
+            {botData.reduce((sum, botDetail) => sum + botDetail.realizedPnl, 0)} (
+            <span>
+              {(
+                ((botData.reduce(
+                  (sum, botDetail) => sum + botDetail.realizedPnl,
+                  0
+                )) /
+                  botData.reduce(
+                    (sum, botDetail) =>
+                      sum + botDetail.qty * botDetail.avg_price,
+                    0
+                  )) *
+                100
+              ).toFixed(2)}{" "}
+              %)
+            </span>
+          </div>
           {botData.map((bot) => (
             <div
               key={bot.id}
@@ -69,14 +94,21 @@ const BotDetails: React.FC = () => {
                 <strong>Average Price:</strong> {bot.avg_price}
               </div>
               <div className="mb-4">
+                <strong>Order id:</strong> {bot.order_id}
+              </div>
+              <div className="mb-4">
+                <strong>Quantity:</strong> {bot.qty}
+              </div>
+              <div className="mb-4">
+                <strong>Realized Pnl:</strong> {bot.realizedPnl || 0}
+              </div>
+              <div className="mb-4">
                 <strong>Side:</strong> {bot.info.side}
               </div>
-              <div className="mb-4">
+              {/* <div className="mb-4">
                 <strong>Type:</strong> {bot.info.type}
-              </div>
-              <div className="mb-4">
-                <strong>Symbol:</strong> {bot.info.symbol}
-              </div>
+              </div> */}
+
               <div className="mb-4">
                 <p>
                   <strong>Timestamp:</strong>{" "}
