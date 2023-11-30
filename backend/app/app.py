@@ -4,6 +4,7 @@ from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket, WebSock
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.src.schema.schemas import TradeHistoryCreate
+from app.src.controller.trade import get_order_realizedPnl
 from .routers import backtests, users, bots, strategies
 from .src.models import Base
 from .src.config.database import SessionLocal, engine, get_db
@@ -84,10 +85,14 @@ async def websocket_endpoint(websocket: WebSocket):
             if data.get("action"):
                 # store trade info into database
                 try:
-                    print("data", data)
-                    trade_data = TradeHistoryCreate(**data)
                     db = SessionLocal()
-                    db_trade_history = create_trade_history(db, trade_data)
+                    realizedPnl = None
+                    if data["data"]["side"] == 'SELL':
+                        # get the realized pnl
+                        realizedPnl = get_order_realizedPnl(data["data"]["orderId"], data["data"]["symbol"])
+                    trade_data = TradeHistoryCreate(**data)
+                    
+                    db_trade_history = create_trade_history(db, trade_data, realizedPnl)
                     print("store: ",  db_trade_history)
                 except Exception as e:
                     print(f"Error: {e}")

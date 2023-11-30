@@ -1,5 +1,5 @@
 import pytz
-from sqlalchemy import Column, ForeignKey, String, Text
+from sqlalchemy import Column, ForeignKey, String, Text, Float
 from sqlalchemy.orm import relationship
 from .base import Base
 from sqlalchemy.dialects.postgresql import BIGINT, TIMESTAMP, ENUM
@@ -15,6 +15,8 @@ class Bot(Base):
     name = Column(String, nullable=False)
     strategy = Column(String, default="supertrend")
     symbol = Column(String, default="ETH/USDT", nullable=False)
+    t_frame = Column(String, default="1d")
+    quantity = Column(Float, default=0.1, nullable=False)
     description = Column(Text)
     created_at = Column(TIMESTAMP(timezone=True), default=lambda: datetime.now(pytz.timezone('Asia/Taipei')), nullable=False)
     status = Column(

@@ -33,6 +33,8 @@ class BotBase(BaseModel):
     symbol: str = "ETH/USDT"
     description: Union[str, None] = None
     created_at: datetime
+    t_frame: str = "1d"
+    quantity: float = 0.1
     # status: str = 'running'
 
 
@@ -94,9 +96,11 @@ class TradeHistoryCreate(BaseModel):
 class TradeHistory_Resp(BaseModel):
     id: int = 5
     container_name: str = "User1_supertrend_cool_bot"
-    
+    order_id: int
+    qty: float = 0.1
     action: str = "buy"
     avg_price: float = 2052.43
+    realizedPnl: Union[float, None]
     info: dict = {
         "orderId": "1211943298",
         "symbol": "ETHUSDT",

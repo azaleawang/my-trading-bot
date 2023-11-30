@@ -35,8 +35,8 @@ async def send_message(message={"data": "test"}):
 symbol = os.getenv("SYMBOL", "ETH/USDT")
 timeframe = os.getenv("TIMEFRAME", "30m")
 limit = int(os.getenv("LIMIT", "100"))
-in_position = os.getenv("IN_POSITION", "True") == "True"
-quantity_buy_sell = float(os.getenv("QUANTITY_BUY_SELL", "0.1"))
+in_position = os.getenv("IN_POSITION", False)
+quantity_buy_sell = float(os.getenv("QUANTITY_BUY_SELL", 0.1))
 
 
 exchange_id = "binance"
@@ -49,6 +49,8 @@ exchange = exchange_class(
         "enableRateLimit": True,
         "options": {
             "defaultType": "future",
+            "defaultMarginMode": "isolated",
+            "watchBalance": "margin",
         },
     }
 )
@@ -206,6 +208,7 @@ if __name__ == "__main__":
         send_message({"message": f"Trading bot {container_name} start working!"})
     )
     # Just for testing
+    # buy
     order = exchange.create_market_buy_order(symbol, quantity_buy_sell)
     info = order["info"]
     asyncio.run(
@@ -215,6 +218,30 @@ if __name__ == "__main__":
     )
     log_write(info)
 
+    # sell
+    time.sleep(10)
+    order = exchange.create_market_sell_order(symbol, quantity_buy_sell)
+    print(order)
+    info = order["info"]
+    asyncio.run(
+        send_message(
+            message={"container_name": container_name, "action": "test", "data": info}
+        )
+    )
+    log_write(order)
+
+
+    # buy again
+    time.sleep(10)
+    order = exchange.create_market_buy_order(symbol, quantity_buy_sell)
+    info = order["info"]
+    asyncio.run(
+        send_message(
+            message={"container_name": container_name, "action": "test", "data": info}
+        )
+    )
+    log_write(info)
+    
     run_bot()
     while True:
         schedule.run_pending()

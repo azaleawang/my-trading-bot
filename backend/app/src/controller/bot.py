@@ -15,7 +15,6 @@ def start_bot_container(
 ) -> dict:
     try:
         # load the bot script from ??? the better design may be downloading from s3
-
         command = [
             "docker",
             "run",
@@ -23,17 +22,17 @@ def start_bot_container(
             "--name",
             container_name,
             "-e",
-            f"CONTAINER_NAME={container_name}",  # 已有的环境变量
+            f"CONTAINER_NAME={container_name}",
             "-e",
-            "SYMBOL=ETH/USDT",
+            f"SYMBOL={bot_info.symbol}",
             "-e",
-            "TIMEFRAME=30m",
+            f"TIMEFRAME={bot_info.t_frame}",
             "-e",
             "LIMIT=100",
             "-e",
             "IN_POSITION=True",
             "-e",
-            "QUANTITY_BUY_SELL=0.1",
+            f"QUANTITY_BUY_SELL={bot_info.quantity}",
             "-v",
             f"{os.getenv('BOT_SCRIPT_PATH')}:/app",
             "yayin494/trading-bot:tagname",

@@ -13,11 +13,13 @@ class Trade_History(Base):
     id = Column(BIGINT, primary_key=True)
     # strategy_id = Column(BIGINT, ForeignKey("strategies.id"), nullable=False)
     container_name = Column(String, ForeignKey("bots.container_name"), nullable=False)
+    order_id = Column(BIGINT, unique=True, nullable=False)
+    qty = Column(Float, nullable=False)
     action = Column(String, nullable=False)
     avg_price = Column(Float, nullable=False)
     info = Column(JSONB, nullable=False)
     timestamp = Column(BIGINT, nullable=False)
-    
+    realizedPnl = Column(Float)
     bot = relationship("Bot", back_populates="trade_history")
     # time = Column(
     #     TIMESTAMP(timezone=True),
