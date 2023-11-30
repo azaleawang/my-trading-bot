@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import BacktestResult from "../data";
-import StrategyForm from "../../../run-backtest/components/strategy-form";
+import StrategyForm from "../strategy-form";
 
 const Backtest = () => {
   const [backtestData, setBacktestData] = useState();

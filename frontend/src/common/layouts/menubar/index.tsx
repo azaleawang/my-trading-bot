@@ -17,7 +17,7 @@ const MenuBar: React.FC = () => {
             <Link to="/user/1/create-bot">Create Bot</Link>
           </li>
           <li>
-            <Link to="/backtest">Backtest</Link>
+            <Link to="/user/1/backtest">Backtest</Link>
           </li>
         </ul>
       </nav>

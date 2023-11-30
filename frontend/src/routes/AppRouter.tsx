@@ -22,7 +22,7 @@ const router = createBrowserRouter(
           element={<BotDetails />}
         />
         <Route path="/user/:userId/create-bot" element={<CreateBotForm />} />
-        <Route path="/backtest" element={<Backtest />} />
+        <Route path="/user/:userId/backtest" element={<Backtest />} />
       {/* <Route path="/run-backtest" element={<StrategyForm />} /> */}
       </Route>
       <Route path="*" element={<Navigate to="/" />} />
