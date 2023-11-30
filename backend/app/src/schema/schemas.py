@@ -56,14 +56,6 @@ class BacktestResultBase(BaseModel):
     result: Any
 
 
-class Strategy(BaseModel):
-    id: int
-    name: str
-    file_url: Union[str, None]
-    provider_id: int
-    is_public: bool
-
-
 # 就是一般的message 回應格式
 class Message_Resp(BaseModel):
     message: str = "some message"
@@ -141,3 +133,16 @@ class Backtest_Strategy(BaseModel):
     since: Union[str, None] = "2017-01-01T00:00:00Z"
     default_type: Union[str, None] = "future"
     params: Union[dict, None] = {"rsi_window": 20}
+    
+class StrategyCreate(BaseModel):
+    name: str
+    file_url: Union[str, None]
+    params: Union[dict, None]
+    provider_id: int
+    is_public: bool
+
+class Strategy(StrategyCreate):
+    id: int
+    class Config:
+        from_attributes = True
+

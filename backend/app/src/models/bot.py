@@ -24,4 +24,4 @@ class Bot(Base):
     )
     owner_id = Column(BIGINT, ForeignKey("users.id"), nullable=False)
     owner = relationship("User", back_populates="bots")
-    trade_history = relationship("Trade_History", back_populates="bot")
+    trade_history = relationship("Trade_History", back_populates="bot", cascade="all")

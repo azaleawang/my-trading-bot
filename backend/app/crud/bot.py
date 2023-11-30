@@ -99,7 +99,7 @@ def delete_user_bot(user_id: int, bot_id: int, db: Session):
 
     if bot.status == "stopped":
         delete_bot_container(bot.container_id)
-        bot.status = "deleted"
+        db.delete(bot)
         db.commit()
         return bot
     else:
