@@ -29,7 +29,7 @@ class Bot_Created_Resp(BaseModel):
 class Bot_History_Resp(BaseModel):
     data: List[schemas.TradeHistory_Resp]
 
-@router.get("/users/{user_id}/bots", response_model=Bot_Resp)
+@router.get("/users/{user_id}/bots")
 def get_bot_for_user(user_id: int, db: Session = Depends(get_db)):
     try:
         db_bot = get_user_bots(user_id=user_id, db=db)

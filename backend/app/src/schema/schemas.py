@@ -45,13 +45,6 @@ class BotCreate(BotBase):
     status: str = "running"
 
 
-class Bot(BotCreate):
-    id: int
-
-    class Config:
-        from_attributes = True
-
-
 # Backtest_result schema
 class BacktestResultBase(BaseModel):
     info: dict
@@ -93,6 +86,7 @@ class TradeHistoryCreate(BaseModel):
         "updateTime": "1701054107239",
     }
 
+
 class TradeHistory_Resp(BaseModel):
     id: int = 5
     container_name: str = "User1_supertrend_cool_bot"
@@ -129,6 +123,15 @@ class TradeHistory_Resp(BaseModel):
     }
     timestamp: int = 1701071929040
 
+
+class Bot(BotCreate):
+    id: int
+    trade_history: List[TradeHistory_Resp]
+
+    class Config:
+        from_attributes = True
+
+
 # req body of posting backtest
 class Backtest_Strategy(BaseModel):
     name: str = "MaRsi"
@@ -137,7 +140,8 @@ class Backtest_Strategy(BaseModel):
     since: Union[str, None] = "2017-01-01T00:00:00Z"
     default_type: Union[str, None] = "future"
     params: Union[dict, None] = {"rsi_window": 20}
-    
+
+
 class StrategyCreate(BaseModel):
     name: str
     file_url: Union[str, None]
@@ -145,8 +149,9 @@ class StrategyCreate(BaseModel):
     provider_id: int
     is_public: bool
 
+
 class Strategy(StrategyCreate):
     id: int
+
     class Config:
         from_attributes = True
-

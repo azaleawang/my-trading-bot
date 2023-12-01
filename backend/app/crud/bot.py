@@ -6,6 +6,7 @@ from app.src.controller.bot import delete_bot_container, stop_bot_container
 from app.src.models.bot import Bot
 from app.src.schema import schemas
 from sqlalchemy.sql import and_
+from sqlalchemy.orm import joinedload
 
 def get_bots(db: Session, skip: int = 0, limit: int = 100):
     return db.query(Bot).offset(skip).limit(limit).all()
@@ -20,7 +21,9 @@ def check_name(db: Session, container_name: str, bot_name: str, user_id: int):
 
 
 def get_user_bots(db: Session, user_id: int):
-    return db.query(Bot).filter(Bot.owner_id == user_id).all()
+    # return db.query(Bot).filter(Bot.owner_id == user_id).all()
+    return db.query(Bot).options(joinedload(Bot.trade_history)).filter(Bot.owner_id == user_id).all()
+
 
 
 def create_user_bot(db: Session, bot: schemas.BotCreate):
