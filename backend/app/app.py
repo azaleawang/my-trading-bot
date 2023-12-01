@@ -1,10 +1,19 @@
 """Module providing a function of FastAPI and WebSocket."""
 from app.crud.trade_history import create_trade_history
-from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi import (
+    Depends,
+    FastAPI,
+    HTTPException,
+    Request,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.src.schema.schemas import TradeHistoryCreate
+from app.src.schema.schemas import BotErrorSchema, TradeHistoryCreate
 from app.src.controller.trade import get_order_realizedPnl
+from app.src.models.bot_error import Bot_Error
+from app.crud.bot_error import create_error_log
 from .routers import backtests, users, bots, strategies
 from .src.models import Base
 from .src.config.database import SessionLocal, engine, get_db
@@ -14,8 +23,9 @@ import logging
 from sqlalchemy.orm import Session
 from starlette.responses import FileResponse
 import os
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
-frontend_dir = os.path.join(current_dir, '../dist')
+frontend_dir = os.path.join(current_dir, "../dist")
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -39,29 +49,6 @@ app.add_middleware(
 )
 
 
-# @app.get("/", tags=["ROOT"])
-# def get_root() -> dict:
-#     return {"Hello": "World"}
-
-# @app.post("/trade-history")
-# def create_trade_history_endpoint(trade_data: TradeHistoryCreate, db: Session = Depends(get_db)):
-#     try:
-#         return create_trade_history(db, trade_data)
-#     except Exception as e:
-#         raise HTTPException(status_code=400, detail=str(e))
-
-# @app.websocket("/ws")
-# async def websocket_endpoint(websocket: WebSocket):
-#     await websocket.accept()
-#     try:
-#         while True:
-#             data = await websocket.receive_json()
-#             await websocket.send_json("Message received")
-#             print(f"Message received: {data.get('action')}")
-            
-#     except WebSocketDisconnect:
-#         print("Client disconnected")
-
 @app.get("/{full_path:path}")
 async def serve_frontend(full_path: str, request: Request):
     # Check if the file exists in the static directory
@@ -70,8 +57,9 @@ async def serve_frontend(full_path: str, request: Request):
         return FileResponse(static_file_path)
     print(static_file_path)
     # Fallback to serving index.html for SPA routing
-    index_file = os.path.join(frontend_dir, 'index.html')
+    index_file = os.path.join(frontend_dir, "index.html")
     return FileResponse(index_file)
+
 
 @app.websocket("/ws/trade_history")
 async def websocket_endpoint(websocket: WebSocket):
@@ -80,26 +68,79 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             data = await websocket.receive_json()
             await websocket.send_json("Message received")
-            
+
             # check if the trading action message
             if data.get("action"):
-                # store trade info into database
                 try:
-                    db = SessionLocal()
-                    realizedPnl = None
-                    if data["data"]["side"] == 'SELL':
-                        # get the realized pnl
-                        realizedPnl = get_order_realizedPnl(data["data"]["orderId"], data["data"]["symbol"])
-                    trade_data = TradeHistoryCreate(**data)
-                    
-                    db_trade_history = create_trade_history(db, trade_data, realizedPnl)
-                    print("store: ",  db_trade_history)
+                    with SessionLocal() as db:
+                        realizedPnl = None
+                        if data["data"]["side"] == "SELL":
+                            # get the realized pnl
+                            realizedPnl = get_order_realizedPnl(
+                                data["data"]["orderId"], data["data"]["symbol"]
+                            )
+                        trade_data = TradeHistoryCreate(**data)
+
+                        db_trade_history = create_trade_history(
+                            db, trade_data, realizedPnl
+                        )
+                        db.commit()
+                        print("store: ", db_trade_history)
                 except Exception as e:
                     print(f"Error: {e}")
-                finally:
-                    db.close()
+
+            elif data.get("error"):
+                try:
+                    print("error", data)
+                    with SessionLocal() as db:
+                        error_data = BotErrorSchema(**data)
+                        error = create_error_log(error_data, db)
+                        db.commit()
+                        print("error: ", error)
+                except Exception as e:
+                    print(f"Error logging failed: {e}")
+            else:
+                print("message", data)
+
     except WebSocketDisconnect:
         print("Client disconnected")
+
+
+# @app.websocket("/ws/trade_history")
+# async def websocket_endpoint(websocket: WebSocket):
+#     await websocket.accept()
+#     try:
+#         while True:
+#             data = await websocket.receive_json()
+#             await websocket.send_json("Message received")
+
+#             # check if the trading action message
+#             if data.get("action"):
+#                 # store trade info into database
+#                 try:
+#                     db = SessionLocal()
+#                     realizedPnl = None
+#                     if data["data"]["side"] == 'SELL':
+#                         # get the realized pnl
+#                         realizedPnl = get_order_realizedPnl(data["data"]["orderId"], data["data"]["symbol"])
+#                     trade_data = TradeHistoryCreate(**data)
+
+#                     db_trade_history = create_trade_history(db, trade_data, realizedPnl)
+#                     print("store: ",  db_trade_history)
+#                 except Exception as e:
+#                     print(f"Error: {e}")
+#                 finally:
+#                     db.close()
+#             elif data.get('error'):
+#                 print("Get error from container", data)
+#                 # how to deal with the error message from trading container? store to db first?
+#                 error = create_error_log(BotErrorSchema(**data), db)
+#                 print("error: ", error)
+
+#     except WebSocketDisconnect:
+#         print("Client disconnected")
+
+
 
 
 active_connections: List[WebSocket] = []
@@ -121,6 +162,7 @@ async def websocket_endpoint(websocket: WebSocket):
         print("Client disconnected")
 
 
+# TODO this should be casted to certain user rather than broadcast QQ
 async def broadcast(message: dict):
     for connection in active_connections:
         try:

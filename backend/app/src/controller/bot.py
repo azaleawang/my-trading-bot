@@ -32,7 +32,7 @@ def start_bot_container(
             "-e",
             "IN_POSITION=True",
             "-e",
-            f"QUANTITY_BUY_SELL={bot_info.quantity}",
+            f"AMOUNT_IN_USDT={bot_info.quantity}",
             "-v",
             f"{os.getenv('BOT_SCRIPT_PATH')}:/app",
             "yayin494/trading-bot:tagname",

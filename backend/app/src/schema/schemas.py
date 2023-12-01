@@ -155,3 +155,13 @@ class Strategy(StrategyCreate):
 
     class Config:
         from_attributes = True
+
+class BotErrorSchema(BaseModel):
+    container_name: str
+    error: str
+        
+class BotError(BotErrorSchema):
+    id: int
+    timestamp: Any
+    class Config:
+        from_attributes = True

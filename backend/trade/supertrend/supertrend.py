@@ -11,11 +11,16 @@ import time
 from datetime import datetime
 import asyncio
 import websockets
-
+import ccxt
+from ccxt.base.errors import NetworkError, ExchangeError, InsufficientFunds
 
 pd.set_option("display.max_rows", None)
 warnings.filterwarnings("ignore")
 start_st = datetime.fromtimestamp(time.time()).strftime("%Y%m%d-%H%M%S")
+
+
+class CustomTradeException(Exception):
+    pass
 
 
 async def send_message(message={"data": "test"}):
@@ -32,13 +37,6 @@ async def send_message(message={"data": "test"}):
 # limit = 100
 # in_position = True
 # quantity_buy_sell = 0.1
-symbol = os.getenv("SYMBOL", "ETH/USDT")
-timeframe = os.getenv("TIMEFRAME", "30m")
-limit = int(os.getenv("LIMIT", "100"))
-in_position = os.getenv("IN_POSITION", False)
-quantity_buy_sell = float(os.getenv("QUANTITY_BUY_SELL", 0.1))
-
-
 exchange_id = "binance"
 exchange_class = getattr(ccxt, exchange_id)
 exchange = exchange_class(
@@ -56,6 +54,15 @@ exchange = exchange_class(
 )
 sandbox_mode = config.SANDBOX_MODE
 exchange.set_sandbox_mode(sandbox_mode)
+
+symbol = os.getenv("SYMBOL", "ETH/USDT")
+timeframe = os.getenv("TIMEFRAME", "30m")
+limit = int(os.getenv("LIMIT", "100"))
+# in_position = os.getenv("IN_POSITION", False)
+in_position = False
+# quantity_buy_sell = float(os.getenv("QUANTITY_BUY_SELL", 0.1))
+amount_in_usdt = float(os.getenv("AMOUNT_IN_USDT", 120))
+quantity_sell = None
 
 
 def log_write(msg, start_st=start_st, df=False, json_format=False, print_it=True):
@@ -121,62 +128,118 @@ def supertrend(df, period=7, atr_multiplier=3):
 
 
 def check_buy_sell_signals(df):
-    global in_position, symbol, quantity_buy_sell, log
+    global in_position, symbol, log
 
     log_write("Checking for buy and sell signals")
-
     last_row_index = len(df.index) - 1
     previous_row_index = last_row_index - 1
 
-    if not df["in_uptrend"][previous_row_index] and df["in_uptrend"][last_row_index]:
-        if not in_position:
-            log_write("Changed to uptrend, buy")
-            order = exchange.create_market_buy_order(symbol, quantity_buy_sell)
-            log_write(order)
-            asyncio.run(
-                send_message(
-                    message={
-                        "container_name": container_name,
-                        "action": "buy",
-                        "data": order["info"],
-                    }
-                )
+    try:
+        if (
+            not df["in_uptrend"][previous_row_index]
+            and df["in_uptrend"][last_row_index]
+        ):
+            if not in_position:
+                log_write("Changed to uptrend, buy")
+                execute_buy_trade(exchange, symbol)
+                print(df.tail(5))
+                log_write(df.tail(5), df=True)
+
+            else:
+                log_write("Already in position, nothing to do")
+
+        if (
+            df["in_uptrend"][previous_row_index]
+            and not df["in_uptrend"][last_row_index]
+        ):
+            if in_position:
+                log_write("Changed to downtrend, sell")
+                execute_sell_trade(exchange, symbol, quantity_sell)
+                print(df.tail(5))
+                log_write(df.tail(5), df=True)
+
+            else:
+                log_write("You aren't in position, nothing to sell")
+    except CustomTradeException as e:
+        log_write(f"Trade error: {e}")
+        asyncio.run(
+            send_message(
+                {
+                    "container_name": container_name,
+                    "error": f"Trading bot encountered an error: {e}",
+                }
             )
-            in_position = True
-
-            print(df.tail(5))
-            log_write(df.tail(5), df=True)
-
-        else:
-            log_write("Already in position, nothing to do")
-
-    if df["in_uptrend"][previous_row_index] and not df["in_uptrend"][last_row_index]:
-        if in_position:
-            log_write("Changed to downtrend, sell")
-            order = exchange.create_market_sell_order(symbol, quantity_buy_sell)
-            print(order)
-            log_write(order)
-            in_position = False
-            asyncio.run(
-                send_message(
-                    message={
-                        "container_name": container_name,
-                        "action": "sell",
-                        "data": order["info"],
-                    }
-                )
+        )
+    except Exception as e:
+        log_write(f"Unexpected error: {e}")
+        asyncio.run(
+            send_message(
+                {
+                    "container_name": container_name,
+                    "error": f"Trading bot encountered an unexpected error: {e}",
+                }
             )
-            print(df.tail(5))
-            log_write(df.tail(5), df=True)
+        )
 
-        else:
-            log_write("You aren't in position, nothing to sell")
+
+def execute_buy_trade(exchange, symbol, amount_in_usdt=amount_in_usdt):
+    global quantity_sell, in_position
+    try:
+        print("ready to place order amount = " + str(amount_in_usdt))
+        order = exchange.create_market_buy_order(
+            symbol, amount_in_usdt / exchange.fetch_ticker(symbol)["last"]
+        )
+        log_write(order)
+        in_position = True
+        quantity_sell = order["info"]["executedQty"]
+        asyncio.run(
+            send_message(
+                message={
+                    "container_name": container_name,
+                    "action": "test",
+                    "data": order["info"],
+                }
+            )
+        )
+        return order
+    except InsufficientFunds as isf:
+        raise CustomTradeException(f"Insufficient funds for trade: {isf}")
+    except ExchangeError as excherr:
+        raise CustomTradeException(f"Exchange error occurred: {excherr}")
+    except NetworkError as nwerr:
+        raise CustomTradeException(f"Network error occurred: {nwerr}")
+    except Exception as e:
+        raise CustomTradeException(f"Unexpected error: {e}")
+
+
+def execute_sell_trade(exchange, symbol, quantity):
+    global in_position
+    try:
+        order = exchange.create_market_sell_order(symbol, quantity)
+        log_write(order)
+        in_position = False
+        asyncio.run(
+            send_message(
+                message={
+                    "container_name": container_name,
+                    "action": "test",
+                    "data": order["info"],
+                }
+            )
+        )
+        return order
+    except ExchangeError as excherr:
+        raise CustomTradeException(f"Exchange error occurred: {excherr}")
+    except NetworkError as nwerr:
+        raise CustomTradeException(f"Network error occurred: {nwerr}")
+    except Exception as e:
+        raise CustomTradeException(f"Unexpected error: {e}")
 
 
 def run_bot():
     global symbol, timeframe, limit, log
 
-    msg = f"symbol: {symbol}, timeframe: {timeframe}, limit: {limit}, in_position: {in_position}, quantity_buy_sell: {quantity_buy_sell}"
+    msg = f"symbol: {symbol}, timeframe: {timeframe}, limit: {limit}, in_position: {in_position}, amount_in_usdt: {amount_in_usdt}"
     log_write(msg)
 
     log_write("Fetching new bars")
@@ -188,8 +251,8 @@ def run_bot():
             bars[:-1], columns=["timestamp", "open", "high", "low", "close", "volume"]
         )
         df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
-    except:
-        pass
+    except Exception as e:
+        print("error in fetching new bars %s", e)
 
     if df is None:
         log_write("Error fetching ohlcv-data from exchange")
@@ -207,42 +270,34 @@ if __name__ == "__main__":
     asyncio.run(
         send_message({"message": f"Trading bot {container_name} start working!"})
     )
-    # Just for testing
-    # buy
-    order = exchange.create_market_buy_order(symbol, quantity_buy_sell)
-    info = order["info"]
-    asyncio.run(
-        send_message(
-            message={"container_name": container_name, "action": "test", "data": info}
-        )
-    )
-    log_write(info)
 
-    # sell
-    time.sleep(10)
-    order = exchange.create_market_sell_order(symbol, quantity_buy_sell)
-    print(order)
-    info = order["info"]
-    asyncio.run(
-        send_message(
-            message={"container_name": container_name, "action": "test", "data": info}
-        )
-    )
-    log_write(order)
+    try:
+        print("starting testing order function")
+        print("=== BUY ===")
+        execute_buy_trade(exchange, symbol)
+        time.sleep(10)
 
+        print("=== SELL ===")
 
-    # buy again
-    time.sleep(10)
-    order = exchange.create_market_buy_order(symbol, quantity_buy_sell)
-    info = order["info"]
-    asyncio.run(
-        send_message(
-            message={"container_name": container_name, "action": "test", "data": info}
+        execute_sell_trade(exchange, symbol, quantity_sell)
+        time.sleep(10)
+
+        print("=== BUY ===")
+        execute_buy_trade(exchange, symbol)
+
+    except CustomTradeException as e:
+        log_write(f"Trade error: {e}")
+        asyncio.run(
+            send_message(
+                {
+                    "container_name": container_name,
+                    "error": str(e),
+                }
+            )
         )
-    )
-    log_write(info)
-    
+
     run_bot()
     while True:
         schedule.run_pending()
         time.sleep(1)
+        # TODO if stopped bot, sell all remains or do nothing?

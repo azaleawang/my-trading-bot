@@ -26,4 +26,5 @@ class Bot(Base):
     )
     owner_id = Column(BIGINT, ForeignKey("users.id"), nullable=False)
     owner = relationship("User", back_populates="bots")
-    trade_history = relationship("Trade_History", back_populates="bot", cascade="all")
+    trade_history = relationship("Trade_History", back_populates="bot", cascade="all, delete-orphan")
+    error = relationship("Bot_Error", back_populates="bot", cascade="all, delete-orphan")

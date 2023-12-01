@@ -15,6 +15,7 @@ from app.crud.bot import (
 from app.src.schema import schemas
 from app.src.config.database import get_db
 from app.crud.trade_history import get_bot_trade_history
+from app.crud.bot_error import get_error_log_by_container
 
 router = APIRouter()
 
@@ -26,8 +27,10 @@ class Bot_Resp(BaseModel):
 class Bot_Created_Resp(BaseModel):
     data: schemas.Bot
 
+
 class Bot_History_Resp(BaseModel):
     data: List[schemas.TradeHistory_Resp]
+
 
 @router.get("/users/{user_id}/bots")
 def get_bot_for_user(user_id: int, db: Session = Depends(get_db)):
@@ -96,9 +99,19 @@ def delete_bot_for_user(
         raise HTTPException(status_code=500, detail="Error stopping bot." + str(e))
 
 
-@router.get("/users/{user_id}/bots/{bot_id}/trade-history", response_model=Bot_History_Resp)
+@router.get(
+    "/users/{user_id}/bots/{bot_id}/trade-history", response_model=Bot_History_Resp
+)
 def read_user(user_id: int, bot_id: int, db: Session = Depends(get_db)):
     db_bot_history = get_bot_trade_history(db, user_id, bot_id)
     if db_bot_history is None:
         raise HTTPException(status_code=404, detail="Trading bot not found")
     return {"data": db_bot_history}
+
+
+@router.get(
+    "/users/{user_id}/bots/{bot_id}/bot-error", response_model=List[schemas.BotError]
+)
+def read_bit_error(user_id: int, bot_id: int, db: Session = Depends(get_db)):
+    db_bot_error = get_error_log_by_container(bot_id, db)
+    return db_bot_error

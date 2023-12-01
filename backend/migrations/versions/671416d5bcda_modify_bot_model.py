@@ -1,8 +1,8 @@
-"""Modify and add strategy model
+"""Modify Bot model
 
-Revision ID: dd7d3a98799e
-Revises: 5617076aa5c0
-Create Date: 2023-11-30 09:40:46.231559
+Revision ID: 671416d5bcda
+Revises: cf802e72128b
+Create Date: 2023-12-01 21:40:26.320067
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'dd7d3a98799e'
-down_revision: Union[str, None] = '5617076aa5c0'
+revision: str = '671416d5bcda'
+down_revision: Union[str, None] = 'cf802e72128b'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
