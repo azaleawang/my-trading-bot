@@ -1,30 +1,14 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useParams } from "react-router-dom";
-
-interface BotDetailsProps {
-  id: number;
-  container_name: string;
-  action: string;
-  order_id: number;
-  qty: number;
-  avg_price: number;
-  realizedPnl: number;
-  info: {
-    side: string;
-    type: string;
-    symbol: string;
-    // ... other properties ...
-  };
-  timestamp: number;
-}
+// import { BotDetailsProps } from "../../models";
+import { TradingDataContext } from "../../../../common/hooks/TradingDataContext";
 
 const BotDetails: React.FC = () => {
   const { userId, botId } = useParams<{ userId: string; botId: string }>();
-  //   TODO 把user id 補上
   const api_url = `/api/v1/bots/users/${userId}/bots/${botId}/trade-history`;
-
-  const [botData, setBotData] = useState<BotDetailsProps[]>();
+  const { botData, setBotData } = useContext(TradingDataContext);
+  // const [botData, setBotData] = useState<BotDetailsProps[]>();
 
   useEffect(() => {
     const fetchBotDetails = async () => {
@@ -63,7 +47,7 @@ const BotDetails: React.FC = () => {
           <div className="mb-4">
             <strong>Symbol:</strong> {botData[0].info.symbol}
           </div>
-          <div className="mb-4">
+          {/* <div className="mb-4">
             <strong>Total Realized Pnl:</strong>{" "}
             {botData.reduce((sum, botDetail) => sum + botDetail.realizedPnl, 0)} (
             <span>
@@ -81,7 +65,7 @@ const BotDetails: React.FC = () => {
               ).toFixed(2)}{" "}
               %)
             </span>
-          </div>
+          </div> */}
           {botData.map((bot) => (
             <div
               key={bot.id}

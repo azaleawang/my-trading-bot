@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import axios from "axios";
 import { Bot } from "../../models";
 import { useNavigate, useParams } from "react-router-dom";
-import BinancePrices from "../live-klines";
+import BinancePrices from "../bianance-price";
+import { TradingDataContext } from "../../../../common/hooks/TradingDataContext";
 
 const BotContainer: React.FC = () => {
-  const [bots, setBots] = useState<Bot[]>([]);
-  // const userId = 1;
+  const [bots, setBots] = useState<Bot[]>([]);  // const userId = 1;
   const { userId } = useParams<{ userId: string }>();
-
+  const { markPrice } = useContext(TradingDataContext);
   const bot_api_base = `/api/v1/bots/users/${userId}/bots`;
   const navigate = useNavigate();
 
@@ -67,6 +67,21 @@ const BotContainer: React.FC = () => {
     }
   };
 
+  const calculateTotalPnl = (bot: Bot) => {
+    let totalRealizedPnl = bot.trade_history.reduce((sum, trade) => sum + (trade.realizedPnl || 0), 0);
+    let length = bot.trade_history.length;
+    let totalUnrealizedPnl = 0
+    if (length %2 !== 0) {
+      // having open position
+      let lastTrade = bot.trade_history[length - 1];
+      totalUnrealizedPnl = (Number(markPrice) - lastTrade.avg_price) * lastTrade.qty
+    }
+    let totalCost = bot.trade_history.reduce((sum, trade) => sum + trade.qty * trade.avg_price, 0);
+    // 一個是總計一個是百分比
+    return [(totalUnrealizedPnl + totalRealizedPnl).toFixed(3), Number(100*(totalUnrealizedPnl + totalRealizedPnl) / totalCost).toFixed(2)];
+  };
+
+  
   return (
     <>
       <BinancePrices />
@@ -88,22 +103,15 @@ const BotContainer: React.FC = () => {
               {/* <div className="text-gray-400">200 U</div> */}
             </div>
             <div className="text-right">
-              <div className="text-lg">總利潤</div>
-              <div className="text-gray-400">3.01 U (-10%)</div>
+              <div className="text-lg">浮動利潤</div>
+              {/* <div className="text-gray-400">3.01 U (-10%)</div> */}
+              <div className="text-gray-400">{calculateTotalPnl(bot)[0]} U ({calculateTotalPnl(bot)[1]} %)</div>
             </div>
             <div className="flex gap-4">
               <button
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
                 onClick={(event) => handleStop(event, bot.id)}
               >
-                {/* <svg
-                className="fill-current w-4 h-4 mr-2"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-              >
-                <path d="M..." />{" "} */}
-                {/* Add an appropriate path data for 'stop' icon */}
-                {/* </svg> */}
                 <span>Stop</span>
               </button>
               <button

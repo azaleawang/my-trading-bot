@@ -1,9 +1,11 @@
 import { RouterProvider } from 'react-router-dom';
 import AppRouter from './routes/AppRouter';
-
+import { TradingDataProvider } from "./common/hooks/TradingDataContext";
 function App() {
   return (
-    <RouterProvider router={AppRouter} />
+    <TradingDataProvider>    
+      <RouterProvider router={AppRouter} />
+    </TradingDataProvider>
   );
 }
 
