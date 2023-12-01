@@ -3,11 +3,14 @@ import React, { useEffect, useState, useContext } from "react";
 import { useParams } from "react-router-dom";
 // import { BotDetailsProps } from "../../models";
 import { TradingDataContext } from "../../../../common/hooks/TradingDataContext";
+import { BotError } from "../../models";
 
 const BotDetails: React.FC = () => {
   const { userId, botId } = useParams<{ userId: string; botId: string }>();
   const api_url = `/api/v1/bots/users/${userId}/bots/${botId}/trade-history`;
   const { botData, setBotData } = useContext(TradingDataContext);
+  const [botErrors, setBotErrors] = useState<BotError[]>([]);
+
   // const [botData, setBotData] = useState<BotDetailsProps[]>();
 
   useEffect(() => {
@@ -28,10 +31,22 @@ const BotDetails: React.FC = () => {
     }
   }, [botId]);
 
-  // Render bot details or loading state
-  if (!botData) {
-    return <div>Loading bot details...</div>;
-  }
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(
+          `/api/v1/bots/users/${userId}/bots/${botId}/bot-error`
+        );
+        setBotErrors(response.data);
+        console.log("Bot errors:", response.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
 
   // Format the timestamp
   const formattedTimestamp = (timestamp: number) =>
@@ -39,6 +54,17 @@ const BotDetails: React.FC = () => {
 
   return (
     <div>
+      {!botErrors || botErrors.length === 0 ? (
+        <></>
+      ) : (
+        botErrors.map((error, index) => (
+          <div key={index}>
+            <p>{error.error}</p>
+            <p>{new Date(error.timestamp).toLocaleString()}</p>
+          </div>
+        ))
+      )}
+
       {botData && botData.length > 0 ? (
         <>
           <h1 className="text-xl font-bold mb-2">
@@ -72,16 +98,20 @@ const BotDetails: React.FC = () => {
               className="bg-gray-800 text-white p-4 rounded-lg shadow-lg m-2"
             >
               <div className="mb-4">
-                <strong>Action:</strong> {bot.action}
-              </div>
-              <div className="mb-4">
-                <strong>Average Price:</strong> {bot.avg_price}
-              </div>
-              <div className="mb-4">
                 <strong>Order id:</strong> {bot.order_id}
               </div>
               <div className="mb-4">
+                <strong>Action:</strong> {bot.action}
+              </div>
+              <div className="mb-4">
+                <strong>Average Price:</strong> {bot.avg_price.toFixed(2)}
+              </div>
+              <div className="mb-4">
                 <strong>Quantity:</strong> {bot.qty}
+              </div>
+              <div className="mb-4">
+                <strong>成交(USDT):</strong>{" "}
+                {Number(bot.info.cumQuote).toFixed(2)}
               </div>
               <div className="mb-4">
                 <strong>Realized Pnl:</strong> {bot.realizedPnl || 0}

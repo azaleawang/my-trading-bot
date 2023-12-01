@@ -9,7 +9,7 @@ const CreateBotForm: React.FC = () => {
     symbol: "",
     description: "",
     t_frame: "30m",
-    quantity: 0.1
+    quantity: 120
   });
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
@@ -123,7 +123,7 @@ const CreateBotForm: React.FC = () => {
         </div>
         <div className="mb-4">
           <label htmlFor="quantity" className="block text-sm font-medium mb-2">
-            Quantity
+            Quantity (USDT)
           </label>
           <input
             type="number"

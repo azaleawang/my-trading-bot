@@ -30,7 +30,23 @@ export interface BotDetailsProps {
     side: string;
     type: string;
     symbol: string;
+    cumQuote: string
     // ... other properties ...
   };
   timestamp: number;
+}
+
+export interface MarkPriceData {
+  e: string; // Event type
+  E: number; // Event time
+  s: string; // Symbol
+  p: string; // Mark price
+  // ... other fields ...
+}
+
+export interface BotError {
+  id: number;
+  container_name: string;
+  error: string;
+  timestamp: string
 }

@@ -18,7 +18,7 @@ const defaultState: TradingDataContextProps = {
 export const TradingDataContext = createContext<TradingDataContextProps>(defaultState);
 
 export const TradingDataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [markPrice, setMarkPrice] = useState<string[] | null>(null);
+  const [markPrice, setMarkPrice] = useState<string[] | null>(null); // TODO 這個應該暫時用不到了 
   const [botData, setBotData] = useState<BotDetailsProps[] | undefined>();
 
   // You can also add logic to fetch data here

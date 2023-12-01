@@ -1,20 +1,45 @@
 import { useContext, useEffect, useState } from "react";
 import axios from "axios";
-import { Bot } from "../../models";
+import { Bot, MarkPriceData } from "../../models";
 import { useNavigate, useParams } from "react-router-dom";
 import BinancePrices from "../bianance-price";
 import { TradingDataContext } from "../../../../common/hooks/TradingDataContext";
 
 const BotContainer: React.FC = () => {
   const [bots, setBots] = useState<Bot[]>([]);  // const userId = 1;
+  const [markAllPrice, setMarkAllPrice] = useState<MarkPriceData[] | null>(null);
   const { userId } = useParams<{ userId: string }>();
-  const { markPrice } = useContext(TradingDataContext);
+  // const { markPrice } = useContext(TradingDataContext);
   const bot_api_base = `/api/v1/bots/users/${userId}/bots`;
   const navigate = useNavigate();
 
   const handleBotClick = (botId: number) => {
     navigate(`/user/${userId}/trading-bots/${botId}`);
   };
+
+  useEffect(() => {
+    // Initialize WebSocket connections
+    const markPriceWs = new WebSocket(
+      "wss://fstream.binance.com/ws/!markPrice@arr"
+    );
+    // const btcWs = new WebSocket(
+    //   "wss://stream.binance.com:9443/ws/btcusdt@markPrice/bnbusdt@markPrice"
+    // );
+
+    // Handle ETH WebSocket messages
+    markPriceWs.onmessage = (event) => {
+      
+
+      const message: MarkPriceData[] = JSON.parse(event.data);
+      console.log("Hi from binance ws", message[0]);
+      setMarkAllPrice(message);
+    };
+
+    // Clean up function
+    return () => {
+      markPriceWs.close();
+    };
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -74,17 +99,17 @@ const BotContainer: React.FC = () => {
     if (length %2 !== 0) {
       // having open position
       let lastTrade = bot.trade_history[length - 1];
-      totalUnrealizedPnl = (Number(markPrice) - lastTrade.avg_price) * lastTrade.qty
+      let markPrice = markAllPrice?.filter((price) => price.s === lastTrade.info.symbol).map((symbol) => symbol.p)
+      totalUnrealizedPnl = (Number(markPrice?.[0]) - lastTrade.avg_price) * lastTrade.qty
     }
-    let totalCost = bot.trade_history.reduce((sum, trade) => sum + trade.qty * trade.avg_price, 0);
-    // 一個是總計一個是百分比
-    return [(totalUnrealizedPnl + totalRealizedPnl).toFixed(3), Number(100*(totalUnrealizedPnl + totalRealizedPnl) / totalCost).toFixed(2)];
+
+    return (totalUnrealizedPnl + totalRealizedPnl).toFixed(3);
   };
 
   
   return (
     <>
-      <BinancePrices />
+      {/* <BinancePrices /> */}
       <div className="flex flex-col gap-6 p-6">
         {bots.map((bot) => (
           <div
@@ -105,7 +130,7 @@ const BotContainer: React.FC = () => {
             <div className="text-right">
               <div className="text-lg">浮動利潤</div>
               {/* <div className="text-gray-400">3.01 U (-10%)</div> */}
-              <div className="text-gray-400">{calculateTotalPnl(bot)[0]} U ({calculateTotalPnl(bot)[1]} %)</div>
+              <div className="text-gray-400">{calculateTotalPnl(bot)} U</div>
             </div>
             <div className="flex gap-4">
               <button
