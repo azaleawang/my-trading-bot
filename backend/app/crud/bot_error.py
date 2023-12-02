@@ -2,10 +2,10 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.src.schema.schemas import BotErrorSchema
-from app.src import models
+from app import models
 
 
-# Read error log for user by container name
+# Read error log for user by container name (for now, only trade-related logs)
 def get_error_log_by_container(bot_id: int, db: Session):
     result = (
         db.query(models.Bot_Error)

@@ -3,7 +3,7 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from fastapi import HTTPException
 import logging
 from app.src.controller.bot import delete_bot_container, stop_bot_container
-from app.src.models.bot import Bot
+from app.models.bot import Bot
 from app.src.schema import schemas
 from sqlalchemy.sql import and_
 from sqlalchemy.orm import joinedload

@@ -1,5 +1,5 @@
 import logging
-from typing import List, Union
+from typing import List, Union, Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -16,6 +16,7 @@ from app.src.schema import schemas
 from app.src.config.database import get_db
 from app.crud.trade_history import get_bot_trade_history
 from app.crud.bot_error import get_error_log_by_container
+from app.crud.container_status import parse_and_store
 
 router = APIRouter()
 
@@ -115,3 +116,49 @@ def read_user(user_id: int, bot_id: int, db: Session = Depends(get_db)):
 def read_bit_error(user_id: int, bot_id: int, db: Session = Depends(get_db)):
     db_bot_error = get_error_log_by_container(bot_id, db)
     return db_bot_error
+
+class ContainerStatus_Resp(BaseModel):
+    container_id: str
+    container_name: str
+    state: str = 'exited'
+    status: str = 'Exited (137) 39 hours ago'
+    RunningFor: str = '39 hours ago'
+
+class ContainerLog_Resp(BaseModel):
+    container_id: str
+    container_name: str
+    logs: list = ['20231130-180805: Checking for buy and sell signals', '20231130-180905: symbol: BNB/USDT, timeframe: 30m, limit: 100, in_position: True, quantity_buy_sell: 0.1'] 
+    
+    
+# @router.get(
+#     "/users/{user_id}/bots/container-states", response_model=List[ContainerStatus_Resp]
+# )
+# def read_container_states(user_id: int, bot_id: int, db: Session = Depends(get_db)):
+#     # TODO
+#     db_container_state = get_container_states_log_by_user(user_id, db)
+#     return db_container_state
+
+# @router.get(
+#     "/users/{user_id}/bots/container-logs", response_model=List[ContainerLog_Resp]
+# )
+# def read_container_logs(user_id: int, bot_id: int, db: Session = Depends(get_db)):
+#     # TODO
+#     # db_bot_error = get_error_log_by_user(bot_id, db)
+#     # return db_bot_error
+#     return 
+    
+# # worker function to check docker container states and refresh logs
+# def check_container_states_and_logs():
+#     pass
+class ContainerInfoDict(BaseModel):
+    data: list = [{"name": 'User1_supertrend_test', 'state':[{}], "log":["log1", "log2"]}]
+    
+
+@router.post("/container-monitoring/")
+def receive_container_monitoring_info(data: ContainerInfoDict):
+    try: # TODO store the data into database
+        parse_and_store(container_data=data.data)
+        return {"message": "Data from docker-monitoring worker stored successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    

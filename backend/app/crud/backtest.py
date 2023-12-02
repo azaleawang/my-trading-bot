@@ -2,7 +2,7 @@ import logging
 from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException
 from app.src.config.database import get_db
-from app.src.models.backtest import Backtest_Result
+from app.models.backtest import Backtest_Result
 from app.src.schema import schemas
 from sqlalchemy import text, func
 

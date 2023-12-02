@@ -1,4 +1,4 @@
-from app.src.models import Strategy
+from app.models import Strategy
 from sqlalchemy.orm import Session
 from app.src.schema import schemas
 from sqlalchemy import or_

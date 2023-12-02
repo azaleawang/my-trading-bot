@@ -142,8 +142,8 @@ def check_buy_sell_signals(df):
             if not in_position:
                 log_write("Changed to uptrend, buy")
                 execute_buy_trade(exchange, symbol)
-                print(df.tail(5))
-                log_write(df.tail(5), df=True)
+                # print(df.tail(5))
+                # log_write(df.tail(5), df=True)
 
             else:
                 log_write("Already in position, nothing to do")
@@ -155,8 +155,8 @@ def check_buy_sell_signals(df):
             if in_position:
                 log_write("Changed to downtrend, sell")
                 execute_sell_trade(exchange, symbol, quantity_sell)
-                print(df.tail(5))
-                log_write(df.tail(5), df=True)
+                # print(df.tail(5))
+                # log_write(df.tail(5), df=True)
 
             else:
                 log_write("You aren't in position, nothing to sell")
@@ -252,7 +252,7 @@ def run_bot():
         )
         df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
     except Exception as e:
-        print("error in fetching new bars %s", e)
+        print(f"error in fetching new bars {e}")
 
     if df is None:
         log_write("Error fetching ohlcv-data from exchange")

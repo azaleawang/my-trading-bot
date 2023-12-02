@@ -1,9 +1,11 @@
 import subprocess
+
 from typing import Union
 from fastapi import HTTPException
+
 from pydantic import BaseModel
 from app.src.schema import schemas
-import os
+import os, json
 
 
 class Bot_Created_Resp(BaseModel):
@@ -29,8 +31,6 @@ def start_bot_container(
             f"TIMEFRAME={bot_info.t_frame}",
             "-e",
             "LIMIT=100",
-            "-e",
-            "IN_POSITION=True",
             "-e",
             f"AMOUNT_IN_USDT={bot_info.quantity}",
             "-v",
@@ -105,3 +105,4 @@ def delete_bot_container(container_id: str):
         raise HTTPException(
             status_code=500, detail="Error deleting bot in docker: " + str(e.stderr)
         )
+

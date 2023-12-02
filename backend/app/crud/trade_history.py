@@ -2,10 +2,10 @@ import datetime
 import pytz
 from typing import Union
 from sqlalchemy import and_
-from app.src.models.trade_history import Trade_History
 from sqlalchemy.orm import Session
-from app.src.models.bot import Bot
 from app.src.schema import schemas
+from app.models.trade_history import Trade_History
+from app.models.bot import Bot
 
 
 def create_trade_history(db: Session, trade_data: schemas.TradeHistoryCreate, realizedPnl: Union[None, float]):

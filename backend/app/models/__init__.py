@@ -6,5 +6,6 @@ from .strategy import Strategy
 from .backtest import Backtest_Result
 from .trade_history import Trade_History
 from .bot_error import Bot_Error
+from .container_status import ContainerStatus
 
-__all__ = ["Base", "User", "Bot", "Strategy", "Backtest_Result", "Trade_History", "Bot_Error"]
+__all__ = ["Base", "User", "Bot", "Strategy", "Backtest_Result", "Trade_History", "Bot_Error", "ContainerStatus"]

@@ -12,10 +12,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.src.schema.schemas import BotErrorSchema, TradeHistoryCreate
 from app.src.controller.trade import get_order_realizedPnl
-from app.src.models.bot_error import Bot_Error
+from app.models.bot_error import Bot_Error
 from app.crud.bot_error import create_error_log
 from .routers import backtests, users, bots, strategies
-from .src.models import Base
+from app.models import Base
 from .src.config.database import SessionLocal, engine, get_db
 from starlette.websockets import WebSocketDisconnect
 from typing import List
