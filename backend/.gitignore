@@ -9,3 +9,4 @@ test.*
 trade/*/config.py
 *.log
 nohup.out
+migrations/versions/

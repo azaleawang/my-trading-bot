@@ -9,10 +9,10 @@ from app.src.config.database import SessionLocal
 from sqlalchemy.orm import Session
 
 
-def get_bots(db: Session, container_name: str):
+def get_bots(db: Session, container_id: str):
     container_status = (
         db.query(ContainerStatus)
-        .filter(ContainerStatus.container_name == container_name)
+        .filter(ContainerStatus.container_id == container_id)
         .first()
     )
     return container_status
@@ -22,12 +22,12 @@ def parse_and_store(container_data):
     db = SessionLocal()
     try:
         for container in container_data:
-            container_name = container["name"]
+            container_id = container["container_id"]
 
             # Check if the container already exists
             existing_record = (
                 db.query(ContainerStatus)
-                .filter(ContainerStatus.container_name == container_name)
+                .filter(ContainerStatus.container_id == container_id)
                 .first()
             )
 
@@ -43,9 +43,10 @@ def parse_and_store(container_data):
                 db.add(existing_record)  # Not necessary but adds clarity
             else:
                 # Create a new record
-                new_record = ContainerStatus(container_name=container_name)
+                new_record = ContainerStatus(container_id=container_id)
 
                 for st in container["state"]:
+                    new_record.container_name = st.get("Names", None)
                     new_record.status = st.get("Status", None)
                     new_record.state = st.get("State", None)
                     new_record.running_for = st.get("RunningFor", None)

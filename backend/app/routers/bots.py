@@ -9,6 +9,7 @@ from app.crud.bot import (
     check_name,
     create_user_bot,
     delete_user_bot,
+    get_bots,
     get_user_bots,
     stop_user_bot,
 )
@@ -31,6 +32,18 @@ class Bot_Created_Resp(BaseModel):
 
 class Bot_History_Resp(BaseModel):
     data: List[schemas.TradeHistory_Resp]
+
+class BotCreate_Resp(BaseModel):
+    data: List[schemas.BotCreate]
+
+@router.get("/", response_model=BotCreate_Resp)
+def get_all_bots(db: Session = Depends(get_db)):
+    try:
+        db_all_bots = get_bots(db)
+        return {"data": db_all_bots}
+    except Exception as e:
+        logging.error(f"Error in get_bot_for_user: {e}")
+        raise HTTPException(status_code=500, detail="Error fetching bots." + str(e))
 
 
 @router.get("/users/{user_id}/bots")
@@ -117,19 +130,24 @@ def read_bit_error(user_id: int, bot_id: int, db: Session = Depends(get_db)):
     db_bot_error = get_error_log_by_container(bot_id, db)
     return db_bot_error
 
+
 class ContainerStatus_Resp(BaseModel):
     container_id: str
     container_name: str
-    state: str = 'exited'
-    status: str = 'Exited (137) 39 hours ago'
-    RunningFor: str = '39 hours ago'
+    state: str = "exited"
+    status: str = "Exited (137) 39 hours ago"
+    RunningFor: str = "39 hours ago"
+
 
 class ContainerLog_Resp(BaseModel):
     container_id: str
     container_name: str
-    logs: list = ['20231130-180805: Checking for buy and sell signals', '20231130-180905: symbol: BNB/USDT, timeframe: 30m, limit: 100, in_position: True, quantity_buy_sell: 0.1'] 
-    
-    
+    logs: list = [
+        "20231130-180805: Checking for buy and sell signals",
+        "20231130-180905: symbol: BNB/USDT, timeframe: 30m, limit: 100, in_position: True, quantity_buy_sell: 0.1",
+    ]
+
+
 # @router.get(
 #     "/users/{user_id}/bots/container-states", response_model=List[ContainerStatus_Resp]
 # )
@@ -145,20 +163,22 @@ class ContainerLog_Resp(BaseModel):
 #     # TODO
 #     # db_bot_error = get_error_log_by_user(bot_id, db)
 #     # return db_bot_error
-#     return 
-    
+#     return
+
+
 # # worker function to check docker container states and refresh logs
 # def check_container_states_and_logs():
 #     pass
 class ContainerInfoDict(BaseModel):
-    data: list = [{"name": 'User1_supertrend_test', 'state':[{}], "log":["log1", "log2"]}]
-    
+    data: list = [
+        {"container_id": "123123123123", "state": [{}], "log": ["log1", "log2"]}
+    ]
+
 
 @router.post("/container-monitoring/")
 def receive_container_monitoring_info(data: ContainerInfoDict):
-    try: # TODO store the data into database
+    try:  # TODO store the data into database
         parse_and_store(container_data=data.data)
         return {"message": "Data from docker-monitoring worker stored successfully"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-    

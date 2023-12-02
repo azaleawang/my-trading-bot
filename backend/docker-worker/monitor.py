@@ -13,6 +13,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
+def fetch_all_containers():
+    try:
+        url = f"{os.getenv('HOST')}:{os.getenv('PORT')}/api/v1/bots/"
+        response = requests.get(url)
+        return response.json().get("data", [])
+    except Exception as e:
+        print("Error fetching all containers from server: ", e)
+
+
 def send_data_to_server(data):
     try:
         url = f"http://127.0.0.1:8000/api/v1/bots/container-monitoring/"
@@ -21,13 +30,14 @@ def send_data_to_server(data):
     except Exception as e:
         print("Error sending data to server: ", e)
 
-def get_container_status(container_name: str) -> list:
+
+def get_container_status(container_id: str) -> list:
     command = [
         "docker",
         "ps",
         "-a",
         "-f",
-        f"name={container_name}",
+        f"id={container_id}",
         "--format",
         "{{json .}}",
         "--no-trunc",
@@ -38,7 +48,7 @@ def get_container_status(container_name: str) -> list:
 
         return containers
     except subprocess.CalledProcessError as e:
-        print(f"Error getting status for docker container {container_name}: {e.stderr}")
+        print(f"Error getting status for docker container {container_id}: {e.stderr}")
         raise HTTPException(
             status_code=500,
             detail="Error getting status for docker container: " + str(e.stderr),
@@ -79,26 +89,33 @@ def get_last_container_logs(container_id_or_name: str, line_count: int = 5) -> l
 
 
 if __name__ == "__main__":
-    # check container information
-    # maybe pass a list of containers should be checked
-    # Queue的設計應該是一次推一位使用者所擁有的containers?
-    data_to_server  = []
-    container_list = ["User1_supertrend_kguy", "User1_supertrend_err"]
-    for container_name in container_list:
-        container_dict = {}
-        container_dict["name"] = container_name
-        print(f"Checking container {container_name}")
-        state = get_container_status(container_name)
-        container_dict["state"] = state
+    while True:
+        data_to_server = []
+        container_list = fetch_all_containers()
+        if not container_list:
+            print("No containers found")
+        else:
+            for container in container_list:
+                container_id = container.get("container_id")
+                if not container_id:
+                    continue
+                
+                container_dict = {}
+                container_dict["container_id"] = container_id
+                print(f"Checking container {container['name']}")
+                state = get_container_status(container_id)
+                container_dict["state"] = state
 
-        logs = get_last_container_logs(container_name)
-        container_dict["log"] = logs
+                logs = get_last_container_logs(container_id)
+                container_dict["log"] = logs
 
-        data_to_server.append(container_dict)
-    data_json = json.dumps({"data": data_to_server})
-    print(data_json)
+                data_to_server.append(container_dict)
+            data_json = json.dumps({"data": data_to_server})
+            # print(data_json)
 
-    send_data_to_server(json.loads(data_json)) 
+            send_data_to_server(json.loads(data_json))
+        
+        time.sleep(60)
 
 
 # data: [{"name": "m", "state": [], "logs": []}, {}]

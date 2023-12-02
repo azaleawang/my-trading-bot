@@ -10,7 +10,7 @@ class Bot(Base):
     __tablename__ = "bots"
 
     id = Column(BIGINT, primary_key=True, index=True)
-    container_id = Column(String)
+    container_id = Column(String, unique=True, nullable=False)
     container_name = Column(String, unique=True, nullable=False)
     name = Column(String, nullable=False)
     strategy = Column(String, default="supertrend")
