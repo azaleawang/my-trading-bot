@@ -47,7 +47,7 @@ def get_all_bots(db: Session = Depends(get_db)):
 
 
 @router.get("/users/{user_id}/bots")
-def get_bot_for_user(user_id: int, db: Session = Depends(get_db)):
+def get_bot_details_for_user(user_id: int, db: Session = Depends(get_db)):
     try:
         db_bot = get_user_bots(user_id=user_id, db=db)
 
@@ -116,7 +116,7 @@ def delete_bot_for_user(
 @router.get(
     "/users/{user_id}/bots/{bot_id}/trade-history", response_model=Bot_History_Resp
 )
-def read_user(user_id: int, bot_id: int, db: Session = Depends(get_db)):
+def read_bot_trade_history(user_id: int, bot_id: int, db: Session = Depends(get_db)):
     db_bot_history = get_bot_trade_history(db, user_id, bot_id)
     if db_bot_history is None:
         raise HTTPException(status_code=404, detail="Trading bot not found")
@@ -126,7 +126,7 @@ def read_user(user_id: int, bot_id: int, db: Session = Depends(get_db)):
 @router.get(
     "/users/{user_id}/bots/{bot_id}/bot-error", response_model=List[schemas.BotError]
 )
-def read_bit_error(user_id: int, bot_id: int, db: Session = Depends(get_db)):
+def read_bot_error_for_user(user_id: int, bot_id: int, db: Session = Depends(get_db)):
     db_bot_error = get_error_log_by_container(bot_id, db)
     return db_bot_error
 
@@ -176,7 +176,7 @@ class ContainerInfoDict(BaseModel):
 
 
 @router.post("/container-monitoring/")
-def receive_container_monitoring_info(data: ContainerInfoDict):
+def receive_and_store_container_monitoring_info(data: ContainerInfoDict):
     try:  # TODO store the data into database
         parse_and_store(container_data=data.data)
         return {"message": "Data from docker-monitoring worker stored successfully"}
