@@ -7,17 +7,16 @@ import { BotError } from "../../models";
 
 const BotDetails: React.FC = () => {
   const { userId, botId } = useParams<{ userId: string; botId: string }>();
-  const api_url = `/api/v1/bots/users/${userId}/bots/${botId}/trade-history`;
-  const { botData, setBotData } = useContext(TradingDataContext);
+  const api_base = `/api/v1/bots/users/${userId}/bots/${botId}`;
+  const { botData, setBotData, containerData, setContainerData } =
+    useContext(TradingDataContext);
   const [botErrors, setBotErrors] = useState<BotError[]>([]);
-
-  // const [botData, setBotData] = useState<BotDetailsProps[]>();
 
   useEffect(() => {
     const fetchBotDetails = async () => {
       try {
         // Replace with your actual API endpoint
-        const response = await axios.get(api_url);
+        const response = await axios.get(`${api_base}/trade-history/`);
         setBotData(response.data?.data);
         console.log("fetching data", response.data?.data);
       } catch (error) {
@@ -34,9 +33,7 @@ const BotDetails: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(
-          `/api/v1/bots/users/${userId}/bots/${botId}/bot-error`
-        );
+        const response = await axios.get(`${api_base}/bot-error/`);
         setBotErrors(response.data);
         console.log("Bot errors:", response.data);
       } catch (error) {
@@ -45,9 +42,21 @@ const BotDetails: React.FC = () => {
     };
 
     fetchData();
-  }, []);
+  }, [botId]);
 
+  useEffect(() => {
+    const fetchContainerData = async () => {
+      try {
+        const response = await axios.get(`${api_base}/container-monitoring/`);
+        setContainerData(response.data.data);
+        console.log("set ContainerData:", response.data.data);
+      } catch (error) {
+        console.error("Error fetching container data:", error);
+      }
+    };
 
+    fetchContainerData();
+  }, [botId]);
   // Format the timestamp
   const formattedTimestamp = (timestamp: number) =>
     new Date(timestamp).toLocaleString();
@@ -55,7 +64,7 @@ const BotDetails: React.FC = () => {
   return (
     <div>
       {!botErrors || botErrors.length === 0 ? (
-        <></>
+        <p>No trading error found</p>
       ) : (
         botErrors.map((error, index) => (
           <div key={index}>
@@ -63,6 +72,28 @@ const BotDetails: React.FC = () => {
             <p>{new Date(error.timestamp).toLocaleString()}</p>
           </div>
         ))
+      )}
+
+      {!containerData || containerData.length === 0 ? (
+        <p>No container info :(</p>
+      ) : (
+        containerData
+          .filter((container) => container.bot_id == Number(botId))
+          .map((data, i) => (
+            <div key={i}>
+              <p>container name: {data.container_name}</p>
+              <p>
+                運作狀態: {data.state} ({data.status})
+              </p>
+              <p>運作時間: {data.running_for}</p>
+              <p>上次更新: {data.updated_at}</p>
+              <ol>
+                {data.logs.map((log, i) => (
+                  <li key={i}>{log}</li>
+                ))}
+              </ol>
+            </div>
+          ))
       )}
 
       {botData && botData.length > 0 ? (

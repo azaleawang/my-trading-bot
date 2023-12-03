@@ -1,13 +1,13 @@
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { Bot, MarkPriceData } from "../../models";
 import { useNavigate, useParams } from "react-router-dom";
-import BinancePrices from "../bianance-price";
-import { TradingDataContext } from "../../../../common/hooks/TradingDataContext";
 
 const BotContainer: React.FC = () => {
-  const [bots, setBots] = useState<Bot[]>([]);  // const userId = 1;
-  const [markAllPrice, setMarkAllPrice] = useState<MarkPriceData[] | null>(null);
+  const [bots, setBots] = useState<Bot[]>([]); // const userId = 1;
+  const [markAllPrice, setMarkAllPrice] = useState<MarkPriceData[] | null>(
+    null
+  );
   const { userId } = useParams<{ userId: string }>();
   // const { markPrice } = useContext(TradingDataContext);
   const bot_api_base = `/api/v1/bots/users/${userId}/bots`;
@@ -20,16 +20,10 @@ const BotContainer: React.FC = () => {
   useEffect(() => {
     // Initialize WebSocket connections
     const markPriceWs = new WebSocket(
-      "wss://fstream.binance.com/ws/!markPrice@arr"
+      "wss://fstream.binance.com/ws/!markPrice@arr@1s"
     );
-    // const btcWs = new WebSocket(
-    //   "wss://stream.binance.com:9443/ws/btcusdt@markPrice/bnbusdt@markPrice"
-    // );
 
-    // Handle ETH WebSocket messages
     markPriceWs.onmessage = (event) => {
-      
-
       const message: MarkPriceData[] = JSON.parse(event.data);
       console.log("Hi from binance ws", message[0]);
       setMarkAllPrice(message);
@@ -54,6 +48,7 @@ const BotContainer: React.FC = () => {
 
     fetchData();
   }, []);
+
 
   const handleStop = async (event: any, botId: number) => {
     try {
@@ -93,20 +88,25 @@ const BotContainer: React.FC = () => {
   };
 
   const calculateTotalPnl = (bot: Bot) => {
-    let totalRealizedPnl = bot.trade_history.reduce((sum, trade) => sum + (trade.realizedPnl || 0), 0);
+    let totalRealizedPnl = bot.trade_history.reduce(
+      (sum, trade) => sum + (trade.realizedPnl || 0),
+      0
+    );
     let length = bot.trade_history.length;
-    let totalUnrealizedPnl = 0
-    if (length %2 !== 0) {
+    let totalUnrealizedPnl = 0;
+    if (length % 2 !== 0) {
       // having open position
       let lastTrade = bot.trade_history[length - 1];
-      let markPrice = markAllPrice?.filter((price) => price.s === lastTrade.info.symbol).map((symbol) => symbol.p)
-      totalUnrealizedPnl = (Number(markPrice?.[0]) - lastTrade.avg_price) * lastTrade.qty
+      let markPrice = markAllPrice
+        ?.filter((price) => price.s === lastTrade.info.symbol)
+        .map((symbol) => symbol.p);
+      totalUnrealizedPnl =
+        (Number(markPrice?.[0]) - lastTrade.avg_price) * lastTrade.qty;
     }
 
     return (totalUnrealizedPnl + totalRealizedPnl).toFixed(3);
   };
 
-  
   return (
     <>
       {/* <BinancePrices /> */}
