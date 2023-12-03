@@ -5,6 +5,7 @@ module.exports = {
       args: "/home/ubuntu/my-trading-bot/backend/main.py",
       interpreter: "", 
       watch: true,
+      post_start: "/home/ubuntu/my-trading-bot/backend/docker-worker/monitor.py"
     }]
   };
   
