@@ -165,3 +165,13 @@ class BotError(BotErrorSchema):
     timestamp: Any
     class Config:
         from_attributes = True
+        
+class ContainerState(BaseModel):
+    bot_id: int
+    container_id: str
+    container_name: str
+    state: str
+    status: str
+    running_for: str
+    logs: list
+    updated_at: Any

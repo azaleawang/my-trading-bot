@@ -28,3 +28,4 @@ class Bot(Base):
     owner = relationship("User", back_populates="bots")
     trade_history = relationship("Trade_History", back_populates="bot", cascade="all, delete-orphan")
     error = relationship("Bot_Error", back_populates="bot", cascade="all, delete-orphan")
+    container_status = relationship("ContainerStatus", back_populates="bot", cascade="all, delete-orphan")

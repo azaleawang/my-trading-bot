@@ -7,15 +7,36 @@ from sqlalchemy.sql import and_
 from app.models.container_status import ContainerStatus
 from app.src.config.database import SessionLocal
 from sqlalchemy.orm import Session
+from sqlalchemy.orm import joinedload
+
+from app.models.bot import Bot
 
 
-def get_bots(db: Session, container_id: str):
+
+def get_container_status(db: Session, bot_id: int):
+    # Query all containers for the user
     container_status = (
         db.query(ContainerStatus)
-        .filter(ContainerStatus.container_id == container_id)
-        .first()
+        .join(Bot)
+        .filter(
+            Bot.id == bot_id,
+        )
+        .all()
     )
     return container_status
+
+
+def get_user_containers_status(db: Session, user_id: int):
+    # Query all containers for the user
+    user_container_status = (
+        db.query(ContainerStatus)
+        .join(Bot)
+        .filter(
+            Bot.owner_id == user_id,
+        )
+        .all()
+    )
+    return user_container_status
 
 
 def parse_and_store(container_data):
@@ -24,6 +45,8 @@ def parse_and_store(container_data):
     for container in container_data:
         try:
             container_id = container["container_id"]
+            
+            # TODO 把 bot id 存進去 還沒寫完
             existing_record = (
                 db.query(ContainerStatus)
                 .filter(ContainerStatus.container_id == container_id)
@@ -35,7 +58,8 @@ def parse_and_store(container_data):
                 update_container(existing_record, container)
             else:
                 # Create a new record
-                new_record = create_new_container_record(container)
+                bot_id = get_bot_id_by_container_id(db, container_id)
+                new_record = create_new_container_record(bot_id, container)
                 db.add(new_record)
 
             db.commit()  # Commit changes for each container
@@ -55,11 +79,18 @@ def update_container(existing_record, container):
 
     existing_record.logs = container.get("log", [])  # Update logs
 
+def get_bot_id_by_container_id(db: Session, container_id: str):
+    bot_id = db.query(Bot.id).filter(Bot.container_id == container_id).first()
+    bot_id = bot_id[0] if bot_id else None
+    return bot_id
 
-def create_new_container_record(container):
+
+def create_new_container_record(bot_id, container):
+    # bot_id 
     new_record = ContainerStatus(container_id=container["container_id"])
     for st in container["state"]:
         new_record.container_name = st.get("Names", None)
+        new_record.bot_id = bot_id
         new_record.status = st.get("Status", None)
         new_record.state = st.get("State", None)
         new_record.running_for = st.get("RunningFor", None)

@@ -24,7 +24,7 @@ def fetch_all_containers():
 
 def send_data_to_server(data):
     try:
-        url = f"http://127.0.0.1:8000/api/v1/bots/container-monitoring/"
+        url = f"{os.getenv('HOST')}:{os.getenv('PORT')}/api/v1/bots/container-monitoring/"
         response = requests.post(url, json=data)
         print("server said: ", response.text)
     except Exception as e:
@@ -52,6 +52,11 @@ def get_container_status(container_id: str) -> list:
         raise HTTPException(
             status_code=500,
             detail="Error getting status for docker container: " + str(e.stderr),
+        )
+    except Exception as e:
+        print(f"Unexpected Error getting status for docker container {container_id}: {e}")
+        raise HTTPException(
+            status_code=500, detail="Error getting status for docker container: " + str(e)
         )
 
 

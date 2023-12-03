@@ -13,13 +13,6 @@ def get_error_log_by_container(bot_id: int, db: Session):
         .filter(models.Bot.id == bot_id)
         .all()
     )
-
-    if not result:
-        raise HTTPException(status_code=404, detail="No error logs found for this bot")
-
-    # Extract error logs and container names
-   
-    # print(result)
     return result
 
 

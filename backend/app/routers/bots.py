@@ -17,7 +17,7 @@ from app.src.schema import schemas
 from app.src.config.database import get_db
 from app.crud.trade_history import get_bot_trade_history
 from app.crud.bot_error import get_error_log_by_container
-from app.crud.container_status import parse_and_store
+from app.crud.container_status import get_container_status, get_user_containers_status, parse_and_store
 
 router = APIRouter()
 
@@ -42,7 +42,7 @@ def get_all_bots(db: Session = Depends(get_db)):
         db_all_bots = get_bots(db)
         return {"data": db_all_bots}
     except Exception as e:
-        logging.error(f"Error in get_bot_for_user: {e}")
+        logging.error(f"Error in get_all_bots: {e}")
         raise HTTPException(status_code=500, detail="Error fetching bots." + str(e))
 
 
@@ -114,7 +114,7 @@ def delete_bot_for_user(
 
 
 @router.get(
-    "/users/{user_id}/bots/{bot_id}/trade-history", response_model=Bot_History_Resp
+    "/users/{user_id}/bots/{bot_id}/trade-history/", response_model=Bot_History_Resp
 )
 def read_bot_trade_history(user_id: int, bot_id: int, db: Session = Depends(get_db)):
     db_bot_history = get_bot_trade_history(db, user_id, bot_id)
@@ -124,12 +124,14 @@ def read_bot_trade_history(user_id: int, bot_id: int, db: Session = Depends(get_
 
 
 @router.get(
-    "/users/{user_id}/bots/{bot_id}/bot-error", response_model=List[schemas.BotError]
+    "/users/{user_id}/bots/{bot_id}/bot-error/", response_model=List[schemas.BotError]
 )
 def read_bot_error_for_user(user_id: int, bot_id: int, db: Session = Depends(get_db)):
-    db_bot_error = get_error_log_by_container(bot_id, db)
-    return db_bot_error
-
+    try:
+        db_bot_error = get_error_log_by_container(bot_id, db)
+        return db_bot_error
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Error fetching error log." + str(e))
 
 class ContainerStatus_Resp(BaseModel):
     container_id: str
@@ -148,27 +150,6 @@ class ContainerLog_Resp(BaseModel):
     ]
 
 
-# @router.get(
-#     "/users/{user_id}/bots/container-states", response_model=List[ContainerStatus_Resp]
-# )
-# def read_container_states(user_id: int, bot_id: int, db: Session = Depends(get_db)):
-#     # TODO
-#     db_container_state = get_container_states_log_by_user(user_id, db)
-#     return db_container_state
-
-# @router.get(
-#     "/users/{user_id}/bots/container-logs", response_model=List[ContainerLog_Resp]
-# )
-# def read_container_logs(user_id: int, bot_id: int, db: Session = Depends(get_db)):
-#     # TODO
-#     # db_bot_error = get_error_log_by_user(bot_id, db)
-#     # return db_bot_error
-#     return
-
-
-# # worker function to check docker container states and refresh logs
-# def check_container_states_and_logs():
-#     pass
 class ContainerInfoDict(BaseModel):
     data: list = [
         {"container_id": "123123123123", "state": [{}], "log": ["log1", "log2"]}
@@ -179,6 +160,27 @@ class ContainerInfoDict(BaseModel):
 def receive_and_store_container_monitoring_info(data: ContainerInfoDict):
     try:  # TODO store the data into database
         parse_and_store(container_data=data.data)
-        return {"message": "Data from docker-monitoring worker stored successfully"}
+        return {"message": "Data from docker-monitoring worker received successfully"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+class ContainerStateDict(BaseModel):
+    data: List[schemas.ContainerState]
+    
+@router.get("/users/{user_id}/bots/container-monitoring/", response_model=ContainerStateDict)
+def get_container_monitoring_info(user_id: int, db: Session = Depends(get_db)):
+        try:
+            # get data from db
+            containers_info = get_user_containers_status(db, user_id)
+            return {"data": containers_info}
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        
+@router.get("/users/{user_id}/bots/{bot_id}/container-monitoring/", response_model=ContainerStateDict)
+def get_container_monitoring_logs(bot_id: int, db: Session = Depends(get_db)):
+        try:
+            # get data from db
+            container_info = get_container_status(db, bot_id)
+            return {"data": container_info}
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=str(e))
