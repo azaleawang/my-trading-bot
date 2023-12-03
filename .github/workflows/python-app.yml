@@ -21,9 +21,10 @@ jobs:
           username: "${{ secrets.EC2_USERNAME }}"
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            echo "Hello from github action, start deploy main to ec2"
+            echo "Hello from github action, start deploy develop to ec2"
             source ~/trading-bot-env/bin/activate
             cd /home/ubuntu/my-trading-bot
             git switch develop
             git pull
             pm2 reload ecosystem.config.js
+            pm2 reload worker.config.js

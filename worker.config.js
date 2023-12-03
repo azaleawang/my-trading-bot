@@ -1,8 +1,8 @@
 module.exports = {
     apps : [{
-      name: "my-trading-bot",
+      name: "trading-bot-monitor",
       script: "/home/ubuntu/trading-bot-env/bin/python3",
-      args: "/home/ubuntu/my-trading-bot/backend/main.py",
+      args: "/home/ubuntu/my-trading-bot/backend/docker-worker/monitor.py",
       interpreter: "", 
       watch: true,
     }]

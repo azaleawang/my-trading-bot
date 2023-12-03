@@ -41,7 +41,7 @@ const StrategyForm = () => {
     const fetchStrategies = async () => {
       try {
         const response = await axios.get(
-          `${strategy_api_base}/?user_id=${userId}`
+          `${strategy_api_base}?user_id=${userId}`
         );
         setStrategies(response.data);
       } catch (error) {
