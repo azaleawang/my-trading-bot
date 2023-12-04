@@ -8,6 +8,7 @@ from fastapi import (
     WebSocket,
     WebSocketDisconnect,
     status,
+    Response,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -69,10 +70,17 @@ async def get_me(user: schemas.User = Depends(get_current_user)):
 
 @app.post("/signup", response_model=schemas.User)
 def create_new_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = get_user_by_email(db, email=user.email)
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    return create_user(db=db, user=user)
+    try:
+        db_user = get_user_by_email(db, email=user.email)
+        if db_user:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        return create_user(db=db, user=user)
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e) or "Something broke when creating user!",
+        )
 
 
 @app.post(
@@ -80,8 +88,9 @@ def create_new_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     summary="Create access and refresh tokens for user",
     response_model=TokenSchema,
 )
-async def login(form_data: LoginForm, db: Session = Depends(get_db)):
-    # TODO 不知道要去哪裡把form_data username 欄位改成 email
+async def login(
+    response: Response, form_data: LoginForm, db: Session = Depends(get_db)
+):
     try:
         user = get_user_by_email(db, form_data.email)
         if user is None:
@@ -100,9 +109,11 @@ async def login(form_data: LoginForm, db: Session = Depends(get_db)):
 
         access_token = create_access_token(username=user.name, email=user.email)
         refresh_token = create_refresh_token(username=user.name, email=user.email)
+
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
+            "user_id": user.id
         }
     except HTTPException as http_ex:
         raise http_ex
