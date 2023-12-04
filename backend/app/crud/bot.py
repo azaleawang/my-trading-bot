@@ -51,16 +51,11 @@ def create_user_bot(db: Session, bot: schemas.BotCreate):
     #     raise HTTPException(status_code=500, detail="Unexpected database error.")
 
 
-def stop_user_bot(user_id: int, bot_id: str, db: Session):
+def stop_user_bot(bot_id: str, db: Session):
     bot = db.query(Bot).filter(Bot.id == bot_id).first()
 
     if bot is None:
         raise HTTPException(status_code=404, detail=f"Bot #{bot_id} Bot not found.")
-    elif bot.owner_id != user_id:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No matched bot #{bot_id} for this user id {user_id}.",
-        )
     elif bot.status == "stopped":
         raise HTTPException(
             status_code=400, detail=f"Bot #{bot_id} is already stopped."
@@ -82,16 +77,16 @@ def stop_user_bot(user_id: int, bot_id: str, db: Session):
         )
 
 
-def delete_user_bot(user_id: int, bot_id: int, db: Session):
+def delete_user_bot(bot_id: int, db: Session):
     bot = db.query(Bot).filter(Bot.id == bot_id).first()
 
     if bot is None:
         raise HTTPException(status_code=404, detail=f"Bot #{bot_id} Bot not found.")
-    if bot.owner_id != user_id:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No matched bot #{bot_id} for this user id {user_id}.",
-        )
+    # if bot.owner_id != user_id:
+    #     raise HTTPException(
+    #         status_code=404,
+    #         detail=f"No matched bot #{bot_id} for this user id {user_id}.",
+    #     )
     if bot.status == "running":
         raise HTTPException(
             status_code=400, detail=f"Please stop Bot #{bot_id} manually first!"
@@ -99,7 +94,7 @@ def delete_user_bot(user_id: int, bot_id: int, db: Session):
     if bot.status == "deleted":
         raise HTTPException(status_code=400, detail=f"Bot #{bot_id} already deleted.")
 
-    if bot.status == "stopped":
+    if bot.status == "stopped" or bot.status == "exited":
         delete_bot_container(bot.container_id)
         db.delete(bot)
         db.commit()

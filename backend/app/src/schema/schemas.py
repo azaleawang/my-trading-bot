@@ -41,7 +41,7 @@ class BotBase(BaseModel):
     # container_id: str
     # container_name
     name: str = "cool_bot"
-    # owner_id: int
+    owner_id: int
     strategy: str = "supertrend"
     symbol: str = "ETH/USDT"
     description: Union[str, None] = None
@@ -52,7 +52,7 @@ class BotBase(BaseModel):
 
 
 class BotCreate(BotBase):
-    owner_id: int
+    # owner_id: int
     container_id: str
     container_name: str
     status: str = "running"
@@ -192,6 +192,10 @@ class ContainerState(BaseModel):
     running_for: str
     logs: list
     updated_at: Any
+
+
+class ContainerStateDict(BaseModel):
+    data: List[ContainerState]
 
 
 class LoginForm(BaseModel):

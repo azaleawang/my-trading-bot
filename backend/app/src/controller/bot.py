@@ -12,9 +12,7 @@ class Bot_Created_Resp(BaseModel):
     data: schemas.Bot
 
 
-def start_bot_container(
-    owner_id: int, container_name: str, bot_info: schemas.BotBase
-) -> dict:
+def start_bot_container(container_name: str, bot_info: schemas.BotBase) -> dict:
     try:
         # load the bot script from ??? the better design may be downloading from s3
         command = [
@@ -54,7 +52,7 @@ def start_bot_container(
         container_id = result.stdout.strip()
         # store information into db!
         return {
-            "owner_id": owner_id,
+            # "owner_id": owner_id,
             "container_id": container_id,
             "container_name": container_name,
             "status": "running",
@@ -105,4 +103,3 @@ def delete_bot_container(container_id: str):
         raise HTTPException(
             status_code=500, detail="Error deleting bot in docker: " + str(e.stderr)
         )
-

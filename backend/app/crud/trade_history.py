@@ -28,8 +28,8 @@ def create_trade_history(db: Session, trade_data: schemas.TradeHistoryCreate, re
     return new_trade
 
 
-def get_bot_trade_history(db: Session, user_id: int, bot_id: int):
-    bot = db.query(Bot).filter(and_(Bot.id == bot_id, Bot.owner_id == user_id)).first()
+def get_bot_trade_history(db: Session, bot_id: int):
+    bot = db.query(Bot).filter(and_(Bot.id == bot_id)).first()
     if bot:
         return bot.trade_history
     else:

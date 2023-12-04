@@ -15,7 +15,7 @@ load_dotenv()
 
 def fetch_all_containers():
     try:
-        url = f"{os.getenv('HOST')}:{os.getenv('PORT')}/api/v1/bots/"
+        url = f"{os.getenv('HOST')}:{os.getenv('PORT')}/api/v1/bots/admin"
         response = requests.get(url)
         return response.json().get("data", [])
     except Exception as e:
@@ -24,7 +24,7 @@ def fetch_all_containers():
 
 def send_data_to_server(data):
     try:
-        url = f"{os.getenv('HOST')}:{os.getenv('PORT')}/api/v1/bots/container-monitoring/"
+        url = f"{os.getenv('HOST')}:{os.getenv('PORT')}/api/v1/bots/container-monitoring"
         response = requests.post(url, json=data)
         print("server said: ", response.text)
     except Exception as e:
