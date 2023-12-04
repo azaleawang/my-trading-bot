@@ -120,7 +120,7 @@ if __name__ == "__main__":
 
             send_data_to_server(json.loads(data_json))
         
-        time.sleep(60)
+        time.sleep(10)
 
 
 # data: [{"name": "m", "state": [], "logs": []}, {}]

@@ -12,7 +12,6 @@ from sqlalchemy.orm import joinedload
 from app.models.bot import Bot
 
 
-
 def get_container_status(db: Session, bot_id: int):
     # Query all containers for the user
     container_status = (
@@ -45,8 +44,8 @@ def parse_and_store(container_data):
     for container in container_data:
         try:
             container_id = container["container_id"]
-            
-            # TODO 把 bot id 存進去 還沒寫完
+
+            # check if the container recorded before
             existing_record = (
                 db.query(ContainerStatus)
                 .filter(ContainerStatus.container_id == container_id)
@@ -62,12 +61,43 @@ def parse_and_store(container_data):
                 new_record = create_new_container_record(bot_id, container)
                 db.add(new_record)
 
+            # bot_status = (
+            #     db.query(Bot.status).filter(Bot.container_id == container_id).first()
+            # )
+            # if bot_status and bot_status[0] != existing_record.status:
+            #     db.query(Bot).filter(Bot.container_id == container_id).update(
+            #         {"status": existing_record.status}
+            #     )
+            #     print(
+            #         f"Container {container_id} status updated to {existing_record.status}"
+            #     )
+
             db.commit()  # Commit changes for each container
+
+            # check if container status is different from bot status
+            check_bot_status_consistency(
+                db, container_id, existing_record or new_record
+            )
+
         except Exception as e:
             db.rollback()  # Rollback only affects the current container
             print(f"Error processing container {container_id}: {e}")
 
     db.close()
+
+
+def check_bot_status_consistency(db, container_id, db_record):
+    bot_status = db.query(Bot.status).filter(Bot.container_id == container_id).first()
+    print(f"Checking bot status", bot_status[0], db_record.state, container_id)
+    if (bot_status[0] and bot_status[0] != db_record.state):
+        db.query(Bot).filter(Bot.container_id == container_id).update(
+            {"status": db_record.state}
+        )
+        print(f"Container {container_id} status updated to {db_record.status}")
+        db.commit() 
+    else:
+        print(f"Bot status is consistent with container status")
+    return
 
 
 def update_container(existing_record, container):
@@ -79,6 +109,7 @@ def update_container(existing_record, container):
 
     existing_record.logs = container.get("log", [])  # Update logs
 
+
 def get_bot_id_by_container_id(db: Session, container_id: str):
     bot_id = db.query(Bot.id).filter(Bot.container_id == container_id).first()
     bot_id = bot_id[0] if bot_id else None
@@ -86,7 +117,7 @@ def get_bot_id_by_container_id(db: Session, container_id: str):
 
 
 def create_new_container_record(bot_id, container):
-    # bot_id 
+    # bot_id
     new_record = ContainerStatus(container_id=container["container_id"])
     for st in container["state"]:
         new_record.container_name = st.get("Names", None)
