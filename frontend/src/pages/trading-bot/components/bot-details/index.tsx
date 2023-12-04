@@ -3,14 +3,11 @@ import React, { useEffect, useState, useContext } from "react";
 import { useParams } from "react-router-dom";
 import { TradingDataContext } from "@/common/hooks/TradingDataContext";
 import { BotError, ContainerStateProps } from "../../models";
-import useCookie from "@/common/hooks/useCookie";
-import { bot_api_base, user_api_base } from "@/common/apis";
+import { bot_api_base } from "@/common/apis";
 
 const BotDetails: React.FC = () => {
   const { botId } = useParams<{ botId: string }>();
-  const [userId] = useCookie("user_id", "");
   const bot_api = bot_api_base(botId);
-  const user_api = user_api_base(userId);
   const { botData, setBotData } = useContext(TradingDataContext);
   const [botErrors, setBotErrors] = useState<BotError[]>([]);
   const [containerData, setContainerData] = useState<
