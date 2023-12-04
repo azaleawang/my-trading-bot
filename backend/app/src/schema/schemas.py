@@ -1,7 +1,19 @@
+from uuid import UUID
 from typing import Any, List, Union
 from datetime import datetime
 
-from pydantic import BaseModel, JsonValue
+from pydantic import BaseModel, Field
+
+
+class TokenSchema(BaseModel):
+    access_token: str
+    refresh_token: str
+
+
+class TokenPayload(BaseModel):
+    username: str
+    email: str
+    exp: int = None
 
 
 # User schema
@@ -156,16 +168,20 @@ class Strategy(StrategyCreate):
     class Config:
         from_attributes = True
 
+
 class BotErrorSchema(BaseModel):
     container_name: str
     error: str
-        
+
+
 class BotError(BotErrorSchema):
     id: int
     timestamp: Any
+
     class Config:
         from_attributes = True
-        
+
+
 class ContainerState(BaseModel):
     bot_id: int
     container_id: str
@@ -175,3 +191,8 @@ class ContainerState(BaseModel):
     running_for: str
     logs: list
     updated_at: Any
+
+
+class LoginForm(BaseModel):
+    email: str
+    password: str

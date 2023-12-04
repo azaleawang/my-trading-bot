@@ -8,14 +8,6 @@ from app.crud.user import create_user, get_user, get_user_by_email, get_users
 
 router = APIRouter()
 
-@router.post("/", response_model=schemas.User)
-def create_new_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    db_user = get_user_by_email(db, email=user.email)
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
-    return create_user(db=db, user=user)
-
-
 @router.get("/", response_model=List[schemas.User])
 def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     users = get_users(db, skip=skip, limit=limit)

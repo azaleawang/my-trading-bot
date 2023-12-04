@@ -7,7 +7,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(BIGINT, primary_key=True, index=True)
-    name = Column(String, index=True)
+    name = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     bots = relationship("Bot", back_populates="owner")

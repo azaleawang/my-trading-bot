@@ -7,13 +7,21 @@ from fastapi import (
     Request,
     WebSocket,
     WebSocketDisconnect,
+    status,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.src.schema.schemas import BotErrorSchema, TradeHistoryCreate
+from app.src.schema.schemas import (
+    BotErrorSchema,
+    LoginForm,
+    TokenSchema,
+    TradeHistoryCreate,
+)
 from app.src.controller.trade import get_order_realizedPnl
-from app.models.bot_error import Bot_Error
+from app.src.schema import schemas
 from app.crud.bot_error import create_error_log
+from app.crud.user import create_user, get_user_by_email
+from app.utils.deps import get_current_user
 from .routers import backtests, users, bots, strategies
 from app.models import Base
 from .src.config.database import SessionLocal, engine, get_db
@@ -23,6 +31,11 @@ import logging
 from sqlalchemy.orm import Session
 from starlette.responses import FileResponse
 import os
+from app.utils.auth import (
+    verify_password,
+    create_access_token,
+    create_refresh_token,
+)
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 frontend_dir = os.path.join(current_dir, "../dist")
@@ -49,13 +62,64 @@ app.add_middleware(
 )
 
 
+@app.get("/me", summary="Get details of currently logged in user")
+async def get_me(user: schemas.User = Depends(get_current_user)):
+    return user
+
+
+@app.post("/signup", response_model=schemas.User)
+def create_new_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    db_user = get_user_by_email(db, email=user.email)
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    return create_user(db=db, user=user)
+
+
+@app.post(
+    "/login",
+    summary="Create access and refresh tokens for user",
+    response_model=TokenSchema,
+)
+async def login(form_data: LoginForm, db: Session = Depends(get_db)):
+    # TODO 不知道要去哪裡把form_data username 欄位改成 email
+    try:
+        user = get_user_by_email(db, form_data.email)
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Incorrect email or password",
+            )
+
+        print("user want to login", user.name, user.email)
+        hashed_pass = user.hashed_password
+        if not verify_password(form_data.password, hashed_pass):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Incorrect email or password",
+            )
+
+        access_token = create_access_token(username=user.name, email=user.email)
+        refresh_token = create_refresh_token(username=user.name, email=user.email)
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+        }
+    except HTTPException as http_ex:
+        raise http_ex
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e) or "Something broke when login or creating JWT token!",
+        )
+
+
 @app.get("/{full_path:path}")
 async def serve_frontend(full_path: str, request: Request):
     # Check if the file exists in the static directory
     static_file_path = os.path.join(frontend_dir, full_path)
     if os.path.isfile(static_file_path):
         return FileResponse(static_file_path)
-    print(static_file_path)
     # Fallback to serving index.html for SPA routing
     index_file = os.path.join(frontend_dir, "index.html")
     return FileResponse(index_file)
@@ -104,43 +168,6 @@ async def websocket_endpoint(websocket: WebSocket):
 
     except WebSocketDisconnect:
         print("Client disconnected")
-
-
-# @app.websocket("/ws/trade_history")
-# async def websocket_endpoint(websocket: WebSocket):
-#     await websocket.accept()
-#     try:
-#         while True:
-#             data = await websocket.receive_json()
-#             await websocket.send_json("Message received")
-
-#             # check if the trading action message
-#             if data.get("action"):
-#                 # store trade info into database
-#                 try:
-#                     db = SessionLocal()
-#                     realizedPnl = None
-#                     if data["data"]["side"] == 'SELL':
-#                         # get the realized pnl
-#                         realizedPnl = get_order_realizedPnl(data["data"]["orderId"], data["data"]["symbol"])
-#                     trade_data = TradeHistoryCreate(**data)
-
-#                     db_trade_history = create_trade_history(db, trade_data, realizedPnl)
-#                     print("store: ",  db_trade_history)
-#                 except Exception as e:
-#                     print(f"Error: {e}")
-#                 finally:
-#                     db.close()
-#             elif data.get('error'):
-#                 print("Get error from container", data)
-#                 # how to deal with the error message from trading container? store to db first?
-#                 error = create_error_log(BotErrorSchema(**data), db)
-#                 print("error: ", error)
-
-#     except WebSocketDisconnect:
-#         print("Client disconnected")
-
-
 
 
 active_connections: List[WebSocket] = []
