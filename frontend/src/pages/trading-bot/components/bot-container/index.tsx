@@ -1,20 +1,25 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Bot, MarkPriceData } from "../../models";
-import { useNavigate, useParams } from "react-router-dom";
+import { Bot, MarkPriceData } from "@/pages/trading-bot/models";
+import { useNavigate } from "react-router-dom";
+import useCookie from "@/common/hooks/useCookie";
+import { user_api_base, bot_api_base } from "@/common/apis";
 
 const BotContainer: React.FC = () => {
   const [bots, setBots] = useState<Bot[]>([]); // const userId = 1;
   const [markAllPrice, setMarkAllPrice] = useState<MarkPriceData[] | null>(
     null
   );
-  const { userId } = useParams<{ userId: string }>();
+  // const { userId } = useParams<{ userId: string }>();
+  const [userId] = useCookie("user_id", "");
+
   // const { markPrice } = useContext(TradingDataContext);
-  const bot_api_base = `/api/v1/bots/users/${userId}/bots`;
+  // TODO 從外面Import進來
+  const user_api = user_api_base(userId);
   const navigate = useNavigate();
 
   const handleBotClick = (botId: number) => {
-    navigate(`/user/${userId}/trading-bots/${botId}`);
+    navigate(`/trading-bots/${botId}`);
   };
 
   useEffect(() => {
@@ -38,7 +43,7 @@ const BotContainer: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(bot_api_base);
+        const response = await axios.get(`${user_api}/bots`);
         const bots = response.data.data;
         setBots(bots.filter((bot: Bot) => bot.status !== "deleted"));
       } catch (error) {
@@ -54,7 +59,7 @@ const BotContainer: React.FC = () => {
     try {
       event.stopPropagation();
       if (confirm(`Sure to stop bot ${botId} ?`)) {
-        const resp = await axios.put(`${bot_api_base}/${botId}`);
+        const resp = await axios.put(`${bot_api_base(botId)}`);
         console.log(resp.data);
         alert("Stop OK!");
 
@@ -75,7 +80,7 @@ const BotContainer: React.FC = () => {
   const handleDelete = async (event: any, botId: number) => {
     try {
       event.preventDefault();
-      const resp = await axios.delete(`${bot_api_base}/${botId}`);
+      const resp = await axios.delete(`${bot_api_base(botId)}`);
       console.log(resp.data);
       alert("Delete OK!");
       setBots((prevBots) => prevBots.filter((bot) => bot.id !== botId));

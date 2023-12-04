@@ -16,13 +16,13 @@ const router = createBrowserRouter(
     <>
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
-        <Route path="/user/:userId/trading-bots" element={<BotContainer />} />
+        <Route path="/trading-bots" element={<BotContainer />} />
         <Route
-          path="/user/:userId/trading-bots/:botId"
+          path="/trading-bots/:botId"
           element={<BotDetails />}
         />
-        <Route path="/user/:userId/create-bot" element={<CreateBotForm />} />
-        <Route path="/user/:userId/backtest" element={<Backtest />} />
+        <Route path="/create-bot" element={<CreateBotForm />} />
+        <Route path="/backtest" element={<Backtest />} />
       {/* <Route path="/run-backtest" element={<StrategyForm />} /> */}
       </Route>
       <Route path="*" element={<Navigate to="/" />} />

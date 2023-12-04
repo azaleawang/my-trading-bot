@@ -1,8 +1,13 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { bot_api_base } from "@/common/apis";
+import useCookie from "@/common/hooks/useCookie";
 
 const CreateBotForm: React.FC = () => {
+  
+  const navigate = useNavigate();
+  const [userId] = useCookie("user_id", "");
   const [botData, setBotData] = useState({
     name: "",
     strategy: "",
@@ -11,8 +16,6 @@ const CreateBotForm: React.FC = () => {
     t_frame: "30m",
     quantity: 120
   });
-  const navigate = useNavigate();
-  const { userId } = useParams<{ userId: string }>();
   const strategies = ["supertrend"]; // only accept this strategy for now
   const symbols = ["ETH/USDT", "BTC/USDT", "BNB/USDT"]; // still hard-coded
 
@@ -28,17 +31,18 @@ const CreateBotForm: React.FC = () => {
     e.preventDefault();
     const submissionData = {
       ...botData,
+      owner_id: Number(userId), 
       created_at: new Date().toISOString(),
     };
     try {
-      // Replace with your actual API endpoint
+      console.log(submissionData)
       const response = await axios.post(
-        `/api/v1/bots/users/${userId}/bots`,
+        `${bot_api_base(undefined)}/`,
         submissionData
       );
       console.log(response.data);
       if (confirm(`Bot ${response.data.data.name} created successfully! 交易對: ${response.data.data.symbol}`)) {
-        navigate(`/user/${userId}/trading-bots`);
+        navigate(`/trading-bots`);
       }
 
       // Handle the success (e.g., showing a notification, clearing the form, etc.)

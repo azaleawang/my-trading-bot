@@ -1,22 +1,26 @@
 import axios from "axios";
 import React, { useEffect, useState, useContext } from "react";
 import { useParams } from "react-router-dom";
-// import { BotDetailsProps } from "../../models";
-import { TradingDataContext } from "../../../../common/hooks/TradingDataContext";
-import { BotError } from "../../models";
+import { TradingDataContext } from "@/common/hooks/TradingDataContext";
+import { BotError, ContainerStateProps } from "../../models";
+import useCookie from "@/common/hooks/useCookie";
+import { bot_api_base, user_api_base } from "@/common/apis";
 
 const BotDetails: React.FC = () => {
-  const { userId, botId } = useParams<{ userId: string; botId: string }>();
-  const api_base = `/api/v1/bots/users/${userId}/bots/${botId}`;
-  const { botData, setBotData, containerData, setContainerData } =
-    useContext(TradingDataContext);
+  const { botId } = useParams<{ botId: string }>();
+  const [userId] = useCookie("user_id", "");
+  const bot_api = bot_api_base(botId);
+  const user_api = user_api_base(userId);
+  const { botData, setBotData } = useContext(TradingDataContext);
   const [botErrors, setBotErrors] = useState<BotError[]>([]);
-
+  const [containerData, setContainerData] = useState<
+    ContainerStateProps[] | undefined
+  >();
   useEffect(() => {
     const fetchBotDetails = async () => {
       try {
         // Replace with your actual API endpoint
-        const response = await axios.get(`${api_base}/trade-history/`);
+        const response = await axios.get(`${bot_api}/trade-history`);
         setBotData(response.data?.data);
         console.log("fetching data", response.data?.data);
       } catch (error) {
@@ -33,7 +37,7 @@ const BotDetails: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`${api_base}/bot-error/`);
+        const response = await axios.get(`${bot_api}/bot-error`);
         setBotErrors(response.data);
         console.log("Bot errors:", response.data);
       } catch (error) {
@@ -47,7 +51,8 @@ const BotDetails: React.FC = () => {
   useEffect(() => {
     const fetchContainerData = async () => {
       try {
-        const response = await axios.get(`${api_base}/container-monitoring/`);
+        // TODO 這樣一直重複打資料庫真的好嘛？外面已經撈過全部的資料了
+        const response = await axios.get(`${bot_api}/container-monitoring`);
         setContainerData(response.data.data);
         console.log("set ContainerData:", response.data.data);
       } catch (error) {

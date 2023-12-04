@@ -11,13 +11,13 @@ const MenuBar: React.FC = () => {
           </li>
           {/* Assuming a static userId for demonstration; replace with dynamic userId as needed */}
           <li>
-            <Link to="/user/1/trading-bots">Trading Bots</Link>
+            <Link to="/trading-bots">Trading Bots</Link>
           </li>
           <li>
-            <Link to="/user/1/create-bot">Create Bot</Link>
+            <Link to="/create-bot">Create Bot</Link>
           </li>
           <li>
-            <Link to="/user/1/backtest">Backtest</Link>
+            <Link to="/backtest">Backtest</Link>
           </li>
         </ul>
       </nav>
