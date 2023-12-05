@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import useCookie from "@/common/hooks/useCookie";
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
 

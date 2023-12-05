@@ -1,9 +1,6 @@
 import React from "react";
-import { Link } from "react-router-dom"; // Make sure to have react-router-dom installed
 
 // Update these imports according to your project structure
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
 import { UserAuthForm } from "../user-auth-form";
 
 const AuthenticationPage: React.FC = () => {
