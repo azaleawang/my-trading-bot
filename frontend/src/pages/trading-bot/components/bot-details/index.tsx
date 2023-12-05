@@ -221,7 +221,7 @@ const BotDetails: React.FC = () => {
 
             {containerData?.logs.map((log, i) => (
               <AccordionContent key={i}>{log}</AccordionContent>
-            )) || "Unknown"}
+            )) || <></>}
           </AccordionItem>
         </Accordion>
       </div>

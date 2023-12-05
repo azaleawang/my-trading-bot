@@ -131,12 +131,13 @@ const BotContainer: React.FC = () => {
         {bots.map((bot, i) => (
           <Card
             key={i}
-            className="flex flex-col flex-wrap h-[250px] p-1 bg-zinc-900 rounded-lg justify-between border-0 text-slate-200 w-full md:w-1/2 md:max-w-[450px]"
+            className="flex flex-col flex-wrap min-h-[250px] md:h-[280px] bg-zinc-900 justify-between rounded-lg border-0 text-slate-200 w-full md:w-1/2 md:max-w-[450px]"
             // style={{ backgroundColor: "#222831" }}
           >
-            <CardHeader className="flex">
-              <CardTitle className=" flex text-xl flex-wrap justify-between tracking-wide gap-1">
-                <p className="text-2xl md:tracking-widest break-all">{bot.name}</p>
+            <CardHeader className="flex flex-col">
+              <CardTitle className=" flex flex-wrap justify-between tracking-wide gap-1">
+                {/* 可能要限制一下字數要不然會很醜  */}
+                <p className="text-2xl md:tracking-widest break-all ">{bot.name}</p>
                 <div
                   className={`px-3 py-1 rounded-full text-sm font-semibold w-[100px] text-center
                   ${bot.status === "running" ? "bg-green-800" : "bg-red-900"}`}
@@ -144,7 +145,7 @@ const BotContainer: React.FC = () => {
                   {bot.status.toUpperCase()}
                 </div>
               </CardTitle>
-              <CardDescription className="flex flex-wrap gap-3">
+              <CardDescription className="flex gap-3">
                 <p className="text-gray-300">{bot.symbol}</p>
                 <p className="text-gray-300">{bot.strategy} 策略</p>
               </CardDescription>

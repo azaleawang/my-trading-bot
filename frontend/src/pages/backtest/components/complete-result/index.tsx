@@ -63,7 +63,7 @@ const Backtest = () => {
       {backtestData ? (
         <BacktestResult backtestData={backtestData} />
       ) : (
-        <p>Loading backtest results...</p>
+        <p></p>
       )}
     </div>
   );

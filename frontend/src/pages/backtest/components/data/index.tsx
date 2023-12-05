@@ -81,7 +81,7 @@ const BacktestResult: React.FC<{ backtestData: BacktestData }> = ({
   }, [backtestData]);
 
   return (
-    <div className="bg-gray-800 text-white p-6 rounded-lg shadow-xl">
+    <div className="text-white p-6">
       <h2 className="text-2xl font-bold mb-4">
         Backtest Results: {strategy_name}
       </h2>
@@ -89,7 +89,7 @@ const BacktestResult: React.FC<{ backtestData: BacktestData }> = ({
       <p className="font-bold mb-2">Time frame: {t_frame}</p>
       <h3 className="text-xl font-bold mb-2">Plot</h3>
       <iframe
-        className="w-full h-[600px] border-none"
+        className="w-full h-[700px] border-none"
         srcDoc={htmlContent}
         title="Backtest Plot"
         allowFullScreen
@@ -102,7 +102,7 @@ const BacktestResult: React.FC<{ backtestData: BacktestData }> = ({
           return (
             <div
               key={key}
-              className="bg-gray-700 p-1 rounded flex justify-between items-center"
+              className="bg-zinc-700 p-1 rounded flex justify-between items-center"
             >
               <span className="font-medium">{key.replace(/_/g, " ")}</span>
               <span>
