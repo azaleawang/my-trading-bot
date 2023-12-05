@@ -39,7 +39,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
       // navigate to trading bots page
       navigate(`/user/${response.data.user_id}/trading-bots`);
     } catch (error: any) {
-      console.error("Error creating bot:", error);
+      console.error("Sign in failed", error);
       alert(error.response?.data?.detail || "Something went wrong when signin");
     } finally {
       setIsLoading(false);
@@ -96,7 +96,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
           <span className="w-full border-t" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">
+          <span className="bg-black text-white px-2 text-muted-foreground">
             Or continue with
           </span>
         </div>

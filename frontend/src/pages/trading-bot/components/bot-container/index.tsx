@@ -1,9 +1,21 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Bot, MarkPriceData } from "@/pages/trading-bot/models";
 import { useNavigate } from "react-router-dom";
 import useCookie from "@/common/hooks/useCookie";
 import { user_api_base, bot_api_base } from "@/common/apis";
+import { Label } from "@/components/ui/label";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Icons } from "@/components/ui/icons";
 
 const BotContainer: React.FC = () => {
   const [bots, setBots] = useState<Bot[]>([]); // const userId = 1;
@@ -12,9 +24,9 @@ const BotContainer: React.FC = () => {
   );
   // const { userId } = useParams<{ userId: string }>();
   const [userId] = useCookie("user_id", "");
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
   // const { markPrice } = useContext(TradingDataContext);
-  // TODO 從外面Import進來
   const user_api = user_api_base(userId);
   const navigate = useNavigate();
 
@@ -61,7 +73,7 @@ const BotContainer: React.FC = () => {
         const resp = await axios.put(`${bot_api_base(botId)}`);
         console.log(resp.data);
         alert("Stop OK!");
-
+        // TODO loading component
         setBots((prevBots) =>
           prevBots.map((bot) =>
             bot.id === botId ? { ...bot, status: "stopped" } : bot
@@ -81,11 +93,10 @@ const BotContainer: React.FC = () => {
       event.preventDefault();
       if (confirm("Sure to delete bot ?") && botId) {
         const resp = await axios.delete(`${bot_api_base(botId)}`);
-      console.log(resp.data);
-      alert("Delete OK!");
-      setBots((prevBots) => prevBots.filter((bot) => bot.id !== botId));
-      } else return
-      
+        console.log(resp.data);
+        alert("Delete OK!");
+        setBots((prevBots) => prevBots.filter((bot) => bot.id !== botId));
+      } else return;
     } catch (error: any) {
       console.error(error);
       alert(
@@ -94,7 +105,7 @@ const BotContainer: React.FC = () => {
     }
   };
 
-  const calculateTotalPnl = (bot: Bot) => {
+  const calculateTotalPnl = (bot: Bot): number => {
     let totalRealizedPnl = bot.trade_history.reduce(
       (sum, trade) => sum + (trade.realizedPnl || 0),
       0
@@ -111,61 +122,71 @@ const BotContainer: React.FC = () => {
         (Number(markPrice?.[0]) - lastTrade.avg_price) * lastTrade.qty;
     }
 
-    return (totalUnrealizedPnl + totalRealizedPnl).toFixed(3);
+    return +(totalUnrealizedPnl + totalRealizedPnl).toFixed(3) || 0;
   };
 
   return (
     <>
-      {/* <BinancePrices /> */}
-      <div className="flex flex-col gap-6 p-6">
-        {bots.map((bot) => (
-          <div
-            key={bot.id}
-            className="bg-stone-800 p-6 rounded-lg shadow-lg flex justify-between items-center text-white"
+      <div className="flex flex-wrap gap-5 p-6">
+        {bots.map((bot, i) => (
+          <Card
+            key={i}
+            className="flex flex-col flex-wrap h-[250px] p-1 bg-zinc-900 rounded-lg justify-between border-0 text-slate-200 w-full md:w-1/2 md:max-w-[450px]"
+            // style={{ backgroundColor: "#222831" }}
           >
-            <div
-              className="flex flex-col"
-              onClick={() => handleBotClick(bot.id)}
-            >
-              <span className="text-xl font-semibold">{bot.name}</span>
-              <span className="text-gray-400">{bot.symbol}</span>
-            </div>
-            <div className="text-right">
-              <div className="text-lg">{bot.strategy}</div>
-              {/* <div className="text-gray-400">200 U</div> */}
-            </div>
-            <div className="text-right">
-              <div className="text-lg">浮動利潤</div>
-              {/* <div className="text-gray-400">3.01 U (-10%)</div> */}
-              <div className="text-gray-400">{calculateTotalPnl(bot)} U</div>
-            </div>
-            <div className="flex gap-4">
+            <CardHeader className="flex">
+              <CardTitle className=" flex text-xl flex-wrap justify-between tracking-wide gap-1">
+                <p className="text-2xl md:tracking-widest break-all">{bot.name}</p>
+                <div
+                  className={`px-3 py-1 rounded-full text-sm font-semibold w-[100px] text-center
+                  ${bot.status === "running" ? "bg-green-800" : "bg-red-900"}`}
+                >
+                  {bot.status.toUpperCase()}
+                </div>
+              </CardTitle>
+              <CardDescription className="flex flex-wrap gap-3">
+                <p className="text-gray-300">{bot.symbol}</p>
+                <p className="text-gray-300">{bot.strategy} 策略</p>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-gray-300">
+              <div className="flex gap-5 text-lg">
+                <p className="">浮動利潤 <span className="text-[10px]">USDT</span></p>
+                <strong 
+                  className={`${(calculateTotalPnl(bot)) < 0 ? "text-pink-600": "text-white"}`}>
+                    {calculateTotalPnl(bot)}</strong>
+              </div>
+            </CardContent>
+
+            <CardFooter className="flex gap-3 md:gap-5 ">
               {bot.status === "running" ? (
-                <button
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
+                <Button
+                  className="w-1/2 hover:bg-red-900"
                   onClick={(event) => handleStop(event, bot.id)}
                   disabled={bot.status !== "running"}
                 >
-                  <span>Stop</span>
-                </button>
+                  <span>終止</span>
+                </Button>
               ) : (
-                <button
-                  className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
+                <Button
+                  className="w-1/2  hover:bg-blue-900"
                   onClick={(event) => handleDelete(event, bot.id)}
                 >
-                  <span>Delete</span>
-                </button>
+                  <span>移除</span>
+                </Button>
               )}
-            </div>
-
-            <div
-              className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                bot.status === "running" ? "bg-green-500" : "bg-red-500"
-              }`}
-            >
-              {bot.status.toUpperCase()}
-            </div>
-          </div>
+              <Button
+                disabled={isLoading}
+                onClick={() => handleBotClick(bot.id)}
+                className="w-1/2 hover:bg-zinc-700"
+              >
+                {isLoading && (
+                  <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                詳情
+              </Button>
+            </CardFooter>
+          </Card>
         ))}
       </div>
     </>

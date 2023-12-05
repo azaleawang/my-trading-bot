@@ -1,11 +1,12 @@
+import useCookie from "@/common/hooks/useCookie";
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+// import { useParams } from "react-router-dom";
 
 const StrategyForm = () => {
   const backtest_api_base = `/api/v1/backtests/`;
   const strategy_api_base = `/api/v1/strategies/`;
-  const { userId } = useParams<{ userId: string }>();
+  const [userId] = useCookie("user_id", "");
 
   // strategy data
   interface AllStrategies {

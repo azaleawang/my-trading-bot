@@ -114,7 +114,7 @@ const BotDetails: React.FC = () => {
                   <AccordionContent key={bot.id} className="">
                     <Card
                       key={i}
-                      className="bg-stone-800 text-white px-1 rounded-lg shadow-lg my-5 mx-3 border-stone-500 border-0 rounded-none border-b-2"
+                      className="bg-zinc-900 text-white px-1 rounded-lg shadow-lg my-5 mx-3 border-zinc-700 border-0 rounded-none border-b-2"
                     >
                       <CardHeader className="flex">
                         <div className="flex justify-between flex-wrap">
@@ -155,7 +155,7 @@ const BotDetails: React.FC = () => {
                         </div>
                         <div className="flex justify-between">
                           <p>已實現盈虧</p>
-                          <p> {bot.realizedPnl || 0.0}</p>
+                          <p> {bot.realizedPnl ? bot.realizedPnl .toFixed(4) : "0.0000"}</p>
                         </div>
                       </CardContent>
 
@@ -203,7 +203,7 @@ const BotDetails: React.FC = () => {
               <p>容器名稱: {containerData?.container_name || "Unknown"}</p>
             </AccordionContent>
             <AccordionContent>
-              <p>運作時間: {containerData?.running_for || "Unknown"}</p>
+              <p>啟用時間: {containerData?.running_for || "Unknown"}</p>
             </AccordionContent>
             <AccordionContent>
               <p>
