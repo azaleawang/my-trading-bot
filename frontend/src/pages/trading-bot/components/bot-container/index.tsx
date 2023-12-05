@@ -4,7 +4,7 @@ import { Bot, MarkPriceData } from "@/pages/trading-bot/models";
 import { useNavigate } from "react-router-dom";
 import useCookie from "@/common/hooks/useCookie";
 import { user_api_base, bot_api_base } from "@/common/apis";
-import { Label } from "@/components/ui/label";
+// import { Label } from "@/components/ui/label";
 
 import {
   Card,
@@ -15,7 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Icons } from "@/components/ui/icons";
+// import { Icons } from "@/components/ui/icons";
 
 const BotContainer: React.FC = () => {
   const [bots, setBots] = useState<Bot[]>([]); // const userId = 1;
@@ -24,7 +24,7 @@ const BotContainer: React.FC = () => {
   );
   // const { userId } = useParams<{ userId: string }>();
   const [userId] = useCookie("user_id", "");
-  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  // const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
   // const { markPrice } = useContext(TradingDataContext);
   const user_api = user_api_base(userId);
@@ -177,13 +177,13 @@ const BotContainer: React.FC = () => {
                 </Button>
               )}
               <Button
-                disabled={isLoading}
+                // disabled={isLoading}
                 onClick={() => handleBotClick(bot.id)}
                 className="w-1/2 hover:bg-zinc-700"
               >
-                {isLoading && (
+                {/* {isLoading && (
                   <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                )}
+                )} */}
                 詳情
               </Button>
             </CardFooter>

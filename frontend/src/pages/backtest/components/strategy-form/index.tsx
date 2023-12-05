@@ -179,7 +179,7 @@ const StrategyForm = () => {
             required
           />
         </div>
-        <div className="flex gap-5 flex-wrap">
+        <div className="flex gap-5 flex-wrap mb-3">
           {strategies
             .filter((s: any) => s.name === bt_strategy.name)
             .map((selectedStrategy: any) =>
