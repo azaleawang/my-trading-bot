@@ -4,6 +4,21 @@ import { useParams } from "react-router-dom";
 import { TradingDataContext } from "@/common/hooks/TradingDataContext";
 import { BotError, ContainerStateProps } from "../../models";
 import { bot_api_base } from "@/common/apis";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 const BotDetails: React.FC = () => {
   const { botId } = useParams<{ botId: string }>();
@@ -11,7 +26,7 @@ const BotDetails: React.FC = () => {
   const { botData, setBotData } = useContext(TradingDataContext);
   const [botErrors, setBotErrors] = useState<BotError[]>([]);
   const [containerData, setContainerData] = useState<
-    ContainerStateProps[] | undefined
+    ContainerStateProps | undefined
   >();
   useEffect(() => {
     const fetchBotDetails = async () => {
@@ -50,8 +65,12 @@ const BotDetails: React.FC = () => {
       try {
         // TODO 這樣一直重複打資料庫真的好嘛？外面已經撈過全部的資料了
         const response = await axios.get(`${bot_api}/container-monitoring`);
-        setContainerData(response.data.data);
-        console.log("set ContainerData:", response.data.data);
+        if (response.data.data[0]) {
+          setContainerData(response.data.data[0]);
+          console.log("set ContainerData:", response.data.data[0]);
+        } else {
+          console.log("No container data found");
+        }
       } catch (error) {
         console.error("Error fetching container data:", error);
       }
@@ -61,113 +80,151 @@ const BotDetails: React.FC = () => {
   }, [botId]);
   // Format the timestamp
   const formattedTimestamp = (timestamp: number) =>
-    new Date(timestamp).toLocaleString();
+    new Date(timestamp).toLocaleString("zh-TW", {
+      hour12: false,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
 
+  // Format isoString
+  const formatIOString = (isoString: string) => {
+    const date = new Date(isoString);
+    const offsetHours = 8;
+    date.setHours(date.getHours() + offsetHours);
+
+    const formatted = date.toISOString().replace("T", " ").slice(0, 19);
+
+    return formatted;
+  };
   return (
-    <div>
-      {!botErrors || botErrors.length === 0 ? (
-        <p>No trading error found</p>
-      ) : (
-        botErrors.map((error, index) => (
-          <div key={index}>
-            <p>{error.error}</p>
-            <p>{new Date(error.timestamp).toLocaleString()}</p>
-          </div>
-        ))
-      )}
+    <div className="p-5 flex md:gap-5 flex-wrap text-slate-200 ">
+      {/* Left panel: History */}
+      <div className="flex flex-col w-full md:w-1/2 md:max-w-xl p-0">
+        <Accordion type="single" collapsible>
+          <AccordionItem value="history-trade">
+            <AccordionTrigger>歷史成交</AccordionTrigger>
 
-      {!containerData || containerData.length === 0 ? (
-        <p>No container info :(</p>
-      ) : (
-        containerData
-          .filter((container) => container.bot_id == Number(botId))
-          .map((data, i) => (
-            <div key={i}>
-              <p>container name: {data.container_name}</p>
-              <p>
-                運作狀態: {data.state} ({data.status})
-              </p>
-              <p>運作時間: {data.running_for}</p>
-              <p>上次更新: {data.updated_at}</p>
-              <ol>
-                {data.logs.map((log, i) => (
-                  <li key={i}>{log}</li>
+            {botData && botData.length > 0 ? (
+              <>
+                {botData.map((bot, i) => (
+                  <AccordionContent key={bot.id} className="">
+                    <Card
+                      key={i}
+                      className="bg-stone-800 text-white px-1 rounded-lg shadow-lg my-5 mx-3 border-stone-500 border-0 rounded-none border-b-2"
+                    >
+                      <CardHeader className="flex">
+                        <div className="flex justify-between flex-wrap">
+                          <CardTitle>{bot.info.symbol} 永續</CardTitle>
+                          <div className="text-gray-300 text-xs">
+                            {formattedTimestamp(bot.timestamp)}
+                          </div>
+                        </div>
+
+                        <CardDescription className="flex justify-between flex-wrap">
+                          <p
+                            className={` text-base font-bold
+                        ${
+                          bot.info.side === "BUY"
+                            ? "text-green-500"
+                            : "text-red-500"
+                        }`}
+                          >
+                            {bot.info.side}
+                          </p>
+                          <p className="text-gray-300 text-xs">
+                            # {bot.order_id}
+                          </p>
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="text-gray-300">
+                        <div className="flex justify-between">
+                          <p>價格</p>
+                          <p> {bot.avg_price.toFixed(2)}</p>
+                        </div>
+                        <div className="flex justify-between">
+                          <p>成交量</p>
+                          <p> {bot.qty}</p>
+                        </div>
+                        <div className="flex justify-between">
+                          <p>成交額 (USDT)</p>
+                          <p> {Number(bot.info.cumQuote).toFixed(2)}</p>
+                        </div>
+                        <div className="flex justify-between">
+                          <p>已實現盈虧</p>
+                          <p> {bot.realizedPnl || 0.0}</p>
+                        </div>
+                      </CardContent>
+
+                      <CardFooter className="text-gray-300 text-sm">
+                        <p>{bot.action === "test" ? "* 測試 *" : ""}</p>
+                      </CardFooter>
+                    </Card>
+                  </AccordionContent>
                 ))}
-              </ol>
-            </div>
-          ))
-      )}
+              </>
+            ) : (
+              <AccordionContent>尚無交易記錄哦!</AccordionContent>
+            )}
+          </AccordionItem>
+        </Accordion>
+      </div>
 
-      {botData && botData.length > 0 ? (
-        <>
-          <h1 className="text-xl font-bold mb-2">
-            Bot Details: {botData[0].container_name}
-          </h1>
-          <div className="mb-4">
-            <strong>Symbol:</strong> {botData[0].info.symbol}
-          </div>
-          {/* <div className="mb-4">
-            <strong>Total Realized Pnl:</strong>{" "}
-            {botData.reduce((sum, botDetail) => sum + botDetail.realizedPnl, 0)} (
-            <span>
-              {(
-                ((botData.reduce(
-                  (sum, botDetail) => sum + botDetail.realizedPnl,
-                  0
-                )) /
-                  botData.reduce(
-                    (sum, botDetail) =>
-                      sum + botDetail.qty * botDetail.avg_price,
-                    0
-                  )) *
-                100
-              ).toFixed(2)}{" "}
-              %)
-            </span>
-          </div> */}
-          {botData.map((bot) => (
-            <div
-              key={bot.id}
-              className="bg-gray-800 text-white p-4 rounded-lg shadow-lg m-2"
-            >
-              <div className="mb-4">
-                <strong>Order id:</strong> {bot.order_id}
-              </div>
-              <div className="mb-4">
-                <strong>Action:</strong> {bot.action}
-              </div>
-              <div className="mb-4">
-                <strong>Average Price:</strong> {bot.avg_price.toFixed(2)}
-              </div>
-              <div className="mb-4">
-                <strong>Quantity:</strong> {bot.qty}
-              </div>
-              <div className="mb-4">
-                <strong>成交(USDT):</strong>{" "}
-                {Number(bot.info.cumQuote).toFixed(2)}
-              </div>
-              <div className="mb-4">
-                <strong>Realized Pnl:</strong> {bot.realizedPnl || 0}
-              </div>
-              <div className="mb-4">
-                <strong>Side:</strong> {bot.info.side}
-              </div>
-              {/* <div className="mb-4">
-                <strong>Type:</strong> {bot.info.type}
-              </div> */}
+      {/* Right panel: Other details */}
+      <div className="flex flex-col grow"> 
+      {/* basis-7/12 sm:basis-ful */}
+        <Accordion type="single" collapsible>
+          <AccordionItem value="trade-error">
+            <AccordionTrigger>
+              交易執行錯誤: 發現{botErrors.length}個
+            </AccordionTrigger>
 
-              <div className="mb-4">
-                <p>
-                  <strong>Timestamp:</strong>{" "}
-                  {formattedTimestamp(bot.timestamp)}
-                </p>
-              </div>
-            </div>
-          ))}
-        </>
-      ) : (
-        <div>No bot data found</div>
-      )}
+            {botErrors.length === 0 ? (
+              <AccordionContent>讚讚 目前交易所沒有回報錯誤</AccordionContent>
+            ) : (
+              botErrors.map((error, index) => (
+                <AccordionContent key={index}>
+                  <p>{new Date(error.timestamp).toLocaleString()}</p>
+                  <p>{error.error}</p>
+                </AccordionContent>
+              ))
+            )}
+          </AccordionItem>
+        </Accordion>
+        <Accordion type="single" collapsible>
+          <AccordionItem value="container-status">
+            <AccordionTrigger>
+              機器運作狀態: {containerData?.state.toUpperCase() || "Unknown"}
+            </AccordionTrigger>
+            <AccordionContent>
+              <p>容器名稱: {containerData?.container_name || "Unknown"}</p>
+            </AccordionContent>
+            <AccordionContent>
+              <p>運作時間: {containerData?.running_for || "Unknown"}</p>
+            </AccordionContent>
+            <AccordionContent>
+              <p>
+                上次更新:{" "}
+                {containerData?.updated_at
+                  ? formatIOString(containerData.updated_at)
+                  : "Unknown"}
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+        <Accordion type="single" collapsible>
+          <AccordionItem value="container-status">
+            <AccordionTrigger>最新 5 筆 Logs (UTC+8)</AccordionTrigger>
+
+            {containerData?.logs.map((log, i) => (
+              <AccordionContent key={i}>{log}</AccordionContent>
+            )) || "Unknown"}
+          </AccordionItem>
+        </Accordion>
+      </div>
     </div>
   );
 };

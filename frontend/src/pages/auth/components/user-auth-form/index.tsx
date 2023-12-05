@@ -16,8 +16,8 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [setAccessToken] = useCookie("access_token", "");
-  const [setUserId] = useCookie("user_id", "");
+  // const [setAccessToken] = useCookie("access_token", "");
+  // const [setUserId] = useCookie("user_id", "");
   const navigate = useNavigate();
   async function onSubmit(event: React.SyntheticEvent) {
     event.preventDefault();
@@ -34,10 +34,8 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         loginData
       );
       console.log(response.data);
-      // Cookies.set('access_token', response.data.access_token, { expires: 7 });
-      // Cookies.set('user_id', response.data.user_id, { expires: 7 });
-      setAccessToken(response.data.access_token, { expires: 7 });
-      setUserId(response.data.user_id, { expires: 7 });
+      Cookies.set('access_token', response.data.access_token, { expires: 7 });
+      Cookies.set('user_id', response.data.user_id, { expires: 7 });
       alert("Login successful"); // TODO should be a dialog or toast
       // navigate to trading bots page
       navigate(`/user/${response.data.user_id}/trading-bots`);

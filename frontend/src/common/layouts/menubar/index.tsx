@@ -4,8 +4,9 @@ import { Link } from "react-router-dom";
 const MenuBar: React.FC = () => {
   return (
     <>
-      <nav className="bg-gray-800 p-4 text-white">
-        <ul className="flex space-x-4">
+      <nav className="p-4 text-white sticky top-0" style={{backgroundColor: "#191919"}}  >
+        {/* */}
+        <ul className="flex space-x-4 text-slate-200">
           <li>
             <Link to="/">Home</Link>
           </li>

@@ -6,7 +6,8 @@ const Layout: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <MenuBar />
-      <div className="flex-grow">
+      <div className="flex-grow bg-stone-800" style={{"backgroundColor": "#080202"}}>
+        {/* */}
         <Outlet />
       </div>
       <Footer />

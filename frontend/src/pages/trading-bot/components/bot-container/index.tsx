@@ -54,7 +54,6 @@ const BotContainer: React.FC = () => {
     fetchData();
   }, []);
 
-
   const handleStop = async (event: any, botId: number) => {
     try {
       event.stopPropagation();
@@ -80,10 +79,13 @@ const BotContainer: React.FC = () => {
   const handleDelete = async (event: any, botId: number) => {
     try {
       event.preventDefault();
-      const resp = await axios.delete(`${bot_api_base(botId)}`);
+      if (confirm("Sure to delete bot ?") && botId) {
+        const resp = await axios.delete(`${bot_api_base(botId)}`);
       console.log(resp.data);
       alert("Delete OK!");
       setBots((prevBots) => prevBots.filter((bot) => bot.id !== botId));
+      } else return
+      
     } catch (error: any) {
       console.error(error);
       alert(
@@ -119,7 +121,7 @@ const BotContainer: React.FC = () => {
         {bots.map((bot) => (
           <div
             key={bot.id}
-            className="bg-gray-800 p-6 rounded-lg shadow-lg flex justify-between items-center text-white"
+            className="bg-stone-800 p-6 rounded-lg shadow-lg flex justify-between items-center text-white"
           >
             <div
               className="flex flex-col"
@@ -138,19 +140,24 @@ const BotContainer: React.FC = () => {
               <div className="text-gray-400">{calculateTotalPnl(bot)} U</div>
             </div>
             <div className="flex gap-4">
-              <button
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
-                onClick={(event) => handleStop(event, bot.id)}
-              >
-                <span>Stop</span>
-              </button>
-              <button
-                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
-                onClick={(event) => handleDelete(event, bot.id)}
-              >
-                <span>Delete</span>
-              </button>
+              {bot.status === "running" ? (
+                <button
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
+                  onClick={(event) => handleStop(event, bot.id)}
+                  disabled={bot.status !== "running"}
+                >
+                  <span>Stop</span>
+                </button>
+              ) : (
+                <button
+                  className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded inline-flex items-center"
+                  onClick={(event) => handleDelete(event, bot.id)}
+                >
+                  <span>Delete</span>
+                </button>
+              )}
             </div>
+
             <div
               className={`px-3 py-1 rounded-full text-sm font-semibold ${
                 bot.status === "running" ? "bg-green-500" : "bg-red-500"
