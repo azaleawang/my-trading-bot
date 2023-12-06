@@ -37,7 +37,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
       Cookies.set('user_id', response.data.user_id, { expires: 7 });
       alert("Login successful"); // TODO should be a dialog or toast
       // navigate to trading bots page
-      navigate(`/user/${response.data.user_id}/trading-bots`);
+      navigate(`/trading-bots`);
     } catch (error: any) {
       console.error("Sign in failed", error);
       alert(error.response?.data?.detail || "Something went wrong when signin");

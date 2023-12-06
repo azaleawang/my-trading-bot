@@ -4,24 +4,20 @@ import { Link } from "react-router-dom";
 const MenuBar: React.FC = () => {
   return (
     <>
-      <nav className="p-4 text-white sticky top-0" style={{backgroundColor: "#191919"}}  >
-        {/* */}
-        <ul className="flex space-x-4 text-slate-200">
-          <li>
-            <Link to="/">Home</Link>
-          </li>
-          {/* Assuming a static userId for demonstration; replace with dynamic userId as needed */}
-          <li>
-            <Link to="/trading-bots">Trading Bots</Link>
-          </li>
-          <li>
-            <Link to="/create-bot">Create Bot</Link>
-          </li>
-          <li>
-            <Link to="/backtest">Backtest</Link>
-          </li>
-        </ul>
-      </nav>
+      <ul className="flex space-x-5 text-slate-200">
+        <li className="flex items-center">
+          <Link to="/">首頁</Link>
+        </li>
+        <li className="flex items-center">
+          <Link to="/trading-bots">我的機器人</Link>
+        </li>
+        <li className="flex items-center">
+          <Link to="/create-bot">新增機器人</Link>
+        </li>
+        <li className="flex items-center">
+          <Link to="/backtest">策略回測</Link>
+        </li>
+      </ul>
     </>
   );
 };
