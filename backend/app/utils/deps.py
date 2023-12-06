@@ -39,7 +39,7 @@ async def get_current_user(
         )
 
     user = get_user_by_email(db, token_data.email)
-
+    
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

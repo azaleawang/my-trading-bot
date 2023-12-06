@@ -63,7 +63,7 @@ app.add_middleware(
 )
 
 
-@app.get("/me", summary="Get details of currently logged in user")
+@app.get("/api/v1/user/profile", summary="Get details of currently logged in user to authenticate user", response_model=schemas.UserPublic)
 async def get_me(user: schemas.User = Depends(get_current_user)):
     return user
 

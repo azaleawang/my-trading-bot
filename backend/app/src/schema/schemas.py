@@ -33,6 +33,11 @@ class User(UserBase):
     class Config:
         from_attributes = True
 
+class UserPublic(UserBase):
+    id: int
+
+    class Config:
+        from_attributes = True
 
 # Bot schema
 

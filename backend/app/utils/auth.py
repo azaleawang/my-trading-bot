@@ -46,3 +46,4 @@ def create_refresh_token(username: str, email: str, expires_delta: int = None) -
     to_encode = {"exp": expires_delta, "username": username, "email": email}
     encoded_jwt = jwt.encode(to_encode, JWT_REFRESH_SECRET_KEY, ALGORITHM)
     return encoded_jwt
+
