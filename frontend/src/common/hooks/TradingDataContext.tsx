@@ -11,23 +11,23 @@ interface TradingDataContextProps {
   setBotData: (data: BotDetailsProps[] | undefined) => void; // Function to update botData
   auth: boolean;
   setAuth: (auth: boolean) => void;
-  profile: Profile | undefined;
+  // profile: Profile | undefined;
 }
-interface Profile {
-  id: number;
-  name: string;
-  email: string;
-}
+// interface Profile {
+//   id: number;
+//   name: string;
+//   email: string;
+// }
 
-const defaultState: TradingDataContextProps & { profile: Profile | undefined, setProfile: (profile: Profile | undefined) => void } = {
+const defaultState: TradingDataContextProps = {
   markPrice: null,
   setMarkPrice: () => {},
   botData: undefined,
   setBotData: () => {},
   auth: false,
   setAuth: () => {},
-  profile: undefined,
-  setProfile: () => {},
+  // profile: undefined,
+  // setProfile: () => {},
 };
 
 export const TradingDataContext =
@@ -40,7 +40,7 @@ export const TradingDataProvider: React.FC<{ children: ReactNode }> = ({
   const [botData, setBotData] = useState<BotDetailsProps[] | undefined>();
   const [auth, setAuth] = useState(false);
   const [access_token] = useCookie("access_token", "");
-  const [profile, setProfile] = useState<Profile>();
+  // const [profile, setProfile] = useState<Profile>();
   const getProfile = async () => {
     if (!access_token) {
       console.log("No jwt token");
@@ -54,7 +54,7 @@ export const TradingDataProvider: React.FC<{ children: ReactNode }> = ({
         },
       });
       console.log("jwt token is valid", "User = ", resp.data);
-      setProfile(resp.data);
+      // setProfile(resp.data);
       setAuth(true);
     } catch (error) {
       console.error(error);
@@ -74,7 +74,7 @@ export const TradingDataProvider: React.FC<{ children: ReactNode }> = ({
         setBotData,
         auth,
         setAuth,
-        profile,
+        // profile,
       }}
     >
       {children}

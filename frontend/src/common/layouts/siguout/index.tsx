@@ -2,7 +2,6 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Cookies from "js-cookie";
-import useCookie from "@/common/hooks/useCookie";
 import { TradingDataContext } from "@/common/hooks/TradingDataContext";
 
 const SignButton: React.FC = () => {
