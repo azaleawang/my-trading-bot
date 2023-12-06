@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { TradingDataContext } from "@/common/hooks/TradingDataContext";
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -18,6 +19,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   // const [setAccessToken] = useCookie("access_token", "");
   // const [setUserId] = useCookie("user_id", "");
   const navigate = useNavigate();
+  const { setAuth } = React.useContext(TradingDataContext);
   async function onSubmit(event: React.SyntheticEvent) {
     event.preventDefault();
     setIsLoading(true);
@@ -33,8 +35,9 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         loginData
       );
       console.log(response.data);
-      Cookies.set('access_token', response.data.access_token, { expires: 7 });
-      Cookies.set('user_id', response.data.user_id, { expires: 7 });
+      Cookies.set('access_token', response.data.access_token, { expires: 1 });
+      Cookies.set('user_id', response.data.user_id, { expires: 1 });
+      setAuth(true);
       alert("Login successful"); // TODO should be a dialog or toast
       // navigate to trading bots page
       navigate(`/trading-bots`);
