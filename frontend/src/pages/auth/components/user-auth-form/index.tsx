@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { TradingDataContext } from "@/common/hooks/TradingDataContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -28,7 +28,6 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   // const [setUserId] = useCookie("user_id", "");
   const navigate = useNavigate();
   const { setAuth } = React.useContext(TradingDataContext);
-
   // TODO: add validation for name, email and password
   function validateInput(name: string, email: string, password: string) {
     if (!name.trim() || !email.trim() || !password.trim()) {
@@ -93,8 +92,8 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
       Cookies.set("user_id", response.data.user_id, { expires: 1 });
       setAuth(true);
       alert("Login successful"); // TODO should be a dialog or toast
-      // navigate to trading bots page
-      navigate(`/trading-bots`);
+
+      navigate(-1);
     } catch (error: any) {
       console.error("Sign in failed", error);
       alert(

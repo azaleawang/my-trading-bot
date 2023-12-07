@@ -1,21 +1,52 @@
-// import axios from "axios";
-// import Cookies from "js-cookie";
-// import { TradingDataContext } from "@/common/hooks/TradingDataContext";
+import axios from "axios";
 import useCookie from "@/common/hooks/useCookie";
 // import React from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, Outlet, useLocation } from "react-router-dom";
+interface Profile {
+  id: number;
+  name: string;
+  email: string;
+}
+export default function ProtectedRoute() {
+  const [error, setError] = useState<unknown>();
+  const [loading, setLoading] = useState(true);
+  const [access_token] = useCookie("access_token", "");
+  const navigate = useNavigate();
+  const location = useLocation();
 
+  useEffect(() => {
+    const checkAuthentication = async () => {
+      try {
+        const resp = await axios.get("/api/v1/user/profile", {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        });
 
+        const profile: Profile = resp.data;
 
-const ProtectedRoute = () => {
+        if (!profile) {
+          console.log("You are not authenticated!");
+          navigate("/");
+        } else {
+          // setIsAuth(true);
+          setLoading(false);
+          console.log("You are authenticated!");
+        }
+      } catch (error) {
+        console.log("error", error);
+        setError(error);
+      }
+    };
 
-    const [access_token] = useCookie("access_token", "");
-    // If i fetch user profile here to auth, will fail, idk why...
-    // const { auth } = React.useContext(TradingDataContext);
-    // console.log("You are authenticated?", auth);
+    checkAuthentication();
+  }, [navigate, location]);
 
-    // TODO 重新整理之後會一開始auth = false但點分頁會變成true 怪怪
-  return access_token ? <Outlet /> : <Navigate to="/" />;
-};
+  if (error) {
+    navigate("/");
+  }
 
-export default ProtectedRoute;
+  return loading ? <></>: <Outlet />;
+}
+
