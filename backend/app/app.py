@@ -63,7 +63,11 @@ app.add_middleware(
 )
 
 
-@app.get("/api/v1/user/profile", summary="Get details of currently logged in user to authenticate user", response_model=schemas.UserPublic)
+@app.get(
+    "/api/v1/user/profile",
+    summary="Get details of currently logged in user to authenticate user",
+    response_model=schemas.UserPublic,
+)
 async def get_me(user: schemas.User = Depends(get_current_user)):
     return user
 
@@ -75,6 +79,8 @@ def create_new_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
         if db_user:
             raise HTTPException(status_code=400, detail="Email already registered")
         return create_user(db=db, user=user)
+    except HTTPException as http_ex:
+        raise http_ex
     except Exception as e:
         print(e)
         raise HTTPException(
@@ -113,7 +119,7 @@ async def login(
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
-            "user_id": user.id
+            "user_id": user.id,
         }
     except HTTPException as http_ex:
         raise http_ex

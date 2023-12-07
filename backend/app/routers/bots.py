@@ -146,7 +146,7 @@ class ContainerInfoDict(BaseModel):
 
 @router.post("/container-monitoring")
 def receive_and_store_container_monitoring_info(data: ContainerInfoDict):
-    try:  # TODO store the data into database
+    try:
         parse_and_store(container_data=data.data)
         return {"message": "Data from docker-monitoring worker received successfully"}
     except Exception as e:
