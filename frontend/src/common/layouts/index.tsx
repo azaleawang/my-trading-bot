@@ -17,7 +17,6 @@ const Layout: React.FC = () => {
       >
         {/* */}
         <Outlet />
-        SignoutButton
       </div>
       <Footer />
     </div>
