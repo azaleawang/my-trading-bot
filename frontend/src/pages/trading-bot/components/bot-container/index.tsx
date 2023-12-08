@@ -134,7 +134,8 @@ const BotContainer: React.FC = () => {
     <>
       <div className="flex flex-wrap gap-5 p-6 text-slate-200">
         {bots.length === 0 || !bots ? (
-          <h1>尚無機器人，快來新增一個看看吧！</h1>
+          // <h1>尚無機器人，快來新增一個看看吧！</h1>
+          <></>
         ) : (
           bots.map((bot, i) => (
             <Card
