@@ -19,6 +19,7 @@ def start_bot_container(container_name: str, bot_info: schemas.BotBase) -> dict:
             "docker",
             "run",
             "-d",
+            "-m", "128m",
             "--name",
             container_name,
             "-e",
