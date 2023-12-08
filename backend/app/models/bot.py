@@ -1,8 +1,8 @@
 import pytz
-from sqlalchemy import Column, ForeignKey, String, Text, Float
+from sqlalchemy import Column, ForeignKey, String, Text, Float, Integer
 from sqlalchemy.orm import relationship
 from .base import Base
-from sqlalchemy.dialects.postgresql import BIGINT, TIMESTAMP, ENUM
+from sqlalchemy.dialects.postgresql import BIGINT, TIMESTAMP
 from datetime import datetime
 
 
@@ -40,3 +40,6 @@ class Bot(Base):
     container_status = relationship(
         "ContainerStatus", back_populates="bot", cascade="all, delete-orphan"
     )
+    memory_usage = Column(Integer, default=128)  # Memory usage in MB
+    worker_server_id = Column(BIGINT, ForeignKey('worker_servers.id'))
+    worker_server = relationship("WorkerServer", back_populates="bots")
