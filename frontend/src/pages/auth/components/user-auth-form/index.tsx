@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import axios from "axios";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { TradingDataContext } from "@/common/hooks/TradingDataContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -17,9 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
-
-export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
+export function UserAuthForm() {
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [email, setEmail] = useState<string>("test@test.com");
   const [password, setPassword] = useState<string>("string");
