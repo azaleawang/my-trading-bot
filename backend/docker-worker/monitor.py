@@ -24,7 +24,9 @@ def fetch_all_containers():
 
 def send_data_to_server(data):
     try:
-        url = f"{os.getenv('HOST')}:{os.getenv('PORT')}/api/v1/bots/container-monitoring"
+        url = (
+            f"{os.getenv('HOST')}:{os.getenv('PORT')}/api/v1/bots/container-monitoring"
+        )
         response = requests.post(url, json=data)
         print("server said: ", response.text)
     except Exception as e:
@@ -44,6 +46,8 @@ def get_container_status(container_id: str) -> list:
     ]
     try:
         result = subprocess.run(command, capture_output=True, text=True)
+        if (not result.stdout) or (not result.stdout.splitlines()):
+            return None
         containers = [json.loads(line) for line in result.stdout.splitlines()]
 
         return containers
@@ -54,9 +58,12 @@ def get_container_status(container_id: str) -> list:
             detail="Error getting status for docker container: " + str(e.stderr),
         )
     except Exception as e:
-        print(f"Unexpected Error getting status for docker container {container_id}: {e}")
+        print(
+            f"Unexpected Error getting status for docker container {container_id}: {e}"
+        )
         raise HTTPException(
-            status_code=500, detail="Error getting status for docker container: " + str(e)
+            status_code=500,
+            detail="Error getting status for docker container: " + str(e),
         )
 
 
@@ -104,11 +111,12 @@ if __name__ == "__main__":
                 container_id = container.get("container_id")
                 if not container_id:
                     continue
-                
+
                 container_dict = {}
                 container_dict["container_id"] = container_id
-                print(f"Checking container {container['name']}")
                 state = get_container_status(container_id)
+                if not state:
+                    continue
                 container_dict["state"] = state
 
                 logs = get_last_container_logs(container_id)
@@ -118,9 +126,11 @@ if __name__ == "__main__":
             data_json = json.dumps({"data": data_to_server})
             # print(data_json)
 
-            send_data_to_server(json.loads(data_json))
-        
-        time.sleep(60)
+            send_data_to_server(json.loads(data_json)) if data_to_server else print(
+                "No data need to sent to server"
+            )
+
+        time.sleep(10)
 
 
 # data: [{"name": "m", "state": [], "logs": []}, {}]

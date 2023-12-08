@@ -50,9 +50,9 @@ class BotBase(BaseModel):
     strategy: str = "supertrend"
     symbol: str = "ETH/USDT"
     description: Union[str, None] = None
-    created_at: datetime
+    # created_at: datetime
     t_frame: str = "1d"
-    quantity: float = 0.1
+    quantity: float = 110
     # status: str = 'running'
 
 
@@ -144,6 +144,7 @@ class TradeHistory_Resp(BaseModel):
 
 class Bot(BotCreate):
     id: int
+    created_at: datetime
     trade_history: List[TradeHistory_Resp]
 
     class Config:

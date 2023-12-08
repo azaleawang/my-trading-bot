@@ -26,7 +26,7 @@ def get_user_bots(db: Session, user_id: int):
 
 
 def create_user_bot(db: Session, bot: schemas.BotCreate):
-    # TODO 儲存失敗但docker已經開起來怎麼辦
+    # TODO 儲存失敗但docker已經開起來怎麼辦(應該要分兩次存)
     try:
         db_bot = Bot(**bot.model_dump())
         # Check if the bot name registered

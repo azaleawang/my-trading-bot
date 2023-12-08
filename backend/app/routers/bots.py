@@ -3,6 +3,7 @@ from typing import List, Union, Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+import requests
 from sqlalchemy.orm import Session
 from app.crud.bot import (
     check_name,
@@ -37,8 +38,15 @@ class BotHistoryResp(BaseModel):
 class BotCreate_Resp(BaseModel):
     data: List[schemas.BotCreate]
 
+class BotCheck(BaseModel):
+    container_id: str
+    container_name: str
+    status: str = "running"
 
-@router.get("/admin", response_model=BotCreate_Resp)
+class BotCheck_Resp(BaseModel):
+    data: List[BotCheck]
+
+@router.get("/admin", response_model=BotCheck_Resp)
 def get_all_bots(db: Session = Depends(get_db)):
     try:
         db_all_bots = get_bots(db)
@@ -51,16 +59,24 @@ def get_all_bots(db: Session = Depends(get_db)):
 class BotCreatedResp(BaseModel):
     data: schemas.Bot
 
+
 @router.post("/", response_model=BotCreatedResp)
-def create_bot_for_user(
-    bot: schemas.BotBase, db: Session = Depends(get_db)
-):
+def create_bot_for_user(bot: schemas.BotBase, db: Session = Depends(get_db)):
     try:
         container_name = f"User{bot.owner_id}_{bot.strategy}_{bot.name}"
         check_name(db, container_name, bot.name, bot.owner_id)
         # TODO 可能會出現已經開啟container但資料庫儲存有問題
-        bot_docker_info = start_bot_container(container_name, bot)
-        # Convert Pydantic model to a dictionary
+        # bot_docker_info = start_bot_container(container_name, bot)
+        response = requests.post(
+            f"http://127.0.0.1:5000/start-container?container_name={container_name}",
+            json=bot.model_dump(),
+        )
+        if response.status_code == 200:
+            bot_docker_info = response.json()
+        else:
+            raise HTTPException(
+                status_code=response.status_code, detail="Failed to start container."
+            )  # Convert Pydantic model to a dictionary
         bot_dict = bot.model_dump()
 
         bot_create = schemas.BotCreate(**bot_dict, **bot_docker_info)

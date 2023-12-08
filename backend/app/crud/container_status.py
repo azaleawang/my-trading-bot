@@ -61,16 +61,6 @@ def parse_and_store(container_data):
                 new_record = create_new_container_record(bot_id, container)
                 db.add(new_record)
 
-            # bot_status = (
-            #     db.query(Bot.status).filter(Bot.container_id == container_id).first()
-            # )
-            # if bot_status and bot_status[0] != existing_record.status:
-            #     db.query(Bot).filter(Bot.container_id == container_id).update(
-            #         {"status": existing_record.status}
-            #     )
-            #     print(
-            #         f"Container {container_id} status updated to {existing_record.status}"
-            #     )
 
             db.commit()  # Commit changes for each container
 
