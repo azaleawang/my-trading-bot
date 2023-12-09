@@ -33,11 +33,13 @@ class User(UserBase):
     class Config:
         from_attributes = True
 
+
 class UserPublic(UserBase):
     id: int
 
     class Config:
         from_attributes = True
+
 
 # Bot schema
 
@@ -61,7 +63,7 @@ class BotCreate(BotBase):
     container_id: str
     container_name: str
     status: str = "running"
-    worker_server_ip: str  
+    worker_server_ip: str
 
 
 # Backtest_result schema
@@ -208,3 +210,16 @@ class ContainerStateDict(BaseModel):
 class LoginForm(BaseModel):
     email: str
     password: str
+
+
+class WorkerServerCreate(BaseModel):
+    private_ip: str
+    total_memory: int = 550
+
+
+class WorkerServerRead(WorkerServerCreate):
+    id: int
+    available_memory: int
+
+    class Config:
+        from_attributes = True

@@ -23,7 +23,7 @@ from app.src.schema import schemas
 from app.crud.bot_error import create_error_log
 from app.crud.user import create_user, get_user_by_email
 from app.utils.deps import get_current_user
-from .routers import backtests, users, bots, strategies
+from .routers import backtests, users, bots, strategies, workers
 from app.models import Base
 from .src.config.database import SessionLocal, engine, get_db
 from starlette.websockets import WebSocketDisconnect
@@ -51,6 +51,9 @@ app.include_router(
 )
 app.include_router(
     strategies.router, prefix=f"/api/{API_VER}/strategies", tags=["Strategy"]
+)
+app.include_router(
+    workers.router, prefix=f"/api/{API_VER}/worker-servers", tags=["Worker-Server"]
 )
 app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
 
