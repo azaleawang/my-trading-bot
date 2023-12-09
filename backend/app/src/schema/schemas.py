@@ -46,7 +46,7 @@ class BotBase(BaseModel):
     # container_id: str
     # container_name
     name: str = "cool_bot"
-    owner_id: int
+    owner_id: int = 1
     strategy: str = "supertrend"
     symbol: str = "ETH/USDT"
     description: Union[str, None] = None
@@ -61,6 +61,7 @@ class BotCreate(BotBase):
     container_id: str
     container_name: str
     status: str = "running"
+    worker_server_ip: str  
 
 
 # Backtest_result schema

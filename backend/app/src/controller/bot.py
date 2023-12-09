@@ -4,8 +4,10 @@ from typing import Union
 from fastapi import HTTPException
 
 from pydantic import BaseModel
+import requests
 from app.src.schema import schemas
 import os, json
+
 
 
 class Bot_Created_Resp(BaseModel):
@@ -19,7 +21,8 @@ def start_bot_container(container_name: str, bot_info: schemas.BotBase) -> dict:
             "docker",
             "run",
             "-d",
-            "-m", "128m",
+            "-m",
+            "128m",
             "--name",
             container_name,
             "-e",
@@ -65,42 +68,58 @@ def start_bot_container(container_name: str, bot_info: schemas.BotBase) -> dict:
         raise HTTPException(status_code=500, detail=error_message)
 
 
-def stop_bot_container(container_id: str):
-    command = ["docker", "stop", container_id]
-    try:
-        subprocess.run(
-            command,
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-    except subprocess.CalledProcessError as e:
-        print(f"Error stopping docker container {container_id}: {e.stderr}")
+def stop_bot_container(container_id: str, worker_ip: str):
+    response = requests.put(f"{worker_ip}/stop-container?container_id={container_id}")
+    if response.status_code == 200:
+        print(response.json())
+    else:
         raise HTTPException(
-            status_code=500,
-            detail="Error stopping bot in docker. Pls check docker's status"
-            + str(e.stderr),
+            status_code=response.status_code,
+            detail="Failed to stop container in worker server.",
         )
+    # command = ["docker", "stop", container_id]
+    # try:
+    #     subprocess.run(
+    #         command,
+    #         check=True,
+    #         stdout=subprocess.PIPE,
+    #         stderr=subprocess.PIPE,
+    #         text=True,
+    #     )
+    # except subprocess.CalledProcessError as e:
+    #     print(f"Error stopping docker container {container_id}: {e.stderr}")
+    #     raise HTTPException(
+    #         status_code=500,
+    #         detail="Error stopping bot in docker. Pls check docker's status"
+    #         + str(e.stderr),
+    #     )
 
 
-def delete_bot_container(container_id: str):
-    command = ["docker", "rm", container_id]
-    try:
-        res = subprocess.run(
-            command,
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-        if not res:
-            raise HTTPException(
-                status_code=500,
-                detail="Error deleting bot in docker. Pls check docker's status",
-            )
-    except subprocess.CalledProcessError as e:
-        print(f"Error deleting docker container {container_id}: {e.stderr}")
+def delete_bot_container(container_id: str, worker_ip: str):
+    response = requests.delete(f"{worker_ip}/delete-container?container_id={container_id}")
+    if response.status_code == 200:
+        print(response.json())
+    else:
         raise HTTPException(
-            status_code=500, detail="Error deleting bot in docker: " + str(e.stderr)
+            status_code=response.status_code,
+            detail="Failed to stop container in worker server.",
         )
+    # command = ["docker", "rm", container_id]
+    # try:
+    #     res = subprocess.run(
+    #         command,
+    #         check=True,
+    #         stdout=subprocess.PIPE,
+    #         stderr=subprocess.PIPE,
+    #         text=True,
+    #     )
+    #     if not res:
+    #         raise HTTPException(
+    #             status_code=500,
+    #             detail="Error deleting bot in docker. Pls check docker's status",
+    #         )
+    # except subprocess.CalledProcessError as e:
+    #     print(f"Error deleting docker container {container_id}: {e.stderr}")
+    #     raise HTTPException(
+    #         status_code=500, detail="Error deleting bot in docker: " + str(e.stderr)
+    #     )

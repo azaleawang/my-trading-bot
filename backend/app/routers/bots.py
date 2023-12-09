@@ -9,9 +9,11 @@ from app.crud.bot import (
     check_name,
     create_user_bot,
     delete_user_bot,
+    find_worker_server,
     get_bots,
     get_user_bots,
     stop_user_bot,
+    update_worker_server_memory,
 )
 from app.src.schema import schemas
 from app.src.config.database import get_db
@@ -19,9 +21,9 @@ from app.crud.trade_history import get_bot_trade_history
 from app.crud.bot_error import get_error_log_by_container
 from app.crud.container_status import (
     get_container_status,
-    get_user_containers_status,
     parse_and_store,
 )
+from app.crud.bot import assign_worker_server
 from app.src.controller.bot import start_bot_container
 
 router = APIRouter()
@@ -38,13 +40,16 @@ class BotHistoryResp(BaseModel):
 class BotCreate_Resp(BaseModel):
     data: List[schemas.BotCreate]
 
+
 class BotCheck(BaseModel):
     container_id: str
     container_name: str
     status: str = "running"
 
+
 class BotCheck_Resp(BaseModel):
     data: List[BotCheck]
+
 
 @router.get("/admin", response_model=BotCheck_Resp)
 def get_all_bots(db: Session = Depends(get_db)):
@@ -67,20 +72,26 @@ def create_bot_for_user(bot: schemas.BotBase, db: Session = Depends(get_db)):
         check_name(db, container_name, bot.name, bot.owner_id)
         # TODO 可能會出現已經開啟container但資料庫儲存有問題
         # bot_docker_info = start_bot_container(container_name, bot)
+        # get available worker server ip
+        worker_ip = assign_worker_server(db)
+        # worker_ip = "http://localhost:3000"
         response = requests.post(
-            f"http://127.0.0.1:5000/start-container?container_name={container_name}",
+            f"{worker_ip}/start-container?container_name={container_name}",
             json=bot.model_dump(),
         )
         if response.status_code == 200:
             bot_docker_info = response.json()
         else:
             raise HTTPException(
-                status_code=response.status_code, detail="Failed to start container."
-            )  # Convert Pydantic model to a dictionary
+                status_code=response.status_code, detail="Failed to start container in worker server."
+            )
         bot_dict = bot.model_dump()
 
-        bot_create = schemas.BotCreate(**bot_dict, **bot_docker_info)
+        # TODO pls store worker server id into bot table
+        bot_create = schemas.BotCreate(**bot_dict, **bot_docker_info, worker_server_ip=worker_ip)
         db_bot = create_user_bot(db, bot_create)
+        worker_server = update_worker_server_memory(db, worker_ip, db_bot.memory_usage)
+        print("Update server memory", worker_server.available_memory, "usage = ",  db_bot.memory_usage)
         return {
             "data": db_bot,
         }
@@ -94,8 +105,10 @@ def create_bot_for_user(bot: schemas.BotBase, db: Session = Depends(get_db)):
 @router.put("/{bot_id}")
 def stop_bot_for_user(bot_id: int, db: Session = Depends(get_db)) -> dict:
     try:
-        user_bot = stop_user_bot(bot_id, db)
-        print(user_bot)
+        worker_ip = find_worker_server(db, bot_id)
+        print("find worker ip = ", worker_ip)
+        user_bot = stop_user_bot(bot_id, worker_ip, db)
+        update_worker_server_memory(db, user_bot.worker_server_ip, -user_bot.memory_usage)
 
         return {"message": f"Bot #{bot_id} {user_bot.name} stopped!"}
     except HTTPException as http_ex:
@@ -107,7 +120,8 @@ def stop_bot_for_user(bot_id: int, db: Session = Depends(get_db)) -> dict:
 @router.delete("/{bot_id}")
 def delete_bot_for_user(bot_id: int, db: Session = Depends(get_db)) -> dict:
     try:
-        user_bot = delete_user_bot(bot_id, db)
+        worker_ip = find_worker_server(db, bot_id)
+        user_bot = delete_user_bot(bot_id, worker_ip, db)
 
         return {
             "message": f"Bot #{bot_id} {user_bot.name} removed from Docker containers!"

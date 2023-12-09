@@ -41,5 +41,5 @@ class Bot(Base):
         "ContainerStatus", back_populates="bot", cascade="all, delete-orphan"
     )
     memory_usage = Column(Integer, default=128)  # Memory usage in MB
-    worker_server_id = Column(BIGINT, ForeignKey('worker_servers.id'))
+    worker_server_ip = Column(String, ForeignKey('worker_servers.private_ip'))
     worker_server = relationship("WorkerServer", back_populates="bots")
