@@ -100,11 +100,6 @@ def delete_user_bot(bot_id: int, worker_ip: str, db: Session):
 
     if bot is None:
         raise HTTPException(status_code=404, detail=f"Bot #{bot_id} Bot not found.")
-    # if bot.owner_id != user_id:
-    #     raise HTTPException(
-    #         status_code=404,
-    #         detail=f"No matched bot #{bot_id} for this user id {user_id}.",
-    #     )
     if bot.status == "running":
         raise HTTPException(
             status_code=400, detail=f"Please stop Bot #{bot_id} manually first!"
@@ -113,7 +108,6 @@ def delete_user_bot(bot_id: int, worker_ip: str, db: Session):
         raise HTTPException(status_code=400, detail=f"Bot #{bot_id} already deleted.")
 
     if bot.status == "stopped" or bot.status == "exited":
-        
         delete_bot_container(bot.container_id, worker_ip)
         db.delete(bot)
         db.commit()
@@ -126,7 +120,7 @@ def delete_user_bot(bot_id: int, worker_ip: str, db: Session):
 
 
 def assign_worker_server(db: Session):
-    try:  
+    try:
         # Find a worker server with enough available memory
         suitable_server = (
             db.query(WorkerServer)
@@ -141,48 +135,44 @@ def assign_worker_server(db: Session):
             # session.add(new_container)
             # session.commit()
             print(f"Assigning container to server {suitable_server.private_ip}")
-            return suitable_server.private_ip
+            return suitable_server
         else:
-            return "No suitable server found for the container."
+            raise HTTPException(
+                status_code=500, detail="No available worker-server found."
+            )
     except SQLAlchemyError as e:
         logging.error(f"Error in assigning worker server: {e}")
         raise HTTPException(status_code=500, detail="Database error.")
     except Exception as e:
         logging.error(f"Unexpected error in assigning worker server: {e}")
         raise HTTPException(status_code=500, detail="Unexpected database error.")
-    
+
 
 # update worker server available memory
-def update_worker_server_memory(db: Session, worker_server_ip: str, memory_usage: int):
-    try:
-        worker_server = db.query(WorkerServer).filter(WorkerServer.private_ip == worker_server_ip).first()
-        if worker_server:
-            worker_server.available_memory -= memory_usage
-            db.commit()
-            return worker_server
-        else:
-            raise HTTPException(status_code=404, detail=f"Worker server {worker_server_ip} not found.")
-    except SQLAlchemyError as e:
-        logging.error(f"Error in updating worker server available memory: {e}")
-        raise HTTPException(status_code=500, detail="Database error.")
-    except Exception as e:
-        logging.error(f"Unexpected error in updating worker server available memory: {e}")
-        raise HTTPException(status_code=500, detail="Unexpected database error.")
-    
+def update_worker_server_memory(
+    db: Session, worker_instance_id: str, memory_usage: int
+):
+    worker_server = (
+        db.query(WorkerServer)
+        .filter(WorkerServer.instance_id == worker_instance_id)
+        .first()
+    )
+    if worker_server:
+        worker_server.available_memory -= memory_usage
+        db.commit()
+        return worker_server
+    else:
+        raise HTTPException(
+            status_code=404, detail=f"Worker server {worker_instance_id} not found."
+        )
+
+
 # find worker server by bot id
 def find_worker_server(db: Session, bot_id: int):
-    try:
-        bot = db.query(Bot).filter(Bot.id == bot_id).first()
-       
-        if bot:
-            if bot.worker_server:
-                return bot.worker_server.private_ip
-            raise HTTPException(status_code=404, detail=f"Bot's worker_server not found.")
-        else:
-            raise HTTPException(status_code=404, detail=f"Bot {bot_id} not found.")
-    except SQLAlchemyError as e:
-        logging.error(f"Error in finding worker server by bot id: {e}")
-        raise HTTPException(status_code=500, detail="Database error.")
-    except Exception as e:
-        logging.error(f"Unexpected error in finding worker server by bot id: {e}")
-        raise HTTPException(status_code=500, detail="Unexpected database error.")
+    bot = db.query(Bot).filter(Bot.id == bot_id).first()
+    if bot == None:
+        raise HTTPException(status_code=404, detail=f"Bot {bot_id} not found.")
+    if bot.worker_server:
+        return bot.worker_server.private_ip
+
+    raise HTTPException(status_code=404, detail=f"Bot's worker_server not data.")

@@ -63,7 +63,7 @@ class BotCreate(BotBase):
     container_id: str
     container_name: str
     status: str = "running"
-    worker_server_ip: str
+    worker_instance_id: str
 
 
 # Backtest_result schema
@@ -213,6 +213,7 @@ class LoginForm(BaseModel):
 
 
 class WorkerServerCreate(BaseModel):
+    instance_id: str
     private_ip: str
     total_memory: int = 550
 

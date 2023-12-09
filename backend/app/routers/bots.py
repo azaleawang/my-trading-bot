@@ -73,10 +73,10 @@ def create_bot_for_user(bot: schemas.BotBase, db: Session = Depends(get_db)):
         # bot_docker_info = start_bot_container(container_name, bot)
         # get available worker server ip
         # TODO maybe need to check whether the worker server is open
-        worker_ip = assign_worker_server(db)
+        worker_server = assign_worker_server(db)
         # worker_ip = "http://localhost:3000"
         response = requests.post(
-            f"{worker_ip}/start-container?container_name={container_name}",
+            f"{worker_server.private_ip}/start-container?container_name={container_name}",
             json=bot.model_dump(),
         )
         if response.status_code == 200:
@@ -85,12 +85,11 @@ def create_bot_for_user(bot: schemas.BotBase, db: Session = Depends(get_db)):
             raise HTTPException(
                 status_code=response.status_code, detail="Failed to start container in worker server."
             )
+            
         bot_dict = bot.model_dump()
-
-        # TODO pls store worker server id into bot table
-        bot_create = schemas.BotCreate(**bot_dict, **bot_docker_info, worker_server_ip=worker_ip)
+        bot_create = schemas.BotCreate(**bot_dict, **bot_docker_info, worker_instance_id=worker_server.instance_id)
         db_bot = create_user_bot(db, bot_create)
-        worker_server = update_worker_server_memory(db, worker_ip, db_bot.memory_usage)
+        worker_server = update_worker_server_memory(db, worker_server.instance_id, db_bot.memory_usage)
         print("Update server memory", worker_server.available_memory, "usage = ",  db_bot.memory_usage)
         return {
             "data": db_bot,
@@ -108,7 +107,7 @@ def stop_bot_for_user(bot_id: int, db: Session = Depends(get_db)) -> dict:
         worker_ip = find_worker_server(db, bot_id)
         print("find worker ip = ", worker_ip)
         user_bot = stop_user_bot(bot_id, worker_ip, db)
-        update_worker_server_memory(db, user_bot.worker_server_ip, -user_bot.memory_usage)
+        update_worker_server_memory(db, user_bot.worker_instance_id, -user_bot.memory_usage)
 
         return {"message": f"Bot #{bot_id} {user_bot.name} stopped!"}
     except HTTPException as http_ex:
