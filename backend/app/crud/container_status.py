@@ -78,15 +78,14 @@ def parse_and_store(container_data):
 
 def check_bot_status_consistency(db, container_id, db_record):
     bot_status = db.query(Bot.status).filter(Bot.container_id == container_id).first()
-    print(f"Checking bot status", bot_status[0], db_record.state, container_id)
     if (bot_status[0] and bot_status[0] != db_record.state):
         db.query(Bot).filter(Bot.container_id == container_id).update(
             {"status": db_record.state}
         )
         print(f"Container {container_id} status updated to {db_record.status}")
         db.commit() 
-    else:
-        print(f"Bot status is consistent with container status")
+    # else:
+    #     print(f"Bot status is consistent with container status")
     return
 
 
