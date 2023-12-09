@@ -143,6 +143,8 @@ def assign_worker_server(db: Session):
     except SQLAlchemyError as e:
         logging.error(f"Error in assigning worker server: {e}")
         raise HTTPException(status_code=500, detail="Database error.")
+    except HTTPException as httpx:
+        raise httpx
     except Exception as e:
         logging.error(f"Unexpected error in assigning worker server: {e}")
         raise HTTPException(status_code=500, detail="Unexpected database error.")
