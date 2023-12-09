@@ -1,6 +1,5 @@
 import logging
 from typing import List
-from app.src.controller.bot import start_bot_container
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel

@@ -24,7 +24,6 @@ from app.crud.container_status import (
     parse_and_store,
 )
 from app.crud.bot import assign_worker_server
-from app.src.controller.bot import start_bot_container
 
 router = APIRouter()
 
@@ -73,6 +72,7 @@ def create_bot_for_user(bot: schemas.BotBase, db: Session = Depends(get_db)):
         # TODO 可能會出現已經開啟container但資料庫儲存有問題
         # bot_docker_info = start_bot_container(container_name, bot)
         # get available worker server ip
+        # TODO maybe need to check whether the worker server is open
         worker_ip = assign_worker_server(db)
         # worker_ip = "http://localhost:3000"
         response = requests.post(
