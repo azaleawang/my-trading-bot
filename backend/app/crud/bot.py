@@ -1,7 +1,10 @@
+import os
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from fastapi import HTTPException
 import logging
+import boto3
+from botocore.exceptions import ClientError
 from app.src.controller.bot import delete_bot_container, stop_bot_container
 from app.models.bot import Bot
 from app.models.worker_server import WorkerServer
@@ -119,35 +122,90 @@ def delete_user_bot(bot_id: int, worker_ip: str, db: Session):
         )
 
 
-def assign_worker_server(db: Session):
-    try:
-        # Find a worker server with enough available memory
-        suitable_server = (
-            db.query(WorkerServer)
-            .filter(WorkerServer.available_memory >= 128)
-            .order_by(WorkerServer.available_memory.desc())
-            .first()
-        )
+# snippet-start:[python.example_code.ec2.RunInstances]
+def create_ec2_instance(
+    image_id=os.getenv("AMI_ID"),
+    instance_type="t2.micro",
+    key_pair=os.getenv("EC2_KEY_PAIR"),
+    security_groups=[os.getenv("EC2_SG")],
+):
+    """
+    Creates a new EC2 instance. The instance starts immediately after
+    it is created.
 
-        if suitable_server:
-            # Create and assign a new container
-            # new_container = Container(name=container_name, worker_server=suitable_server)
-            # session.add(new_container)
-            # session.commit()
-            print(f"Assigning container to server {suitable_server.private_ip}")
-            return suitable_server
-        else:
-            raise HTTPException(
-                status_code=500, detail="No available worker-server found."
-            )
-    except SQLAlchemyError as e:
-        logging.error(f"Error in assigning worker server: {e}")
-        raise HTTPException(status_code=500, detail="Database error.")
-    except HTTPException as httpx:
-        raise httpx
-    except Exception as e:
-        logging.error(f"Unexpected error in assigning worker server: {e}")
-        raise HTTPException(status_code=500, detail="Unexpected database error.")
+    The instance is created in the default VPC of the current account.
+
+    :param image: A Boto3 Image object that represents an Amazon Machine Image (AMI)
+                    that defines attributes of the instance that is created. The AMI
+                    defines things like the kind of operating system and the type of
+                    storage used by the instance.
+    :param instance_type: The type of instance to create, such as 't2.micro'.
+                            The instance type defines things like the number of CPUs and
+                            the amount of memory.
+    :param key_pair: A Boto3 KeyPair or KeyPairInfo object that represents the key
+                        pair that is used to secure connections to the instance.
+    :param security_groups: A list of Boto3 SecurityGroup objects that represents the
+                            security groups that are used to grant access to the
+                            instance. When no security groups are specified, the
+                            default security group of the VPC is used.
+    :return: A Boto3 Instance object that represents the newly created instance.
+    """
+    try:
+        ec2 = boto3.client(
+            "ec2",
+            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            region_name=os.getenv("AWS_REGION"),
+        )
+        instance_params = {
+            "ImageId": image_id,
+            "InstanceType": instance_type,
+            "KeyName": key_pair,
+        }
+        if security_groups is not None:
+            instance_params["SecurityGroupIds"] = [sg for sg in security_groups]
+        instance = ec2.run_instances(**instance_params, MinCount=1, MaxCount=1)
+        print("waiting for running ec2")
+
+    except ClientError as err:
+        logging.error(
+            "Couldn't create instance with image %s, instance type %s, and key %s. "
+            "Here's why: %s: %s",
+            image_id,
+            instance_type,
+            key_pair,
+            err.response["Error"]["Code"],
+            err.response["Error"]["Message"],
+        )
+        raise HTTPException(status_code=500, detail="Couldn't create instance")
+    else:
+        return instance
+
+
+def assign_worker_server(db: Session):
+    # try:
+    # Find a worker server with enough available memory
+    suitable_server = (
+        db.query(WorkerServer)
+        .filter(WorkerServer.available_memory >= 128)
+        .order_by(WorkerServer.available_memory.desc())
+        .first()
+    )
+
+    if suitable_server:
+        # Create and assign a new container
+        # new_container = Container(name=container_name, worker_server=suitable_server)
+        # session.add(new_container)
+        # session.commit()
+        print(f"Assigning container to server {suitable_server.private_ip}")
+        return suitable_server
+    else:
+        # Create a new worker server
+        create_ec2_instance()
+        raise HTTPException(
+            status_code=500,
+            detail="No available worker-server found. New server is PREPARING. PLEASE TRY AGAIN LATER.",
+        )
 
 
 # update worker server available memory
