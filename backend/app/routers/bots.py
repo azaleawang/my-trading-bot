@@ -3,6 +3,7 @@ import logging
 from typing import List, Union, Any
 
 from fastapi import APIRouter, Depends, HTTPException
+import pandas as pd
 from pydantic import BaseModel
 import pytz
 import requests
@@ -214,27 +215,44 @@ class PnlChart(BaseModel):
         {"pnl": -6.04348, "timestamp": 1702111500000},
     ]
 
-# 
+
+#
 # api for getting bot's pnl chart
 @router.get("/{bot_id}/pnl-chart", response_model=PnlChart)
 def get_bot_pnl_chart(bot_id: int, db: Session = Depends(get_db)):
     try:
         # get data from db
-        bot_info = get_bot_by_id(db, bot_id)
+        trade_data = []
+        [bot_info, bot_trade_history] = get_bot_by_id(db, bot_id)
+
+        # get buy/sell data from db
+        for trade in bot_trade_history:
+            trade_data.append({
+            "qty": trade.qty * (1 if trade.info["side"] == "BUY" else -1),
+            "price": trade.avg_price,
+            "pnl": trade.realizedPnl or 0,
+            "timestamp": trade.timestamp,
+        })
+            
+        trade_df = pd.DataFrame(trade_data)
+        trade_df.sort_values(by="timestamp", inplace=True)
+        trade_df.reset_index(drop=True, inplace=True)
+        
+        # get bot start time (ISO format)
         bot_create_iso_str = bot_info.created_at.astimezone(pytz.utc).isoformat()
-        print(bot_create_iso_str)
+
+        # get bot start timestamp
+        bot_create_timestamp_ms = int(bot_info.created_at.timestamp()) * 1000
         
-        bot_create_timestamp_ms = int(bot_info.created_at.timestamp())* 1000
-        print(bot_create_timestamp_ms)
         symbol = bot_info.symbol.replace("/", "")
-        pnl_data = calculate_pnl("BTCUSDT", bot_create_iso_str, bot_create_timestamp_ms)
-        return {"data": pnl_data}
         
+        # function that handle pnl calculation
+        pnl_data = calculate_pnl(symbol, bot_create_iso_str, bot_create_timestamp_ms, trade_df)
+        return {"data": pnl_data}
+
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    
-    
     # pnl_data = calculate_pnl(bot_info.symbol.replace("/", ""), bot_info.created_at)
     # history_price = get_history_mark_price(symbols=bot_info.symbol.replace("/", ""), start=bot_info.created_at)
     # get bot info from db
@@ -243,4 +261,3 @@ def get_bot_pnl_chart(bot_id: int, db: Session = Depends(get_db)):
     # pnl_data = []
     return []
     # return pnl_data or []
-    

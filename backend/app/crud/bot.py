@@ -37,7 +37,6 @@ def check_name(db: Session, container_name: str, bot_name: str, user_id: int):
 
 
 def get_user_bots(db: Session, user_id: int):
-    # return db.query(Bot).filter(Bot.owner_id == user_id).all()
     return (
         db.query(Bot)
         .options(joinedload(Bot.trade_history))
@@ -48,7 +47,8 @@ def get_user_bots(db: Session, user_id: int):
 
 # get bot by bot id
 def get_bot_by_id(db: Session, bot_id: int):
-    return db.query(Bot).filter(Bot.id == bot_id).first()
+    db_bot = db.query(Bot).filter(Bot.id == bot_id).first()
+    return db_bot, db_bot.trade_history
 
 
 def create_user_bot(db: Session, bot: schemas.BotCreate):

@@ -30,8 +30,8 @@ def create_trade_history(db: Session, trade_data: schemas.TradeHistoryCreate, re
 
 def get_bot_trade_history(db: Session, bot_id: int):
     bot = db.query(Bot).filter(and_(Bot.id == bot_id)).first()
-    if bot:
-        return bot.trade_history
+    if bot.trade_history:
+        return sorted(bot.trade_history, key=lambda trade: trade.timestamp)
     else:
         return None
     
