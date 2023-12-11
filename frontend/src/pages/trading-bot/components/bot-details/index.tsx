@@ -20,7 +20,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import PnlChart from "@/pages/pnl-chart";
-import { Divide } from "lucide-react";
 
 const BotDetails: React.FC = () => {
   const { botId } = useParams<{ botId: string }>();

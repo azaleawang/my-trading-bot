@@ -11,7 +11,6 @@ import Backtest from "../pages/backtest/components/complete-result";
 import BotDetails from "../pages/trading-bot/components/bot-details";
 import Layout from "../common/layouts";
 import ProtectedRoute from "./ProtectedRoute";
-import MyAreaChart from "@/pages/pnl-chart";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -25,7 +24,6 @@ const router = createBrowserRouter(
         </Route>
 
         <Route path="/backtest" element={<Backtest />} />
-        <Route path="/chart" element={<MyAreaChart />} />
       </Route>
       <Route path="*" element={<Navigate to="/" />} />
     </>
