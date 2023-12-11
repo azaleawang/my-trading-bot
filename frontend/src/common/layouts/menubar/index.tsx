@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 const MenuBar: React.FC = () => {
   return (
     <>
-      <ul className="flex space-x-5 text-slate-200">
+      <ul className="flex space-x-5 text-slate-200 z-50">
         <li className="flex items-center">
           <Link to="/">首頁</Link>
         </li>
