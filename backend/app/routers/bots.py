@@ -1,8 +1,10 @@
+from datetime import datetime
 import logging
 from typing import List, Union, Any
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+import pytz
 import requests
 from sqlalchemy.orm import Session
 from app.crud.bot import (
@@ -10,6 +12,7 @@ from app.crud.bot import (
     create_user_bot,
     delete_user_bot,
     find_worker_server,
+    get_bot_by_id,
     get_bots,
     get_user_bots,
     stop_user_bot,
@@ -24,6 +27,7 @@ from app.crud.container_status import (
     parse_and_store,
 )
 from app.crud.bot import assign_worker_server
+from app.history_chart.calculate import calculate_pnl
 
 router = APIRouter()
 
@@ -83,14 +87,24 @@ def create_bot_for_user(bot: schemas.BotBase, db: Session = Depends(get_db)):
             bot_docker_info = response.json()
         else:
             raise HTTPException(
-                status_code=response.status_code, detail="Failed to start container in worker server."
+                status_code=response.status_code,
+                detail="Failed to start container in worker server.",
             )
-            
+
         bot_dict = bot.model_dump()
-        bot_create = schemas.BotCreate(**bot_dict, **bot_docker_info, worker_instance_id=worker_server.instance_id)
+        bot_create = schemas.BotCreate(
+            **bot_dict, **bot_docker_info, worker_instance_id=worker_server.instance_id
+        )
         db_bot = create_user_bot(db, bot_create)
-        worker_server = update_worker_server_memory(db, worker_server.instance_id, db_bot.memory_usage)
-        print("Update server memory", worker_server.available_memory, "usage = ",  db_bot.memory_usage)
+        worker_server = update_worker_server_memory(
+            db, worker_server.instance_id, db_bot.memory_usage
+        )
+        print(
+            "Update server memory",
+            worker_server.available_memory,
+            "usage = ",
+            db_bot.memory_usage,
+        )
         return {
             "data": db_bot,
         }
@@ -107,7 +121,9 @@ def stop_bot_for_user(bot_id: int, db: Session = Depends(get_db)) -> dict:
         worker_ip = find_worker_server(db, bot_id)
         print("find worker ip = ", worker_ip)
         user_bot = stop_user_bot(bot_id, worker_ip, db)
-        update_worker_server_memory(db, user_bot.worker_instance_id, -user_bot.memory_usage)
+        update_worker_server_memory(
+            db, user_bot.worker_instance_id, -user_bot.memory_usage
+        )
 
         return {"message": f"Bot #{bot_id} {user_bot.name} stopped!"}
     except HTTPException as http_ex:
@@ -190,3 +206,41 @@ def get_container_monitoring_logs(bot_id: int, db: Session = Depends(get_db)):
         return {"data": container_info}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+class PnlChart(BaseModel):
+    data: list = [
+        {"pnl": -4.83644, "timestamp": 1702080000000},
+        {"pnl": -6.04348, "timestamp": 1702111500000},
+    ]
+
+# 
+# api for getting bot's pnl chart
+@router.get("/{bot_id}/pnl-chart", response_model=PnlChart)
+def get_bot_pnl_chart(bot_id: int, db: Session = Depends(get_db)):
+    try:
+        # get data from db
+        bot_info = get_bot_by_id(db, bot_id)
+        bot_create_iso_str = bot_info.created_at.astimezone(pytz.utc).isoformat()
+        print(bot_create_iso_str)
+        
+        bot_create_timestamp_ms = int(bot_info.created_at.timestamp())* 1000
+        print(bot_create_timestamp_ms)
+        symbol = bot_info.symbol.replace("/", "")
+        pnl_data = calculate_pnl("BTCUSDT", bot_create_iso_str, bot_create_timestamp_ms)
+        return {"data": pnl_data}
+        
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    
+    
+    # pnl_data = calculate_pnl(bot_info.symbol.replace("/", ""), bot_info.created_at)
+    # history_price = get_history_mark_price(symbols=bot_info.symbol.replace("/", ""), start=bot_info.created_at)
+    # get bot info from db
+    # bot_info = get_user_bots(db, bot_id)
+    # calculate pnl
+    # pnl_data = []
+    return []
+    # return pnl_data or []
+    

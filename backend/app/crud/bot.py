@@ -46,6 +46,11 @@ def get_user_bots(db: Session, user_id: int):
     )
 
 
+# get bot by bot id
+def get_bot_by_id(db: Session, bot_id: int):
+    return db.query(Bot).filter(Bot.id == bot_id).first()
+
+
 def create_user_bot(db: Session, bot: schemas.BotCreate):
     # TODO 儲存失敗但docker已經開起來怎麼辦(應該要分兩次存)
     try:
