@@ -9,8 +9,13 @@ from app.src.schema import schemas
 from sqlalchemy.sql import and_
 from sqlalchemy.orm import joinedload
 
-from app.src.controller.ec2 import create_ec2_instance, start_ec2_instance, stop_ec2_instance
+from app.src.controller.ec2 import (
+    create_ec2_instance,
+    start_ec2_instance,
+    stop_ec2_instance,
+)
 
+ALLOW_CREATE = True
 
 def get_bots(db: Session):
     return db.query(Bot).all()
@@ -55,8 +60,6 @@ def create_user_bot(db: Session, bot: schemas.BotCreate):
     try:
         db_bot = Bot(**bot.model_dump())
         # Check if the bot name registered
-
-        # TODO check if the bot script existed (s3 or local?)
         db.add(db_bot)
         db.commit()
         db.refresh(db_bot)
@@ -115,7 +118,9 @@ def delete_user_bot(bot_id: int, worker_ip: str, db: Session):
         raise HTTPException(status_code=400, detail=f"Bot #{bot_id} already deleted.")
 
     if bot.status == "stopped" or bot.status == "exited":
-        delete_bot_container(bot.container_id, worker_ip)
+        # Then check whether the worker server is still alive
+        if bot.worker_server.private_ip:
+            delete_bot_container(bot.container_id, worker_ip)
         db.delete(bot)
         db.commit()
         return bot
@@ -139,6 +144,7 @@ def assign_worker_server(db: Session):
     )
 
     if suitable_server:
+        ALLOW_CREATE = True
         print(f"Assigning container to server {suitable_server.private_ip}")
         return suitable_server
 
@@ -160,20 +166,20 @@ def assign_worker_server(db: Session):
             .first()
         )
         if candidate_server:
-            print(f"Starting server {candidate_server.private_ip}")
-            # TODO start ec2 instance
+            print(f"Starting server {candidate_server.instance_id}")
             start_ec2_instance(instance_id=candidate_server.instance_id)
             candidate_server.status = "preparing"
             db.commit()
-            return candidate_server
+        
+        # No stopped server, Let's check if we can create a new server
         # Create a new worker server
-        else:
+        elif ALLOW_CREATE:
             create_ec2_instance()
+            ALLOW_CREATE = False
         raise HTTPException(
             status_code=500,
             detail="No available worker-server found. New server is Starting. PLEASE TRY AGAIN LATER.",
         )
-
 
 # update worker server available memory
 def update_worker_server_memory(

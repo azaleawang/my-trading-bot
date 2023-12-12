@@ -77,11 +77,11 @@ def create_bot_for_user(bot: schemas.BotBase, db: Session = Depends(get_db)):
         container_name = f"User{bot.owner_id}_{bot.strategy}_{bot.name}"
         check_name(db, container_name, bot.name, bot.owner_id)
         # TODO 可能會出現已經開啟container但資料庫儲存有問題
-        # bot_docker_info = start_bot_container(container_name, bot)
-        # get available worker server ip
+        
         # TODO maybe need to check whether the worker server is open
+        # get available worker server ip
         worker_server = assign_worker_server(db)
-        # worker_ip = "http://localhost:3000"
+       
         response = requests.post(
             f"{worker_server.private_ip}/start-container?container_name={container_name}",
             json=bot.model_dump(),
@@ -266,12 +266,3 @@ def get_bot_pnl_chart(bot_id: int, db: Session = Depends(get_db)):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-
-    # pnl_data = calculate_pnl(bot_info.symbol.replace("/", ""), bot_info.created_at)
-    # history_price = get_history_mark_price(symbols=bot_info.symbol.replace("/", ""), start=bot_info.created_at)
-    # get bot info from db
-    # bot_info = get_user_bots(db, bot_id)
-    # calculate pnl
-    # pnl_data = []
-    return []
-    # return pnl_data or []
