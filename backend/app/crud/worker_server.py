@@ -14,6 +14,7 @@ def register_worker_server(db: Session, worker_server: schemas.WorkerServerCreat
     if db_worker_server:
         db_worker_server.private_ip = worker_server.private_ip
         db_worker_server.total_memory = worker_server.total_memory
+        db_worker_server.status = "running"
         db.commit()
         
         return db_worker_server

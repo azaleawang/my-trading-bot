@@ -221,6 +221,8 @@ class WorkerServerCreate(BaseModel):
 class WorkerServerRead(WorkerServerCreate):
     id: int
     available_memory: int
+    status: str
+    updated_at: Any
 
     class Config:
         from_attributes = True

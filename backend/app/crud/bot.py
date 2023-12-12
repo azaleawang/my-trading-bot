@@ -1,16 +1,15 @@
-import os
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from fastapi import HTTPException
 import logging
-import boto3
-from botocore.exceptions import ClientError
 from app.src.controller.bot import delete_bot_container, stop_bot_container
 from app.models.bot import Bot
 from app.models.worker_server import WorkerServer
 from app.src.schema import schemas
 from sqlalchemy.sql import and_
 from sqlalchemy.orm import joinedload
+
+from app.src.controller.ec2 import create_ec2_instance, start_ec2_instance, stop_ec2_instance
 
 
 def get_bots(db: Session):
@@ -127,89 +126,52 @@ def delete_user_bot(bot_id: int, worker_ip: str, db: Session):
         )
 
 
-# snippet-start:[python.example_code.ec2.RunInstances]
-def create_ec2_instance(
-    image_id=os.getenv("AMI_ID"),
-    instance_type="t2.micro",
-    key_pair=os.getenv("EC2_KEY_PAIR"),
-    security_groups=[os.getenv("EC2_SG")],
-):
-    """
-    Creates a new EC2 instance. The instance starts immediately after
-    it is created.
-
-    The instance is created in the default VPC of the current account.
-
-    :param image: A Boto3 Image object that represents an Amazon Machine Image (AMI)
-                    that defines attributes of the instance that is created. The AMI
-                    defines things like the kind of operating system and the type of
-                    storage used by the instance.
-    :param instance_type: The type of instance to create, such as 't2.micro'.
-                            The instance type defines things like the number of CPUs and
-                            the amount of memory.
-    :param key_pair: A Boto3 KeyPair or KeyPairInfo object that represents the key
-                        pair that is used to secure connections to the instance.
-    :param security_groups: A list of Boto3 SecurityGroup objects that represents the
-                            security groups that are used to grant access to the
-                            instance. When no security groups are specified, the
-                            default security group of the VPC is used.
-    :return: A Boto3 Instance object that represents the newly created instance.
-    """
-    try:
-        ec2 = boto3.client(
-            "ec2",
-            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-            region_name=os.getenv("AWS_REGION"),
-        )
-        instance_params = {
-            "ImageId": image_id,
-            "InstanceType": instance_type,
-            "KeyName": key_pair,
-        }
-        if security_groups is not None:
-            instance_params["SecurityGroupIds"] = [sg for sg in security_groups]
-        instance = ec2.run_instances(**instance_params, MinCount=1, MaxCount=1)
-        print("waiting for running ec2")
-
-    except ClientError as err:
-        logging.error(
-            "Couldn't create instance with image %s, instance type %s, and key %s. "
-            "Here's why: %s: %s",
-            image_id,
-            instance_type,
-            key_pair,
-            err.response["Error"]["Code"],
-            err.response["Error"]["Message"],
-        )
-        raise HTTPException(status_code=500, detail="Couldn't create instance")
-    else:
-        return instance
-
-
 def assign_worker_server(db: Session):
     # try:
     # Find a worker server with enough available memory
     suitable_server = (
         db.query(WorkerServer)
+        .filter(WorkerServer.status == "running")
+        .filter(WorkerServer.private_ip != None)
         .filter(WorkerServer.available_memory >= 128)
         .order_by(WorkerServer.available_memory.desc())
         .first()
     )
 
     if suitable_server:
-        # Create and assign a new container
-        # new_container = Container(name=container_name, worker_server=suitable_server)
-        # session.add(new_container)
-        # session.commit()
         print(f"Assigning container to server {suitable_server.private_ip}")
         return suitable_server
+
     else:
+        # First, check if there is any preparing server
+        preparing_server = (
+            db.query(WorkerServer).filter(WorkerServer.status == "preparing").all()
+        )
+        if preparing_server:
+            raise HTTPException(
+                status_code=500,
+                detail="New server is Preparing. PLEASE TRY AGAIN LATER.",
+            )
+        # No preparing server, Let's check if there is any existed stopped server
+        candidate_server = (
+            db.query(WorkerServer)
+            .filter(WorkerServer.status == "stopped")
+            .order_by(WorkerServer.updated_at.desc())
+            .first()
+        )
+        if candidate_server:
+            print(f"Starting server {candidate_server.private_ip}")
+            # TODO start ec2 instance
+            start_ec2_instance(instance_id=candidate_server.instance_id)
+            candidate_server.status = "preparing"
+            db.commit()
+            return candidate_server
         # Create a new worker server
-        create_ec2_instance()
+        else:
+            create_ec2_instance()
         raise HTTPException(
             status_code=500,
-            detail="No available worker-server found. New server is PREPARING. PLEASE TRY AGAIN LATER.",
+            detail="No available worker-server found. New server is Starting. PLEASE TRY AGAIN LATER.",
         )
 
 
@@ -241,3 +203,29 @@ def find_worker_server(db: Session, bot_id: int):
         return bot.worker_server.private_ip
 
     raise HTTPException(status_code=404, detail=f"Bot's worker_server not data.")
+
+
+def worker_scaling(db: Session, worker_ip: str):
+    worker_server = (
+        db.query(WorkerServer).filter(WorkerServer.private_ip == worker_ip).first()
+    )
+    if not worker_server:
+        return False
+    if worker_server.available_memory == worker_server.total_memory:
+        print("Worker server need to be closed")
+        # True if stop successfully
+        return stop_ec2_instance(instance_id=worker_server.instance_id)
+
+    return False
+
+
+def update_worker_server_status(db: Session, worker_ip: str):
+    worker_server = (
+        db.query(WorkerServer).filter(WorkerServer.private_ip == worker_ip).first()
+    )
+    if not worker_server:
+        raise HTTPException(status_code=404, detail=f"Worker server not found.")
+    worker_server.status = "stopped"
+    worker_server.private_ip = None
+    db.commit()
+    return True

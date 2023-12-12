@@ -18,6 +18,8 @@ from app.crud.bot import (
     get_user_bots,
     stop_user_bot,
     update_worker_server_memory,
+    update_worker_server_status,
+    worker_scaling,
 )
 from app.src.schema import schemas
 from app.src.config.database import get_db
@@ -121,10 +123,18 @@ def stop_bot_for_user(bot_id: int, db: Session = Depends(get_db)) -> dict:
     try:
         worker_ip = find_worker_server(db, bot_id)
         print("find worker ip = ", worker_ip)
+
         user_bot = stop_user_bot(bot_id, worker_ip, db)
         update_worker_server_memory(
             db, user_bot.worker_instance_id, -user_bot.memory_usage
         )
+        # for auto-scaling: check whether the worker server need to be closed
+        if worker_scaling(db, worker_ip):
+            # TODO How to restart worker server?
+            update_worker_server_status(db, worker_ip=worker_ip)
+            return {
+                "message": f"Bot #{bot_id} {user_bot.name} stopped ad worker server (ip={worker_ip}) stopped!"
+            }
 
         return {"message": f"Bot #{bot_id} {user_bot.name} stopped!"}
     except HTTPException as http_ex:
@@ -227,27 +237,31 @@ def get_bot_pnl_chart(bot_id: int, db: Session = Depends(get_db)):
 
         # get buy/sell data from db
         for trade in bot_trade_history:
-            trade_data.append({
-            "qty": trade.qty * (1 if trade.info["side"] == "BUY" else -1),
-            "price": trade.avg_price,
-            "pnl": trade.realizedPnl or 0,
-            "timestamp": trade.timestamp,
-        })
-            
+            trade_data.append(
+                {
+                    "qty": trade.qty * (1 if trade.info["side"] == "BUY" else -1),
+                    "price": trade.avg_price,
+                    "pnl": trade.realizedPnl or 0,
+                    "timestamp": trade.timestamp,
+                }
+            )
+
         trade_df = pd.DataFrame(trade_data)
         trade_df.sort_values(by="timestamp", inplace=True)
         trade_df.reset_index(drop=True, inplace=True)
-        
+
         # get bot start time (ISO format)
         bot_create_iso_str = bot_info.created_at.astimezone(pytz.utc).isoformat()
 
         # get bot start timestamp
         bot_create_timestamp_ms = int(bot_info.created_at.timestamp()) * 1000
-        
+
         symbol = bot_info.symbol.replace("/", "")
-        
+
         # function that handle pnl calculation
-        pnl_data = calculate_pnl(symbol, bot_create_iso_str, bot_create_timestamp_ms, trade_df)
+        pnl_data = calculate_pnl(
+            symbol, bot_create_iso_str, bot_create_timestamp_ms, trade_df
+        )
         return {"data": pnl_data}
 
     except Exception as e:
