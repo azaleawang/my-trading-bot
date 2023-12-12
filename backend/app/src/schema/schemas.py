@@ -220,6 +220,7 @@ class WorkerServerCreate(BaseModel):
 
 class WorkerServerRead(WorkerServerCreate):
     id: int
+    private_ip: Union[str, None]
     available_memory: int
     status: str
     updated_at: Any

@@ -134,6 +134,7 @@ def delete_user_bot(bot_id: int, worker_ip: str, db: Session):
 def assign_worker_server(db: Session):
     # try:
     # Find a worker server with enough available memory
+    global ALLOW_CREATE
     suitable_server = (
         db.query(WorkerServer)
         .filter(WorkerServer.status == "running")
