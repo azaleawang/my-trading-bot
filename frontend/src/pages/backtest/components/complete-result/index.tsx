@@ -66,6 +66,9 @@ const Backtest = () => {
       try {
         const data = JSON.parse(event.data);
         console.log("Parsed data:", data.id);
+        if (data.id === backtestId) {
+          fetchBacktestData(data.id);
+        }
         setBacktestId(data.id);
       } catch (error) {
         console.error("Error parsing message:", error);
@@ -85,23 +88,24 @@ const Backtest = () => {
     };
   }, []);
 
+  const fetchBacktestData = async (backtestId: number) => {
+    try {
+      const response = await axios.get(
+        `/api/v1/backtests/results/${backtestId}`
+      );
+      setBacktestData(response.data);
+    } catch (error) {
+      console.error("Error fetching backtest data:", error);
+      setBacktestData(undefined);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     // Fetch backtest data when backtestId is available
     if (backtestId) {
       console.log("backtestId:", backtestId); // Log the backtest ID for debugging purposes
-      const fetchBacktestData = async (backtestId: number) => {
-        try {
-          const response = await axios.get(
-            `/api/v1/backtests/results/${backtestId}`
-          );
-          setBacktestData(response.data);
-        } catch (error) {
-          console.error("Error fetching backtest data:", error);
-          setBacktestData(undefined);
-        } finally {
-          setLoading(false);
-        }
-      };
 
       fetchBacktestData(backtestId);
     }

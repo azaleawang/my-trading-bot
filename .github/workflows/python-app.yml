@@ -27,4 +27,4 @@ jobs:
             git switch develop
             git pull
             pm2 reload ecosystem.config.js
-            pm2 reload worker.config.js
+          # pm2 reload worker.config.js
