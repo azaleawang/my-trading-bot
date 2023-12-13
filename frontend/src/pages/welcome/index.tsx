@@ -22,14 +22,14 @@ export default function Welcome() {
         A Reliable Mate Maximizing Your Trades as You Rest
       </p>
       <div className="fixed bottom-[56px] flex gap-10">
-        <img src="src/assets/automate.svg" alt="logo" className="w-[100px]" />
+        <img src="/automate.svg" alt="logo" className="w-[100px]" />
         <img
-          src="src/assets/automate.svg"
+          src="/automate.svg"
           alt="logo"
           className="w-[100px] hover:scale-110 hover:-translate-y-1 transition-transform hover:border-none"
           onClick={handleImageClick} 
         />
-        <img src="src/assets/automate.svg" alt="logo" className="w-[100px]" />
+        <img src="/automate.svg" alt="logo" className="w-[100px]" />
       </div>
     </div>
   );
