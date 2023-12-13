@@ -11,9 +11,9 @@ const MenuBar: React.FC = () => {
         <li className="flex items-center">
           <Link to="/trading-bots">我的機器人</Link>
         </li>
-        <li className="flex items-center">
+        {/* <li className="flex items-center">
           <Link to="/create-bot">新增機器人</Link>
-        </li>
+        </li> */}
         <li className="flex items-center">
           <Link to="/backtest">策略回測</Link>
         </li>

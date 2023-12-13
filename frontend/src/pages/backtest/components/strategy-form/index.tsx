@@ -4,7 +4,6 @@ import axios from "axios";
 import "./style.css";
 import { useEffect, useState } from "react";
 // import { useParams } from "react-router-dom";
-import * as React from "react";
 import {
   Select,
   SelectContent,
@@ -12,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "react-toastify";
 
 const symbolList = [
   "BTC/USDT",
@@ -145,11 +145,11 @@ const StrategyForm: React.FC<StrategyFormProps> = ({ setLoading }) => {
       const resp: any = await axios.post(backtest_api_base, submissionData);
       setLoading(true);
       console.log(resp.data.message);
-      alert("Start running backtest");
+      toast.info("計算中，喝杯茶稍等 🍵");
     } catch (error: any) {
       console.error(error.response.data);
       setLoading(false);
-      alert(
+      toast.error(
         error.response.data?.message ||
           "Something went wrong when submitting backtest"
       );
@@ -182,24 +182,7 @@ const StrategyForm: React.FC<StrategyFormProps> = ({ setLoading }) => {
                 ))}
               </SelectContent>
             </Select>
-            {/* <select
-            name="name"
-            value={bt_strategy.name}
-            onChange={handleInputChange}
-            className="w-full p-2 rounded bg-zinc-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-zinc-500"
-            required
-          >
-            <option value="">Select a strategy</option>
-            {strategies.map((s: any, i) => (
-              <option value={s.name} key={i}>
-                {s.name}
-              </option>
-            ))} */}
-            {/* <option value="MaRsi">MaRsi</option>
-            <option value="MaCrossover">MaCrossover</option>
-            <option value="SuperTrend">SuperTrend</option>
-            <option value="RsiOscillator">RsiOscillator</option> */}
-            {/* </select> */}
+            
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium mb-2">交易對</label>
@@ -217,25 +200,6 @@ const StrategyForm: React.FC<StrategyFormProps> = ({ setLoading }) => {
                 ))}
               </SelectContent>
             </Select>
-            {/* <label className="block text-sm font-medium mb-2">Symbols:</label>
-          <select
-            name="symbols"
-            value={bt_strategy.symbols}
-            onChange={handleInputChange}
-            className="w-full p-2 rounded bg-zinc-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-zinc-500"
-            required
-          >
-            <option value="">Select a symbol</option>
-            <option value="BTC/USDT">BTC/USDT</option>
-            <option value="ETH/USDT">ETH/USDT</option>
-            <option value="BNB/USDT">BNB/USDT</option>
-            <option value="XRP/USDT">XRP/USDT</option>
-            <option value="ADA/USDT">ADA/USDT</option>
-            <option value="SOL/USDT">SOL/USDT</option>
-            <option value="DOT/USDT">DOT/USDT</option>
-            <option value="DOGE/USDT">DOGE/USDT</option>
-            <option value="MATIC/USDT">MATIC/USDT</option>
-          </select> */}
           </div>
 
           <div className="mb-4">
@@ -253,17 +217,7 @@ const StrategyForm: React.FC<StrategyFormProps> = ({ setLoading }) => {
                 <SelectItem value="4h">4 hour</SelectItem>
               </SelectContent>
             </Select>
-            {/* <select
-            name="t_frame"
-            value={bt_strategy.t_frame}
-            onChange={handleInputChange}
-            className="w-full p-2 rounded bg-zinc-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-zinc-500"
-            required
-          >
-            <option value="1d">1 day</option>
-            <option value="4h">4 hours</option> */}
-            {/* <option value="1h">1 hour</option> */}
-            {/* </select> */}
+            
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium mb-2">起始時間</label>

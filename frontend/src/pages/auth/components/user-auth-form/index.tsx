@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import Cookies from "js-cookie";
+import { toast } from "react-toastify";
 
+import "react-toastify/dist/ReactToastify.css";
 import { Icons } from "@/components/ui/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,10 +59,12 @@ export function UserAuthForm() {
       );
       console.log(response.data);
       setAuth(true);
-      alert("註冊成功，請登入後使用"); // TODO should be a dialog or toast
+      toast.success("註冊成功，請登入後使用", {
+        autoClose: 1000,
+      });
     } catch (error: any) {
       console.error("Sign in failed", error);
-      alert(
+      toast.error(
         error.response?.data?.detail ||
           error.message ||
           "Something went wrong when signin"
@@ -89,12 +93,13 @@ export function UserAuthForm() {
       Cookies.set("access_token", response.data.access_token, { expires: 1 });
       Cookies.set("user_id", response.data.user_id, { expires: 1 });
       setAuth(true);
-      alert("Login successful"); // TODO should be a dialog or toast
-
+      toast.success("登入成功！", {
+        autoClose: 1000,
+      });
       navigate(-1);
     } catch (error: any) {
       console.error("Sign in failed", error);
-      alert(
+      toast.error(
         error.response?.data?.detail ||
           error.message ||
           "Something went wrong when signin"

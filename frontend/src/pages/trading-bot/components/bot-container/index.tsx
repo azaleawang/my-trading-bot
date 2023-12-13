@@ -4,7 +4,7 @@ import { Bot, MarkPriceData } from "@/pages/trading-bot/models";
 import { useNavigate } from "react-router-dom";
 import useCookie from "@/common/hooks/useCookie";
 import { user_api_base, bot_api_base } from "@/common/apis";
-// import { Label } from "@/components/ui/label";
+import { Player } from "@lottiefiles/react-lottie-player";
 
 import {
   Card,
@@ -16,11 +16,15 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/ui/icons";
+import CreateBotForm from "@/pages/create-bot/components/form";
+import { toast } from "react-toastify";
 // import { Icons } from "@/components/ui/icons";
 
 const BotContainer: React.FC = () => {
   const [bots, setBots] = useState<Bot[]>([]); // const userId = 1;
-  const [loadingStates, setLoadingStates] = useState<{ [key: number]: boolean }>({});
+  const [loadingStates, setLoadingStates] = useState<{
+    [key: number]: boolean;
+  }>({});
   const [markAllPrice, setMarkAllPrice] = useState<MarkPriceData[] | null>(
     null
   );
@@ -31,7 +35,7 @@ const BotContainer: React.FC = () => {
   // const { markPrice } = useContext(TradingDataContext);
   const user_api = user_api_base(userId);
   const navigate = useNavigate();
-
+  const [botLoading, setBotLoading] = useState<boolean>(true);
   const handleBotClick = (botId: number) => {
     navigate(`/trading-bots/${botId}`);
   };
@@ -62,6 +66,8 @@ const BotContainer: React.FC = () => {
         setBots(bots.filter((bot: Bot) => bot.status !== "deleted"));
       } catch (error) {
         console.error("Error fetching data:", error);
+      } finally {
+        setBotLoading(false);
       }
     };
 
@@ -72,10 +78,10 @@ const BotContainer: React.FC = () => {
     try {
       event.stopPropagation();
       if (confirm(`確定要終止機器人嗎 ?`)) {
-        setLoadingStates(prevStates => ({ ...prevStates, [botId]: true })); // Start loading for specific bot
+        setLoadingStates((prevStates) => ({ ...prevStates, [botId]: true })); // Start loading for specific bot
         const resp = await axios.put(`${bot_api_base(botId)}`);
         console.log(resp.data);
-        alert("Stop OK!");
+        toast.success("成功終止機器人");
 
         setBots((prevBots) =>
           prevBots.map((bot) =>
@@ -85,11 +91,11 @@ const BotContainer: React.FC = () => {
       }
     } catch (error: any) {
       console.error(error.response.data?.detail);
-      alert(
+      toast.error(
         error.response.data?.detail || "Something went run when stopping bot"
       );
     } finally {
-      setLoadingStates(prevStates => ({ ...prevStates, [botId]: false })); // Stop loading for specific bot
+      setLoadingStates((prevStates) => ({ ...prevStates, [botId]: false })); // Stop loading for specific bot
     }
   };
 
@@ -99,16 +105,24 @@ const BotContainer: React.FC = () => {
       if (confirm("確定要刪除機器人嗎 ?") && botId) {
         const resp = await axios.delete(`${bot_api_base(botId)}`);
         console.log(resp.data);
-        alert("Delete OK!");
+        toast.success("Delete OK!", {
+          autoClose: 1000,
+        });
         setBots((prevBots) => prevBots.filter((bot) => bot.id !== botId));
       } else return;
     } catch (error: any) {
       console.error(error);
-      alert(
+      toast.error(
         error.response.data?.detail || "Something went wrong when deleting bot"
       );
     }
   };
+
+  const createBtn = (
+    <Button className="tracking-widest text-base p-0 w-[150px] m-auto bg-orange-300/80 hover:bg-orange-300">
+      <CreateBotForm />
+    </Button>
+  );
 
   const calculateTotalPnl = (bot: Bot): number => {
     let totalRealizedPnl = bot.trade_history.reduce(
@@ -130,94 +144,120 @@ const BotContainer: React.FC = () => {
     return +(totalUnrealizedPnl + totalRealizedPnl).toFixed(3) || 0;
   };
 
+  if (botLoading) {
+    return (
+      <div className="text-xl text-slate-400 flex justify-center h-[300px]">
+        {/* <Icons.spinner className="mr-5 h-[100px] w-[100px] animate-spin" />
+        <span>Loading...</span> */}
+      </div>
+    );
+  }
+
   return (
-    <>
-      <div className="flex flex-wrap gap-5 p-6 text-slate-200">
-        {bots.length === 0 || !bots ? (
-          // <h1>尚無機器人，快來新增一個看看吧！</h1>
-          <div>
-            <Button>新增機器人</Button>
+    <div className="flex flex-col justify-between">
+      <div className="flex flex-wrap gap-5 p-6 text-slate-200 mt-10">
+        {bots.length !== 0 || !bots ? (
+          <div className="flex flex-col gap-5 mt-5 w-full">
+            <Player
+              autoplay
+              loop
+              src="https://lottie.host/5debc6b1-ed25-493f-8ec6-1951aea44469/KXcHRm0dhd.json"
+              style={{ height: "150px", width: "150px" }}
+            >
+              {/* <Controls visible={true} buttons={['play', 'repeat', 'frame', 'debug']} /> */}
+            </Player>
+            <h1 className="mt-5 m-auto">尚無機器人，快來新增一個看看吧！</h1>
+            {createBtn}
           </div>
         ) : (
-          bots.map((bot, i) => (
-            <Card
-              key={i}
-              className="flex flex-col flex-wrap min-h-[250px] md:h-[280px] bg-zinc-900 justify-between rounded-lg border-0 text-slate-200 w-full md:w-1/2 md:max-w-[450px]"
-              // style={{ backgroundColor: "#222831" }}
-            >
-              <CardHeader className="flex flex-col">
-                <CardTitle className=" flex flex-wrap justify-between tracking-wide gap-1">
-                  {/* 可能要限制一下字數要不然會很醜  */}
-                  <p className="text-2xl md:tracking-widest break-all ">
-                    {bot.name}
-                  </p>
-                  <div
-                    className={`px-3 py-1 rounded-full text-sm font-semibold w-[100px] text-center
+          <>
+            <div className=" flex fixed right-0 top-20">
+              <Button className="text-base mr-5 w-[110px] p-0 bg-orange-300/80 hover:bg-orange-300">
+                <CreateBotForm />
+              </Button>
+            </div>
+            {bots.map((bot, i) => (
+              <Card
+                key={i}
+                className="flex flex-col flex-wrap min-h-[250px] md:h-[280px] bg-zinc-900 justify-between rounded-lg border-0 text-slate-200 w-full md:w-1/2 md:max-w-[450px]"
+                // style={{ backgroundColor: "#222831" }}
+              >
+                <CardHeader className="flex flex-col">
+                  <CardTitle className=" flex flex-wrap justify-between tracking-wide gap-1">
+                    {/* 可能要限制一下字數要不然會很醜  */}
+                    <p className="text-2xl md:tracking-widest break-all ">
+                      {bot.name}
+                    </p>
+                    <div
+                      className={`px-3 py-1 rounded-full text-sm font-semibold w-[100px] text-center
                   ${bot.status === "running" ? "bg-green-800" : "bg-red-900"}`}
-                  >
-                    {bot.status.toUpperCase()}
-                  </div>
-                </CardTitle>
-                <CardDescription className="flex gap-3">
-                  <p className="text-gray-300">{bot.symbol}</p>
-                  <p className="text-gray-300">{bot.strategy} 策略</p>
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-gray-300">
-                <div className="flex gap-5 text-lg">
-                  <p className="">
-                    浮動利潤 <span className="text-[10px]">USDT</span>
-                  </p>
-                  <strong
-                    className={`${
-                      calculateTotalPnl(bot) < 0
-                        ? "text-pink-600"
-                        : "text-white"
-                    }`}
-                  >
-                    {calculateTotalPnl(bot)}
-                  </strong>
-                </div>
-              </CardContent>
-
-              <CardFooter className="flex gap-3 md:gap-5 ">
-                {bot.status === "running" ? (
-                  <Button
-                    className="w-1/2 hover:bg-red-900"
-                    onClick={(event) => handleStop(event, bot.id)}
-                    disabled={bot.status !== "running" || loadingStates[bot.id]}
                     >
-                    <span>
-                      {loadingStates[bot.id] && (
-                        <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                      )}
-                      
-                    </span>終止
-                  </Button>
-                ) : (
+                      {bot.status.toUpperCase()}
+                    </div>
+                  </CardTitle>
+                  <CardDescription className="flex gap-3">
+                    <p className="text-gray-300">{bot.symbol}</p>
+                    <p className="text-gray-300">{bot.strategy} 策略</p>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="text-gray-300">
+                  <div className="flex gap-5 text-lg">
+                    <p className="">
+                      浮動利潤 <span className="text-[10px]">USDT</span>
+                    </p>
+                    <strong
+                      className={`${
+                        calculateTotalPnl(bot) < 0
+                          ? "text-pink-600"
+                          : "text-white"
+                      }`}
+                    >
+                      {calculateTotalPnl(bot)}
+                    </strong>
+                  </div>
+                </CardContent>
+
+                <CardFooter className="flex gap-3 md:gap-5 ">
+                  {bot.status === "running" ? (
+                    <Button
+                      className="w-1/2 hover:bg-red-900"
+                      onClick={(event) => handleStop(event, bot.id)}
+                      disabled={
+                        bot.status !== "running" || loadingStates[bot.id]
+                      }
+                    >
+                      <span>
+                        {loadingStates[bot.id] && (
+                          <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+                        )}
+                      </span>
+                      終止
+                    </Button>
+                  ) : (
+                    <Button
+                      className="w-1/2  hover:bg-blue-900"
+                      onClick={(event) => handleDelete(event, bot.id)}
+                    >
+                      <span>移除</span>
+                    </Button>
+                  )}
                   <Button
-                    className="w-1/2  hover:bg-blue-900"
-                    onClick={(event) => handleDelete(event, bot.id)}
+                    // disabled={isLoading}
+                    onClick={() => handleBotClick(bot.id)}
+                    className="w-1/2 hover:bg-zinc-700"
                   >
-                    <span>移除</span>
-                  </Button>
-                )}
-                <Button
-                  // disabled={isLoading}
-                  onClick={() => handleBotClick(bot.id)}
-                  className="w-1/2 hover:bg-zinc-700"
-                >
-                  {/* {isLoading && (
+                    {/* {isLoading && (
                   <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
                 )} */}
-                  詳情
-                </Button>
-              </CardFooter>
-            </Card>
-          ))
+                    詳情
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </>
         )}
       </div>
-    </>
+    </div>
   );
 };
 

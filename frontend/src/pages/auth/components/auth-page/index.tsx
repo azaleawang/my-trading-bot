@@ -5,34 +5,9 @@ import { UserAuthForm } from "../user-auth-form";
 
 const AuthenticationPage: React.FC = () => {
   return (
-    <>
-      <div className="container my-5 relative h-[400px] flex-col items-center justify-center md:grid">
-        {/* <Link
-          to="/examples/authentication"
-          className={cn(
-            buttonVariants({ variant: "ghost" }),
-            "absolute right-4 top-4 md:right-8 md:top-8"
-          )}
-        >
-          Login
-        </Link> */}
-        <UserAuthForm />
-        <div className="lg:p-8">
-        
-          <div className="my-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
-            {/* <div className="flex flex-col space-y-2 text-center"> */}
-              {/* <h1 className="text-2xl font-semibold tracking-tight text-slate-200">
-                Sign in
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Enter your email below to create your account
-              </p> */}
-              
-            {/* </div> */}
-          </div>
-        </div>
-      </div>
-    </>
+    <div className="container my-auto relative h-[400px] flex-col items-center justify-center flex">
+      <UserAuthForm />
+    </div>
   );
 };
 
