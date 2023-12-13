@@ -1,4 +1,3 @@
-import AuthenticationPage from "../auth/components/auth-page";
 import Welcome from "../welcome";
 
 export default function Home() {
