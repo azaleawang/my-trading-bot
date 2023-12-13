@@ -98,6 +98,8 @@ const Backtest = () => {
         } catch (error) {
           console.error("Error fetching backtest data:", error);
           setBacktestData(undefined);
+        } finally {
+          setLoading(false);
         }
       };
 
