@@ -1,4 +1,12 @@
 import React, { useEffect, useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface Params {
   rsi_window: number;
@@ -48,6 +56,7 @@ interface BacktestData {
   details: Result;
 }
 
+
 const BacktestResult: React.FC<{ backtestData: BacktestData }> = ({
   backtestData,
 }) => {
@@ -63,6 +72,20 @@ const BacktestResult: React.FC<{ backtestData: BacktestData }> = ({
     details,
   } = backtestData;
   const [htmlContent, setHtmlContent] = useState("");
+
+  const tableData = {
+    Trades: details["# Trades"],
+    Return: details["Return [%]"],
+    "BuyHold Return": details["Buy & Hold Return [%]"],
+    "Win Rate": details["Win Rate [%]"],
+    "Profit Factor": details["Profit Factor"],
+    "Avg Drawdown": details["Avg. Drawdown [%]"],
+    "Max Drawdown": details["Max. Drawdown [%]"],
+    Volatility: details["Volatility (Ann.) [%]"],
+    "Calmar Ratio": details["Calmar Ratio"],
+    "Sharpe Ratio": details["Sharpe Ratio"],
+    "Sortino Ratio": details["Sortino Ratio"],
+  };
 
   useEffect(() => {
     const fetchHtmlContent = async () => {
@@ -80,54 +103,48 @@ const BacktestResult: React.FC<{ backtestData: BacktestData }> = ({
     fetchHtmlContent();
   }, [backtestData]);
 
+  function isFloat(n: any) {
+    return Number(n) === n && n % 1 !== 0;
+  }
+
   return (
-    <div className="text-white p-6">
-      <h2 className="text-2xl font-bold mb-4">
+    <div className="text-white p-6 flex flex-col gap-5">
+      {/* <h2 className="text-2xl font-bold mb-4">
         Backtest Results: {strategy_name}
-      </h2>
-      <p className="font-bold mb-2">Symbols: {symbol}</p>
-      <p className="font-bold mb-2">Time frame: {t_frame}</p>
-      <h3 className="text-xl font-bold mb-2">Plot</h3>
+      </h2> */}
+      <div className="flex gap-5 ml-5">策略結果詳情：
+        <p className="font-bold text-slate-300"> {strategy_name} </p>
+        <p className="font-bold text-slate-300"> {symbol} </p>
+        <p className="font-bold text-slate-300"> {t_frame} </p>
+      </div>
+
       <iframe
         className="w-full h-[700px] border-none"
         srcDoc={htmlContent}
         title="Backtest Plot"
         allowFullScreen
       ></iframe>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-1 my-2">
-        {/* Display the result data */}
-        {Object.entries(details).map(([key, value]) => {
-          // Skip the plot URL for separate handling
-          if (key === "plot" || key === "_strategy") return null;
-          return (
-            <div
-              key={key}
-              className="bg-zinc-700 p-1 rounded flex justify-between items-center"
-            >
-              <span className="font-medium">{key.replace(/_/g, " ")}</span>
-              <span>
-                {typeof value === "number" ? value.toFixed(2) : value}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-      <div className="mt-6">
-        {/* <button
-          onClick={() => goFullScreen()}
-          className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700"
-        >
-          Full Screen
-        </button> */}
-        {/* Embed the plot in an iframe */}
-        {/* <iframe
-          className="w-full h-96"
-          // Use fullUrl as the src for the iframe
-          allowFullScreen
-          src={info.s3_url?.split("backtest")[0] + result.plot}
-          title="Backtest Plot"
-        ></iframe> */}
-      </div>
+      <Table>
+        <TableCaption></TableCaption>
+        <TableHeader>
+          <TableRow>
+            {Object.keys(tableData).map((key) => (
+              <TableCell key={key} className="p-1 py-5 text-center bg-zinc-800">
+                {key}
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableHeader>
+
+        <TableBody></TableBody>
+        <TableRow>
+          {Object.values(tableData).map((value, index) => (
+            <TableCell key={index} className="py-5 text-center">
+              {isFloat(value) ? value.toFixed(2) : value || "N/A"}
+            </TableCell>
+          ))}
+        </TableRow>
+      </Table>
     </div>
   );
 };

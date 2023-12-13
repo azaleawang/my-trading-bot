@@ -13,7 +13,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-
 const symbolList = [
   "BTC/USDT",
   "ETH/USDT",
@@ -26,9 +25,12 @@ const symbolList = [
   // "MATIC/USDT",
 ];
 
+interface StrategyFormProps {
+  loading: boolean;
+  setLoading: (loading: boolean) => void;
+}
 
-
-const StrategyForm = () => {
+const StrategyForm: React.FC<StrategyFormProps> = ({ setLoading }) => {
   const backtest_api_base = `/api/v1/backtests/`;
   const strategy_api_base = `/api/v1/strategies/`;
   const [userId] = useCookie("user_id", "");
@@ -141,10 +143,12 @@ const StrategyForm = () => {
       };
       console.log("submissionData", submissionData);
       const resp: any = await axios.post(backtest_api_base, submissionData);
+      setLoading(true);
       console.log(resp.data.message);
       alert("Start running backtest");
     } catch (error: any) {
       console.error(error.response.data);
+      setLoading(false);
       alert(
         error.response.data?.message ||
           "Something went wrong when submitting backtest"
@@ -302,9 +306,9 @@ const StrategyForm = () => {
         <div className="flex items-center justify-center">
           <Button
             type="submit"
-            className="px-6 py-2 text-black rounded transition-colors duration-300 ease-in-out bg-gray-100 hover:bg-gray-300"
+            className="px-6 py-2 rounded bg-zinc-700 hover:bg-zinc-600"
           >
-            Go
+            <p className="tracking-widest	font-medium">開始回測</p>
           </Button>
         </div>
       </form>
