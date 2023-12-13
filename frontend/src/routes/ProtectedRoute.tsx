@@ -3,6 +3,7 @@ import useCookie from "@/common/hooks/useCookie";
 // import React from "react";
 import { useEffect, useState } from "react";
 import { useNavigate, Outlet, useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
 interface Profile {
   id: number;
   name: string;
@@ -28,15 +29,18 @@ export default function ProtectedRoute() {
 
         if (!profile) {
           console.log("You are not authenticated!");
-          navigate("/");
+          navigate("/login");
         } else {
           // setIsAuth(true);
           setLoading(false);
           console.log("You are authenticated!");
         }
-      } catch (error) {
+      } catch (error: any) {
         console.log("error", error);
-        setError(error);
+        if (error?.response.status === 403) {
+          toast.warn("唉呀！忘了登入啦！", {})
+          navigate("/login");
+        } else setError(error);
       }
     };
 
@@ -47,6 +51,5 @@ export default function ProtectedRoute() {
     navigate("/");
   }
 
-  return loading ? <></>: <Outlet />;
+  return loading ? <></> : <Outlet />;
 }
-

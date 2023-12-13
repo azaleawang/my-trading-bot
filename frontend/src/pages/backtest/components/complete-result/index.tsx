@@ -67,6 +67,7 @@ const Backtest = () => {
         const data = JSON.parse(event.data);
         console.log("Parsed data:", data.id);
         if (data.id === backtestId) {
+          setLoading(false);
           fetchBacktestData(data.id);
         }
         setBacktestId(data.id);
@@ -88,6 +89,7 @@ const Backtest = () => {
     };
   }, []);
 
+  // TODO 如果重複兩次一次的 第二次會因為backtestid一樣導致不會更新loading狀態而一直轉圈圈
   const fetchBacktestData = async (backtestId: number) => {
     try {
       const response = await axios.get(

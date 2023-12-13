@@ -21,10 +21,11 @@ const router = createBrowserRouter(
         <Route element={<ProtectedRoute />}>
           <Route path="/trading-bots" element={<BotContainer />} />
           <Route path="/trading-bots/:botId" element={<BotDetails />} />
+          <Route path="/backtest" element={<Backtest />} />
           {/* <Route path="/create-bot" element={<CreateBotForm />} /> */}
         </Route>
 
-        <Route path="/backtest" element={<Backtest />} />
+        
       </Route>
       <Route path="*" element={<Navigate to="/" />} />
     </>

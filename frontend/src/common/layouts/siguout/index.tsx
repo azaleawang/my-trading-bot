@@ -12,12 +12,12 @@ const SignButton: React.FC = () => {
   // const [access_token, updateCookie] = useCookie("access_token", "");
   const handleSignout = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
-    if (auth && confirm("Are you sure you want to sign out?")) {
+    if (auth && confirm("確定要登出嗎 🤔")) {
       try {
         Cookies.remove("access_token");
         Cookies.remove("user_id");
         toast.success("下次見！掰掰 👋");
-        navigate("/");
+        window.location.replace("/");
       } catch (error) {
         console.error("Error signing out:", error);
       }
