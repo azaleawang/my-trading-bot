@@ -20,7 +20,7 @@ async def call_mark_price():
             }
             # print({"symbol":response["s"],"price":response["p"], "timestamp": response["E"]})
             write_to_influxdb(data)
-            print("wrote to influxdb", data)
+            # print("wrote to influxdb", data)
             await asyncio.sleep(0.5)
 
 
