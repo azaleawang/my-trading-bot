@@ -13,7 +13,7 @@ const Layout: React.FC = () => {
 
       <div
         className="flex-grow bg-stone-800"
-        style={{ backgroundColor: "#080202" }}
+        style={{ backgroundColor: "#1C1C1C" }}
       >
         {/* */}
         <Outlet />

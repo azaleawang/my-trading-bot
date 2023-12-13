@@ -21,7 +21,16 @@ interface PnlChartProps {
 }
 
 const PnlChart = ({ botId }: PnlChartProps) => {
-  const [pnlData, setPnlData] = useState<PnlData[]>([]); // const userId = 1;
+  const [pnlData, setPnlData] = useState<PnlData[]>([{
+    pnl: 1,
+    timestamp: 1702396800
+  }, {
+    pnl: 2,
+    timestamp: 1702396810
+  }, {
+    pnl: 3,
+    timestamp: 1702396900
+  }]); // const userId = 1;
   const [loading, setLoading] = useState<boolean>(true);
   // const botId = 46;
 
@@ -125,8 +134,8 @@ const PnlChart = ({ botId }: PnlChartProps) => {
         >
           <defs>
             <linearGradient id="colorPnl" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
+              <stop offset="5%" stopColor="#51A8DD" stopOpacity={0.8} />
+              <stop offset="95%" stopColor="#51A8DD" stopOpacity={0} />
             </linearGradient>
           </defs>
           <XAxis
@@ -157,7 +166,7 @@ const PnlChart = ({ botId }: PnlChartProps) => {
           <Area
             type="monotone"
             dataKey="pnl"
-            stroke="#8884d8"
+            // stroke="#58B2DC"
             fillOpacity={1}
             fill="url(#colorPnl)"
           />

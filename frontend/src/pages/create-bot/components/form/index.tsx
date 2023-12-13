@@ -10,15 +10,15 @@ const CreateBotForm: React.FC = () => {
   const navigate = useNavigate();
   const [userId] = useCookie("user_id", "");
   const [botData, setBotData] = useState({
-    name: "",
+    name: "Cool-bot",
     strategy: "supertrend",
-    symbol: "",
+    symbol: "ETH/USDT",
     description: "",
     t_frame: "30m",
     quantity: 120
   });
   const strategies = ["supertrend"]; // only accept this strategy for now
-  const symbols = ["ETH/USDT", "BTC/USDT", "BNB/USDT"]; // still hard-coded
+  const symbols = ["ETH/USDT", "BNB/USDT", "BTC/USDT"]; // still hard-coded
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -30,6 +30,13 @@ const CreateBotForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    const nameRegex = /^[A-Za-z-_]+$/; // Only accept -,_ and alphabets
+    if (!nameRegex.test(botData.name)) {
+      alert("Invalid Name. It should only contain English letters and hyphens.");
+      return;
+    }
+
     const submissionData = {
       ...botData,
       owner_id: Number(userId),
