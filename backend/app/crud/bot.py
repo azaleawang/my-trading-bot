@@ -30,7 +30,7 @@ def check_name(db: Session, container_name: str, bot_name: str, user_id: int):
         .first()
     ):
         raise HTTPException(
-            status_code=400, detail="Bot name already registered. Pls rename it!"
+            status_code=400, detail="名稱重複，請重新命名！"
         )
     if (
         db.query(Bot)
@@ -129,6 +129,10 @@ def delete_user_bot(bot_id: int, worker_ip: str, db: Session):
             status_code=500,
             detail=f"No operation on database during deleting bot: {bot.container_name}",
         )
+
+def number_of_running_server(db: Session):
+    return db.query(WorkerServer).filter(WorkerServer.status == "running").count()
+    
 
 
 def assign_worker_server(db: Session):

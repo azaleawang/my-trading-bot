@@ -53,9 +53,7 @@ const CreateBotForm: React.FC = () => {
 
     const nameRegex = /^[A-Za-z-_1234567890]+$/; // Only accept -,_ and alphabets
     if (!nameRegex.test(botData.name)) {
-      toast.warn(
-        "名稱欄位僅接受英數 🙌"
-      );
+      toast.warn("名稱欄位僅接受英數 🙌");
       return;
     }
 
@@ -77,7 +75,6 @@ const CreateBotForm: React.FC = () => {
         )
       ) {
         navigate(0);
-        // navigate(`/trading-bots/${String(response.data.data.id)}`);
       }
 
       // Handle the success (e.g., showing a notification, clearing the form, etc.)
@@ -135,7 +132,6 @@ const CreateBotForm: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
-              
             </div>
             <div className="mb-4">
               <label htmlFor="symbol" className="block mb-2">
@@ -155,9 +151,8 @@ const CreateBotForm: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
-              
             </div>
-         
+
             <div className="mb-4">
               {/* <Slider defaultValue={[33]} max={100} step={1} /> */}
 

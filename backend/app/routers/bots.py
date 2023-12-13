@@ -16,6 +16,7 @@ from app.crud.bot import (
     get_bot_by_id,
     get_bots,
     get_user_bots,
+    number_of_running_server,
     stop_user_bot,
     update_worker_server_memory,
     update_worker_server_status,
@@ -78,6 +79,14 @@ def create_bot_for_user(bot: schemas.BotBase, db: Session = Depends(get_db)):
         check_name(db, container_name, bot.name, bot.owner_id)
         # TODO 可能會出現已經開啟container但資料庫儲存有問題
         
+        # Limit the number of running worker becuz i cannot afford too many worker server
+        num = number_of_running_server(db)
+        print(f"{num} servers running Now")
+        if num >= 2:
+            raise HTTPException(
+                status_code=400,
+                detail="超過系統服務上限，請稍後再試",
+            )
         # TODO maybe need to check whether the worker server is open
         # get available worker server ip
         worker_server = assign_worker_server(db)
