@@ -14,14 +14,22 @@ from app.src.controller.ec2 import (
     start_ec2_instance,
     stop_ec2_instance,
 )
+import re
 
 ALLOW_CREATE = True
+
 
 def get_bots(db: Session):
     return db.query(Bot).all()
 
 
 def check_name(db: Session, container_name: str, bot_name: str, user_id: int):
+    name_regex = re.compile(r"^[A-Za-z-_1234567890]+$")
+    match = name_regex.match(bot_name)
+    if not match:
+        raise HTTPException(status_code=400, detail="名稱只能包含英文、數字、底線、減號，請重新命名！")
+    if len(bot_name) < 0 or len(bot_name) > 20:
+        raise HTTPException(status_code=400, detail="名稱長度不符合規定，請重新命名！")
     if (
         db.query(Bot)
         .filter(
@@ -29,9 +37,7 @@ def check_name(db: Session, container_name: str, bot_name: str, user_id: int):
         )
         .first()
     ):
-        raise HTTPException(
-            status_code=400, detail="名稱重複，請重新命名！"
-        )
+        raise HTTPException(status_code=400, detail="名稱重複，請重新命名！")
     if (
         db.query(Bot)
         .filter(and_(Bot.container_name == container_name, Bot.status != "deleted"))
@@ -74,9 +80,6 @@ def create_user_bot(db: Session, bot: schemas.BotCreate):
     except SQLAlchemyError as e:
         logging.error(f"Error in storing bot creation: {e}")
         raise HTTPException(status_code=400, detail="Database error.")
-    # except Exception as e:
-    #     logging.error(f"Unexpected error in storing bot creation: {e}")
-    #     raise HTTPException(status_code=500, detail="Unexpected database error.")
 
 
 def stop_user_bot(bot_id: str, worker_ip: str, db: Session):
@@ -130,9 +133,9 @@ def delete_user_bot(bot_id: int, worker_ip: str, db: Session):
             detail=f"No operation on database during deleting bot: {bot.container_name}",
         )
 
+
 def number_of_running_server(db: Session):
     return db.query(WorkerServer).filter(WorkerServer.status == "running").count()
-    
 
 
 def assign_worker_server(db: Session):
@@ -175,7 +178,7 @@ def assign_worker_server(db: Session):
             start_ec2_instance(instance_id=candidate_server.instance_id)
             candidate_server.status = "preparing"
             db.commit()
-        
+
         # No stopped server, Let's check if we can create a new server
         # Create a new worker server
         elif ALLOW_CREATE:
@@ -185,6 +188,7 @@ def assign_worker_server(db: Session):
             status_code=500,
             detail="No available worker-server found. New server is Starting. PLEASE TRY AGAIN LATER.",
         )
+
 
 # update worker server available memory
 def update_worker_server_memory(

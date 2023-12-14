@@ -45,7 +45,7 @@ const CreateBotForm: React.FC = () => {
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => {
-    setBotData({ ...botData, [e.target.name]: e.target.value });
+    setBotData({ ...botData, [e.target.name]: e.target.value?.trim() });
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -53,7 +53,12 @@ const CreateBotForm: React.FC = () => {
 
     const nameRegex = /^[A-Za-z-_1234567890]+$/; // Only accept -,_ and alphabets
     if (!nameRegex.test(botData.name)) {
-      toast.warn("名稱欄位僅接受英數 🙌");
+      toast.warn("名稱欄位僅接受英文數字以及連字號 🙌");
+      return;
+    }
+
+    if (botData.name.trim().length > 20 || botData.name.trim().length < 3) {
+      toast.warn("名稱字數需介於3~20字 🙌");
       return;
     }
 
