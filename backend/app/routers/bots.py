@@ -256,16 +256,21 @@ def get_container_monitoring_logs(
 ):
     try:
         # get data from db
+        db_bot = get_bot_by_id(bot_id=bot_id, db=db)
+        if not db_bot:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Bot #{bot_id} not found.",
+            )
+        if db_bot.owner_id != user.id:
+            raise HTTPException(
+                status_code=403,
+                detail="You are not allowed to access this user's bot information.",
+            )
         container_info = get_container_status(db, bot_id)
-        if container_info:
-            if container_info.owner_id != user.id:
-                raise HTTPException(
-                    status_code=403,
-                    detail="You are not allowed to access this user's bot information.",
-                )
-            return {"data": container_info}
 
         return {"data": container_info}
+
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
