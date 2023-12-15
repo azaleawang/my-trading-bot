@@ -19,7 +19,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "react-toastify";
-import { Plus, PlusCircle, PlusSquare } from "lucide-react";
+import { Plus } from "lucide-react";
 
 const CreateBotForm: React.FC = () => {
   const navigate = useNavigate();
