@@ -10,14 +10,14 @@ export default function Welcome() {
   return (
     <div className="flex flex-col flex-grow w-full h-full p-5 mt-5 pb-0 justify-center items-center space-between">
       <p
-        style={{ fontSize: "120px", fontFamily: "monospace" }}
-        className="font-bold text-slate-200/[80%] tracking-widest"
+        style={{ fontFamily: "monospace" }}
+        className="font-bold text-slate-200/[80%] tracking-widest md:text-9xl	text-5xl	text-center"
       >
         AutoMate
       </p>
       <p
-        style={{ fontSize: "30px", fontFamily: "sans-serif" }}
-        className="font-medium text-slate-300/[60%] lg:w-2/3 text-center"
+        style={{ fontFamily: "sans-serif" }}
+        className="font-medium text-slate-300/[60%] lg:w-2/3 text-center md:mt-10 mt-5 text-2xl md:text-4xl"
       >
         A Reliable Mate Maximizing Your Trades as You Rest
       </p>

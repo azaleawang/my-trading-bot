@@ -227,3 +227,33 @@ class WorkerServerRead(WorkerServerCreate):
 
     class Config:
         from_attributes = True
+
+
+class ContainerStatus_Resp(BaseModel):
+    container_id: str
+    container_name: str
+    state: str = "exited"
+    status: str = "Exited (137) 39 hours ago"
+    RunningFor: str = "39 hours ago"
+
+
+class ContainerLog_Resp(BaseModel):
+    container_id: str
+    container_name: str
+    logs: list = [
+        "20231130-180805: Checking for buy and sell signals",
+        "20231130-180905: symbol: BNB/USDT, timeframe: 30m, limit: 100, in_position: True, quantity_buy_sell: 0.1",
+    ]
+
+
+class ContainerInfoDict(BaseModel):
+    data: list = [
+        {"container_id": "123123123123", "state": [{}], "log": ["log1", "log2"]}
+    ]
+
+
+class PnlChart(BaseModel):
+    data: list = [
+        {"pnl": -4.83644, "timestamp": 1702080000000},
+        {"pnl": -6.04348, "timestamp": 1702111500000},
+    ]

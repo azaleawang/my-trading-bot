@@ -1,4 +1,5 @@
 import { bot_api_base } from "@/common/apis";
+import useCookie from "@/common/hooks/useCookie";
 import { Icons } from "@/components/ui/icons";
 import axios from "axios";
 import { useEffect, useState } from "react";
@@ -32,14 +33,19 @@ const PnlChart = ({ botId }: PnlChartProps) => {
     timestamp: 1702396900
   }]); // const userId = 1;
   const [loading, setLoading] = useState<boolean>(true);
-  // const botId = 46;
+  const [access_token] = useCookie("access_token", "");
 
   // fetch data from server to draw chart
   useEffect(() => {
     // fetch data from server
     const fetchPnlData = async () => {
       try {
-        const response = await axios.get(`${bot_api_base(botId)}/pnl-chart`);
+        const response = await axios.get(`${bot_api_base(botId)}/pnl-chart`,
+        {
+          headers: {
+            "Authorization": `Bearer ${access_token}`,
+          },
+        });
         console.log("response", bot_api_base(botId));
         const data = response.data.data;
         console.log("data", data);
@@ -66,40 +72,6 @@ const PnlChart = ({ botId }: PnlChartProps) => {
   if (!pnlData || pnlData.length === 0) {
     return <h1 className="text-xl text-slate-400 flex p-5">暫無圖表資訊</h1>;
   }
-
-  // 假設您的資料是每小時記錄一次
-
-  // 填充缺失資料的函數
-  // function fillMissingData(data: PnlData[]) {
-  //   const DATA_INTERVAL = 3000;
-  //   const filledData = [];
-  //   for (let i = 0; i < data.length - 1; i++) {
-  //     filledData.push(data[i]);
-
-  //     const currentTimestamp = new Date(data[i].timestamp).getTime();
-  //     const nextTimestamp = new Date(data[i + 1].timestamp).getTime();
-  //     const diff = nextTimestamp - currentTimestamp;
-
-  //     if (diff > DATA_INTERVAL) {
-  //       // 計算缺失的資料點數量
-  //       // chatGPT generate these, i am not sure if it is correct
-  //       console.log("data missing");
-  //       const missingPoints = diff / DATA_INTERVAL - 1;
-  //       for (let j = 1; j <= missingPoints; j++) {
-  //         filledData.push({
-  //           timestamp: new Date(
-  //             currentTimestamp + DATA_INTERVAL * j
-  //           ).toISOString(),
-  //           pnl: null,
-  //         });
-  //       }
-  //     }
-  //   }
-  //   filledData.push(data[data.length - 1]); // 新增最後一個資料點
-  //   return filledData;
-  // }
-
-  // const processedData = fillMissingData(pnlData);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {

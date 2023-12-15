@@ -20,6 +20,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import PnlChart from "@/pages/pnl-chart";
+import useCookie from "@/common/hooks/useCookie";
 
 const BotDetails: React.FC = () => {
   const { botId } = useParams<{ botId: string }>();
@@ -29,11 +30,16 @@ const BotDetails: React.FC = () => {
   const [containerData, setContainerData] = useState<
     ContainerStateProps | undefined
   >();
+  const [access_token] = useCookie("access_token", "");
   useEffect(() => {
     const fetchBotDetails = async () => {
       try {
         // Replace with your actual API endpoint
-        const response = await axios.get(`${bot_api}/trade-history`);
+        const response = await axios.get(`${bot_api}/trade-history`, {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        });
         setBotData(response.data?.data);
         console.log("fetching data", response.data?.data);
       } catch (error) {
@@ -51,7 +57,11 @@ const BotDetails: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`${bot_api}/bot-error`);
+        const response = await axios.get(`${bot_api}/bot-error`, {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        });
         setBotErrors(response.data);
         console.log("Bot errors:", response.data);
       } catch (error) {
@@ -66,7 +76,11 @@ const BotDetails: React.FC = () => {
     const fetchContainerData = async () => {
       try {
         // TODO 這樣一直重複打資料庫真的好嘛？外面已經撈過全部的資料了
-        const response = await axios.get(`${bot_api}/container-monitoring`);
+        const response = await axios.get(`${bot_api}/container-monitoring`, {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        });
         if (response.data.data[0]) {
           setContainerData(response.data.data[0]);
           console.log("set ContainerData:", response.data.data[0]);

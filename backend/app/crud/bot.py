@@ -58,7 +58,7 @@ def get_user_bots(db: Session, user_id: int):
 # get bot by bot id
 def get_bot_by_id(db: Session, bot_id: int):
     db_bot = db.query(Bot).filter(Bot.id == bot_id).first()
-    return db_bot, db_bot.trade_history
+    return db_bot
 
 
 def create_user_bot(db: Session, bot: schemas.BotCreate):

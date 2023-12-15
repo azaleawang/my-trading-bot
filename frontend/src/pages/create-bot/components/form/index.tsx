@@ -19,10 +19,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "react-toastify";
+import { Plus, PlusCircle, PlusSquare } from "lucide-react";
 
 const CreateBotForm: React.FC = () => {
   const navigate = useNavigate();
   const [userId] = useCookie("user_id", "");
+  const [access_token] = useCookie("access_token", "");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [botData, setBotData] = useState({
     name: "Cool-bot",
     strategy: "supertrend",
@@ -48,9 +51,27 @@ const CreateBotForm: React.FC = () => {
     setBotData({ ...botData, [e.target.name]: e.target.value?.trim() });
   };
 
+  // function debounce(fn: any, delay = 500) {
+  //   let timer: any;
+
+  //   // debounce function 最終會回傳一個 function
+  //   return (...args: any) => {
+  //     // 每一次 debounce function 被觸發時，會先清除之前的 timer，避免觸發先前的 fn 函式
+  //     // 因此只要在 delay 時間內觸發 debounce function，就會一直清除先前的 timer，避免 fn 一直被執行
+  //     clearTimeout(timer);
+  //     // 清除之後，再重新計時
+  //     // 當 delay 時間到時，執行 fn
+  //     timer = setTimeout(() => {
+  //       fn(...args);
+  //     }, delay);
+  //   };
+  // }
+
+  // updateDebounceText 會在延遲 500 ms 後執行 console.log('call api get search result')
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+    
     const nameRegex = /^[A-Za-z-_1234567890]+$/; // Only accept -,_ and alphabets
     if (!nameRegex.test(botData.name)) {
       toast.warn("名稱欄位僅接受英文數字以及連字號 🙌");
@@ -67,16 +88,23 @@ const CreateBotForm: React.FC = () => {
       owner_id: Number(userId),
       created_at: new Date().toISOString(),
     };
+
     try {
+      setIsSubmitting(true);
       console.log(submissionData);
       const response = await axios.post(
         `${bot_api_base(undefined)}/`,
-        submissionData
+        submissionData,
+        {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        }
       );
       console.log(response.data);
       if (
         confirm(
-          `Bot ${response.data.data.name} created successfully! 交易對: ${response.data.data.symbol}`
+          `機器人 ${response.data.data.name} 已創建! 交易對: ${response.data.data.symbol}`
         )
       ) {
         navigate(0);
@@ -89,14 +117,23 @@ const CreateBotForm: React.FC = () => {
         error.response?.data?.detail || "Something went wrong when creating bot"
       );
       // Handle the error (e.g., showing an error message)
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  // const debouncedSubmit = debounce(handleSubmit);
+  // const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  //   e.preventDefault(); // 在这里调用 preventDefault
+  //   debouncedSubmit();   // 然后调用防抖函数
+  // };
 
   return (
     // <div className="w-8/12 max-w-[500px] p-5 m-auto text-white">
     <Dialog>
-      <DialogTrigger className="md:tracking-widest text-base m-0 w-full text-zinc-900 ">
-        新增機器人
+      <DialogTrigger className="md:tracking-widest text-base m-0 w-full flex items-center justify-center gap-2">
+        {/* <PlusSquare size={28} /> */}
+        <Plus size={20} /> 機器人
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -176,30 +213,12 @@ const CreateBotForm: React.FC = () => {
                 required
               />
             </div>
-            {/* <div className="mb-6">
-          <label
-            htmlFor="description"
-            className="block text-base font-medium mb-2"
-          >
-            Description (Optional)
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            value={botData.description}
-            onChange={handleInputChange}
-            className="w-full p-2 rounded bg-zinc-700 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-zinc-500"
-            rows={4}
-          ></textarea>
-        </div> */}
             <div className="flex justify-end">
-              <Button type="submit">確認</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                確認
+              </Button>
             </div>
           </form>
-          {/* <DialogDescription>
-              This action cannot be undone. This will permanently delete your
-              account and remove your data from our servers.
-            </DialogDescription> */}
         </DialogHeader>
       </DialogContent>
     </Dialog>

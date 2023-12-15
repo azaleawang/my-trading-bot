@@ -19,8 +19,8 @@ import { Icons } from "@/components/ui/icons";
 import CreateBotForm from "@/pages/create-bot/components/form";
 import { toast } from "react-toastify";
 // import { Icons } from "@/components/ui/icons";
-
 const BotContainer: React.FC = () => {
+  const [access_token] = useCookie("access_token", "");
   const [bots, setBots] = useState<Bot[]>([]); // const userId = 1;
   const [loadingStates, setLoadingStates] = useState<{
     [key: number]: boolean;
@@ -48,7 +48,7 @@ const BotContainer: React.FC = () => {
 
     markPriceWs.onmessage = (event) => {
       const message: MarkPriceData[] = JSON.parse(event.data);
-      console.log("Hi from binance ws", message[0]);
+      // console.log("Hi from binance ws", message[0]);
       setMarkAllPrice(message);
     };
 
@@ -61,7 +61,11 @@ const BotContainer: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get(`${user_api}/bots`);
+        const response = await axios.get(`${user_api}/bots`, {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        });
         const bots = response.data.data;
         setBots(bots.filter((bot: Bot) => bot.status !== "deleted"));
       } catch (error) {
@@ -79,7 +83,15 @@ const BotContainer: React.FC = () => {
       event.stopPropagation();
       if (confirm(`確定要終止機器人嗎 ?`)) {
         setLoadingStates((prevStates) => ({ ...prevStates, [botId]: true })); // Start loading for specific bot
-        const resp = await axios.put(`${bot_api_base(botId)}`);
+        const resp = await axios.put(
+          `${bot_api_base(botId)}`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${access_token}`,
+            },
+          }
+        );
         console.log(resp.data);
         toast.success("成功終止機器人");
 
@@ -103,7 +115,11 @@ const BotContainer: React.FC = () => {
     try {
       event.preventDefault();
       if (confirm("確定要刪除機器人嗎 ?") && botId) {
-        const resp = await axios.delete(`${bot_api_base(botId)}`);
+        const resp = await axios.delete(`${bot_api_base(botId)}`, {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        });
         console.log(resp.data);
         toast.success("Delete OK!", {
           autoClose: 1000,
@@ -172,7 +188,7 @@ const BotContainer: React.FC = () => {
         ) : (
           <>
             <div className=" flex fixed right-0 top-20">
-              <Button className="text-base mr-5 w-[110px] p-0 bg-orange-300/80 hover:bg-orange-300">
+              <Button className="text-base mr-5 w-[100px] p-0 bg-inherit border-2 border-zinc-300">
                 <CreateBotForm />
               </Button>
             </div>

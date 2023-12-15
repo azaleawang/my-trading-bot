@@ -1,14 +1,13 @@
 import logging
 from typing import List
-
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.src.schema import schemas
 from app.src.config.database import get_db
 from app.crud.user import get_user, get_users
-from app.crud.bot import check_name, create_user_bot, get_user_bots
-from app.crud.container_status import get_container_status, get_user_containers_status
+from app.crud.bot import get_user_bots
+from app.crud.container_status import get_user_containers_status
+from app.utils.deps import get_current_user
 
 router = APIRouter()
 
@@ -19,17 +18,27 @@ def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return users
 
 
-@router.get("/{user_id}", response_model=schemas.User)
-def read_user(user_id: int, db: Session = Depends(get_db)):
-    db_user = get_user(db, user_id=user_id)
-    if db_user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return db_user
+# @router.get("/{user_id}", response_model=schemas.User)
+# def read_user(user_id: int, user: schemas.User = Depends(get_current_user)):
+#     # db_user = get_user(db, user_id=user_id)
+#     if user_id != user.id:
+#         raise HTTPException(
+#             status_code=status.HTTP_403_FORBIDDEN,
+#             detail="You are not allowed to access this user's information.",
+#             headers={"WWW-Authenticate": "Bearer"},
+#         )
+#     return user
 
 
 @router.get("/{user_id}/bots")
-def get_user_bot_details(user_id: int, db: Session = Depends(get_db)):
+def get_user_bot_details(user_id: int, user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
     try:
+        if user_id != user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not allowed to access this user's bot information.",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         db_bot = get_user_bots(user_id=user_id, db=db)
 
         return {
@@ -44,8 +53,14 @@ def get_user_bot_details(user_id: int, db: Session = Depends(get_db)):
 
     
 @router.get("/{user_id}/bots/container-monitoring", response_model=schemas.ContainerStateDict)
-def get_user_container_monitoring(user_id: int, db: Session = Depends(get_db)):
+def get_user_container_monitoring(user_id: int, user: schemas.User = Depends(get_current_user), db: Session = Depends(get_db)):
         try:
+            if user_id != user.id:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You are not allowed to access this user's bot information.",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
             # get data from db
             containers_info = get_user_containers_status(db, user_id)
             return {"data": containers_info}
