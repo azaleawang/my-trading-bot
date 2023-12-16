@@ -3,6 +3,7 @@ from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
 import os
 import pandas as pd
+from datetime import datetime
 load_dotenv() 
 # client = InfluxDBClient(url="http://localhost:8086", token=INFLUX_API_TOKEN, org=org)
 current_directory = os.getcwd()
@@ -18,11 +19,11 @@ def write_to_influxdb(data, bucket="mark-price"):
                                   .time (int(data["timestamp"]) * 1000000)
     write_api.write(bucket=bucket, record=point)
 
-def get_history_mark_price(symbol: str, start="2023-10-28T00:00:00Z", bucket="mark-price"):
+def get_history_mark_price(symbol: str, start="2023-10-28T00:00:00Z", stop=datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"), bucket="mark-price"):
     
     query = f"""
     from(bucket: "{bucket}")
-    |> range(start: {start})
+    |> range(start: {start}, stop: {stop})
     |> filter(fn: (r) => r["_measurement"] == "crypto_prices")
     |> filter(fn: (r) => r["_field"] == "price")
     |> filter(fn: (r) => r["symbol"] == "{symbol}")

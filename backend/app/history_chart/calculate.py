@@ -2,45 +2,8 @@ import pandas as pd
 
 from .influxdb.setup import get_history_mark_price
 
-
-# Generating mock data in the required format
-# mock_data = [
-#     {
-#         "order_id": "1226958203",
-#         "qty": 0.006,
-#         "price": 43367.9,
-#         "timestamp": "1702259706000",
-#     },
-#     {
-#         "order_id": "1226958302",
-#         "qty": -0.006,
-#         "price": 41822.5,
-#         "timestamp": "1702262967000",
-#     },
-#     {
-#         "order_id": "1226958421",
-#         "qty": 0.006,
-#         "price": 41934.68,
-#         "timestamp": "1702263522000",
-#     },
-# ]
-
-# # Creating a DataFrame from the mock data
-# trade_df = pd.DataFrame(mock_data)
-
-
-# Sorting by timestamp from old to new
-# trade_df.sort_values(by="timestamp", inplace=True)
-# trade_df.reset_index(drop=True, inplace=True)
-# print(trade_df)
-
-# Fetching data from the history.py file
-# eth_data = history_data(
-#     symbols=["ETH/USDT"], t_frame="15m", since="2023-12-05T00:00:00Z"
-# )
-
-def calculate_pnl(symbol: str, bot_create_iso_str, bot_create_timestamp_ms, trade_df):
-    mark_data = get_history_mark_price(symbol=symbol, start=bot_create_iso_str)
+def calculate_pnl(symbol: str, bot_create_iso_str, bot_create_timestamp_ms, bot_stop_iso_str, trade_df):
+    mark_data = get_history_mark_price(symbol=symbol, start=bot_create_iso_str, stop=bot_stop_iso_str)
     # print(mark_data.columns)
 
     # iterate over the dataframe

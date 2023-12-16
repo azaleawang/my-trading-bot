@@ -24,6 +24,7 @@ class Bot(Base):
         default=lambda: datetime.now(pytz.timezone("Asia/Taipei")),
         nullable=False,
     )
+    stopped_at = Column(TIMESTAMP(timezone=True))
     status = Column(
         String,
         default="running",

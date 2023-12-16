@@ -14,8 +14,9 @@ from app.src.controller.ec2 import (
     start_ec2_instance,
     stop_ec2_instance,
 )
+from datetime import datetime
+import pytz
 import re
-
 ALLOW_CREATE = True
 
 
@@ -97,9 +98,11 @@ def stop_user_bot(bot_id: str, worker_ip: str, db: Session):
         )
 
     elif bot.status == "running":
-        stop_bot_container(bot.container_id, worker_ip)
         bot.status = "stopped"
+        bot.stopped_at = datetime.now(pytz.timezone("Asia/Taipei"))
         db.commit()
+        stop_bot_container(bot.container_id, worker_ip)
+        
         return bot
     else:
         raise HTTPException(
@@ -123,9 +126,10 @@ def delete_user_bot(bot_id: int, worker_ip: str, db: Session):
     if bot.status == "stopped" or bot.status == "exited":
         # Then check whether the worker server is still alive
         if bot.worker_server.private_ip:
+            db.delete(bot)
+            db.commit()
             delete_bot_container(bot.container_id, worker_ip)
-        db.delete(bot)
-        db.commit()
+        
         return bot
     else:
         raise HTTPException(

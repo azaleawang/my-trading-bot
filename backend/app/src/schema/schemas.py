@@ -148,6 +148,7 @@ class TradeHistory_Resp(BaseModel):
 class Bot(BotCreate):
     id: int
     created_at: datetime
+    stopped_at: Any
     trade_history: List[TradeHistory_Resp]
 
     class Config:

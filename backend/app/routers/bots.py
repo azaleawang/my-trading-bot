@@ -148,18 +148,17 @@ def stop_bot_for_user(
         print("find worker ip = ", worker_ip)
 
         user_bot = stop_user_bot(bot_id, worker_ip, db)
-        # if user_bot.owner_id != user.id:
-        #     raise HTTPException(
-        #         status_code=403,
-        #         detail="You are not allowed to stop bot for other users.",
-        #     )
+        if user_bot.owner_id != user.id:
+            raise HTTPException(
+                status_code=403,
+                detail="You are not allowed to stop bot for other users.",
+            )
 
         update_worker_server_memory(
             db, user_bot.worker_instance_id, -user_bot.memory_usage
         )
         # for auto-scaling: check whether the worker server need to be closed
         if worker_scaling(db, worker_ip):
-            # TODO How to restart worker server?
             update_worker_server_status(db, worker_ip=worker_ip)
             return {
                 "message": f"Bot #{bot_id} {user_bot.name} stopped ad worker server (ip={worker_ip}) stopped!"
@@ -318,33 +317,66 @@ async def get_bot_pnl_chart(
 
         # get bot start timestamp
         bot_create_timestamp_ms = int(bot_info.created_at.timestamp()) * 1000
-
+        bot_stop_iso_str = (
+            datetime.now(pytz.utc).isoformat()
+            if bot_info.stopped_at is None
+            else bot_info.stopped_at.astimezone(pytz.utc).isoformat()
+        )
         symbol = bot_info.symbol.replace("/", "")
-        
-        # if over 15 min check redis    
+
+        # if over 15 min check redis
         redis_client = await get_redis_client()
-        if not redis_client or int(time.time() - int(bot_info.created_at.timestamp()) <= 900):
+        if not redis_client or int(
+            time.time() - int(bot_info.created_at.timestamp()) <= 900
+        ):
             # if created in 15 min then calculate pnl
+
             return {
                 "data": calculate_pnl(
-                    symbol, bot_create_iso_str, bot_create_timestamp_ms, trade_df
+                    symbol,
+                    bot_create_iso_str,
+                    bot_create_timestamp_ms,
+                    bot_stop_iso_str,
+                    trade_df,
                 )
             }
-            
+
         key = f"pnldata:{bot_info.owner_id}:{bot_id}"
-        value = await redis_client.get(key)
+        value = await read_pnl_from_redis(redis_client=redis_client, key=key)
         if value is None:
             print("not recorded in redis", key)
             pnl_data = calculate_pnl(
-                symbol, bot_create_iso_str, bot_create_timestamp_ms, trade_df
+                symbol,
+                bot_create_iso_str,
+                bot_create_timestamp_ms,
+                bot_stop_iso_str,
+                trade_df,
             )
 
-            value = json.dumps(pnl_data)
-            await redis_client.set(key, value, ex=900)  # Set with 15 minutes expiration
+            await write_pnl_to_redis(redis_client=redis_client, key=key, value=json.dumps(pnl_data))
 
-        return {"data": pnl_data if value is None else json.loads(value)}
+        return {"data": pnl_data if value is None else value}
 
     except HTTPException as http_ex:
         raise http_ex
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+async def read_pnl_from_redis(redis_client, key):
+    try:
+        value = await redis_client.get(key)
+        if value is None:
+            return None
+        return json.loads(value)
+    except Exception as e:
+        logging.error(e)
+        return None
+
+
+async def write_pnl_to_redis(redis_client, key, value):
+    try:
+        await redis_client.set(key, value, ex=900)  # Set with 15 minutes expiration
+    except Exception as e:
+        logging.error(e)
+        return None
