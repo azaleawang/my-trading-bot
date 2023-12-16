@@ -1,7 +1,8 @@
 from datetime import datetime
+import json, time
 import logging
 from typing import List, Union, Any
-
+from app.utils.redis import get_redis_client
 from fastapi import APIRouter, Depends, HTTPException
 import pandas as pd
 from pydantic import BaseModel
@@ -275,11 +276,10 @@ def get_container_monitoring_logs(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-
 #
 # api for getting bot's pnl chart
 @router.get("/{bot_id}/pnl-chart", response_model=schemas.PnlChart)
-def get_bot_pnl_chart(
+async def get_bot_pnl_chart(
     bot_id: int,
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
@@ -320,12 +320,29 @@ def get_bot_pnl_chart(
         bot_create_timestamp_ms = int(bot_info.created_at.timestamp()) * 1000
 
         symbol = bot_info.symbol.replace("/", "")
+        
+        # if over 15 min check redis    
+        redis_client = await get_redis_client()
+        if not redis_client or int(time.time() - int(bot_info.created_at.timestamp()) <= 900):
+            # if created in 15 min then calculate pnl
+            return {
+                "data": calculate_pnl(
+                    symbol, bot_create_iso_str, bot_create_timestamp_ms, trade_df
+                )
+            }
+            
+        key = f"pnldata:{bot_info.owner_id}:{bot_id}"
+        value = await redis_client.get(key)
+        if value is None:
+            print("not recorded in redis", key)
+            pnl_data = calculate_pnl(
+                symbol, bot_create_iso_str, bot_create_timestamp_ms, trade_df
+            )
 
-        # function that handle pnl calculation
-        pnl_data = calculate_pnl(
-            symbol, bot_create_iso_str, bot_create_timestamp_ms, trade_df
-        )
-        return {"data": pnl_data}
+            value = json.dumps(pnl_data)
+            await redis_client.set(key, value, ex=900)  # Set with 15 minutes expiration
+
+        return {"data": pnl_data if value is None else json.loads(value)}
 
     except HTTPException as http_ex:
         raise http_ex

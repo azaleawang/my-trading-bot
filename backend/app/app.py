@@ -1,4 +1,5 @@
 """Module providing a function of FastAPI and WebSocket."""
+import json
 from app.crud.trade_history import create_trade_history
 from fastapi import (
     Depends,
@@ -37,12 +38,27 @@ from app.utils.auth import (
     create_access_token,
     create_refresh_token,
 )
-
+from contextlib import asynccontextmanager
+from app.utils.redis import get_redis_client
 current_dir = os.path.dirname(os.path.abspath(__file__))
 frontend_dir = os.path.join(current_dir, "../dist")
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # startup
+    app.state.redis = await get_redis_client()
+    yield
+    # shutdown
+    await app.state.redis.close()
+
+
+app = FastAPI(lifespan=lifespan)
+# Dependency
+
+
+
 API_VER = "v1"
 app.include_router(users.router, prefix=f"/api/{API_VER}/users", tags=["User"])
 app.include_router(bots.router, prefix=f"/api/{API_VER}/bots", tags=["Bot"])
@@ -64,6 +80,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# data = [
+#     {"pnl": -6.66192551, "timestamp": 1702469949000},
+#     {"pnl": -6.645022917790003, "timestamp": 1702469952000},
+# ]
+
+
+async def read_item(key, cb):
+    value = await app.state.redis.get(key)
+    if value is None:
+        # get value from cb function
+        data = cb
+        value = json.dumps(data)
+        await app.state.redis.set(key, value)
+        print("set redis", key)
+
+    return json.loads(value)
 
 
 @app.get(
