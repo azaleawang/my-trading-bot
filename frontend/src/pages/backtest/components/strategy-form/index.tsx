@@ -63,7 +63,7 @@ const StrategyForm: React.FC<StrategyFormProps> = ({ setLoading }) => {
     since: "2023-01-01",
     default_type: "future",
     params: {},
-    user_id: userId
+    user_id: Number(userId)
   });
 
   useEffect(() => {
