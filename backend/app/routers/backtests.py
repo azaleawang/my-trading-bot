@@ -24,7 +24,7 @@ def run_backtest(strategy: Backtest_Strategy, db: Session = Depends(get_db)) -> 
         # check if the strategy backtest result is already in the database
         check_result = check_backtest_strategy(strategy.model_dump(), db)
         if check_result:
-            asyncio.run(send_message({"id": check_result}))
+            asyncio.run(send_message(strategy.user_id, {"id": check_result}))
             return {
                 "message": f"Backtesting '{strategy}' already in the database."
             }    
@@ -78,7 +78,7 @@ def receive_lambda_result(
         parsed_result = data.model_dump()
         print(parsed_result)
         # TODO
-        client_id = int(parsed_result["user_id"])
+        client_id = int(parsed_result["info"]["user_id"])
         parsed_result["result"] = json.loads(parsed_result["result"])
         for key, value in  parsed_result["result"].items():
             if isinstance(value, float) and math.isnan(value):
