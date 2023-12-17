@@ -35,7 +35,7 @@ const StrategyForm: React.FC<StrategyFormProps> = ({ setLoading }) => {
   const strategy_api_base = `/api/v1/strategies/`;
   const [userId] = useCookie("user_id", "");
   // strategy data
-  interface AllStrategies {
+  interface Strategies {
     name: string;
     file_url: string | null;
     provider_id: number;
@@ -43,7 +43,7 @@ const StrategyForm: React.FC<StrategyFormProps> = ({ setLoading }) => {
     id: number;
     params: { [key: string]: any };
   }
-  const [strategies, setStrategies] = useState<AllStrategies[]>([]); // strategies fetched from database
+  const [strategies, setStrategies] = useState<Strategies[]>([]); // strategies fetched from database
 
   // strategy chosen to be tested
   interface Bt_Strategy {
@@ -53,6 +53,7 @@ const StrategyForm: React.FC<StrategyFormProps> = ({ setLoading }) => {
     since: string;
     default_type: string;
     params: { [key: string]: any };
+    user_id: number
   }
 
   const [bt_strategy, setBt_strategy] = useState<Bt_Strategy>({
@@ -62,6 +63,7 @@ const StrategyForm: React.FC<StrategyFormProps> = ({ setLoading }) => {
     since: "2023-01-01",
     default_type: "future",
     params: {},
+    user_id: userId
   });
 
   useEffect(() => {
@@ -177,8 +179,8 @@ const StrategyForm: React.FC<StrategyFormProps> = ({ setLoading }) => {
                 <SelectValue placeholder="請選取策略" />
               </SelectTrigger>
               <SelectContent className="text-white bg-zinc-900">
-                {strategies.map((s: any) => (
-                  <SelectItem value={s.name}>{s.name}</SelectItem>
+                {strategies.map((s: Strategies, i) => (
+                  <SelectItem key={i} value={s.name}>{s.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -195,8 +197,8 @@ const StrategyForm: React.FC<StrategyFormProps> = ({ setLoading }) => {
                 <SelectValue placeholder="交易對" />
               </SelectTrigger>
               <SelectContent className="text-white bg-zinc-900">
-                {symbolList.map((symbol) => (
-                  <SelectItem value={symbol}>{symbol}</SelectItem>
+                {symbolList.map((symbol, i) => (
+                  <SelectItem key={i} value={symbol}>{symbol}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -235,7 +237,7 @@ const StrategyForm: React.FC<StrategyFormProps> = ({ setLoading }) => {
           <div className="flex gap-5 flex-wrap mb-3">
             {strategies
               .filter((s: any) => s.name === bt_strategy.name)
-              .map((selectedStrategy: any) =>
+              .map((selectedStrategy: Strategies) =>
                 Object.entries(selectedStrategy.params).map(
                   ([paramKey, paramValue]) => (
                     <div key={paramKey}>

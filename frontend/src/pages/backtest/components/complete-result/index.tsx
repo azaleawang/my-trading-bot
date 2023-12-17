@@ -3,6 +3,7 @@ import axios from "axios";
 import BacktestResult from "../data";
 import StrategyForm from "../strategy-form";
 import { Icons } from "@/components/ui/icons";
+import useCookie from "@/common/hooks/useCookie";
 
 const Backtest = () => {
   // const [backtestData, setBacktestData] = useState({
@@ -52,10 +53,11 @@ const Backtest = () => {
   const [backtestData, setBacktestData] = useState();
   const [backtestId, setBacktestId] = useState();
   const [loading, setLoading] = useState<boolean>(false);
-
+  const [userId] = useCookie("user_id", "");
+  
   useEffect(() => {
     const socket = new WebSocket(
-      `${import.meta.env.VITE_WS_HOST}/ws/backtest_result`
+      `${import.meta.env.VITE_WS_HOST}/ws/backtest_result/${userId}`
     );
 
     socket.onopen = () => {
@@ -65,7 +67,7 @@ const Backtest = () => {
     socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log("Parsed data:", data.id);
+        console.log("Parsed data:", data);
         if (data.id === backtestId) {
           setLoading(false);
           fetchBacktestData(data.id);
