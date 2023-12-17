@@ -262,31 +262,3 @@ async def websocket_backtest_result_endpoint(websocket: WebSocket, client_id: in
     except WebSocketDisconnect:
         manager.disconnect(client_id, websocket)
         print(f"Client #{client_id} left the chat")
-
-
-# @app.websocket("/ws/backtest_result/{client_id}")
-# async def websocket_endpoint(websocket: WebSocket, client_id: int):
-#     await manager.connect(websocket)
-#     # await websocket.accept()
-#     # active_connections.append(websocket)
-#     try:
-#         while True:
-#             # Replace this with your logic to fetch or generate data
-#             data = await websocket.receive_json()
-#             print(f"Message received: {data}")
-#             await manager.send_personal_message(f"You wrote: {data}", websocket)
-#             # await websocket.send_json("Message received")
-#             # await broadcast(data)
-#     except WebSocketDisconnect:
-#         manager.disconnect(websocket)
-#         await manager.broadcast(f"Client #{client_id} left the chat")
-
-
-# TODO this should be casted to certain user rather than broadcast QQ
-# async def broadcast(message: dict):
-#     for connection in active_connections:
-#         try:
-#             await connection.send_json(message)
-#         except WebSocketDisconnect as wsd:
-#             # Handle disconnect during broadcast if needed
-#             logging.error("Client disconnected during broadcast: %s", wsd)
