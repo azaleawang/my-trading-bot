@@ -125,9 +125,9 @@ def delete_user_bot(bot_id: int, worker_ip: str, db: Session):
 
     if bot.status == "stopped" or bot.status == "exited":
         # Then check whether the worker server is still alive
+        db.delete(bot)
+        db.commit()
         if bot.worker_server.private_ip:
-            db.delete(bot)
-            db.commit()
             delete_bot_container(bot.container_id, worker_ip)
         
         return bot
@@ -232,6 +232,7 @@ def worker_scaling(db: Session, worker_ip: str):
         return False
     if worker_server.available_memory == worker_server.total_memory:
         print("Worker server need to be closed")
+        # First 
         # True if stop successfully
         return stop_ec2_instance(instance_id=worker_server.instance_id)
 

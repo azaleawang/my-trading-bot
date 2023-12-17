@@ -327,7 +327,7 @@ async def get_bot_pnl_chart(
         # if over 15 min check redis
         redis_client = await get_redis_client()
         if not redis_client or int(
-            time.time() - int(bot_info.created_at.timestamp()) <= 9
+            time.time() - int(bot_info.created_at.timestamp()) <= 900
         ):
             # if created in 15 min then calculate pnl
 
