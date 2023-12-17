@@ -98,11 +98,10 @@ def stop_user_bot(bot_id: str, worker_ip: str, db: Session):
         )
 
     elif bot.status == "running":
-        bot.status = "stopped"
         bot.stopped_at = datetime.now(pytz.timezone("Asia/Taipei"))
-        db.commit()
         stop_bot_container(bot.container_id, worker_ip)
-        
+        bot.status = "stopped"
+        db.commit()
         return bot
     else:
         raise HTTPException(
