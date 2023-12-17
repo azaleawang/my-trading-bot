@@ -327,7 +327,7 @@ async def get_bot_pnl_chart(
         # if over 15 min check redis
         redis_client = await get_redis_client()
         if not redis_client or int(
-            time.time() - int(bot_info.created_at.timestamp()) <= 900
+            time.time() - int(bot_info.created_at.timestamp()) <= 9
         ):
             # if created in 15 min then calculate pnl
 
@@ -353,7 +353,12 @@ async def get_bot_pnl_chart(
                 trade_df,
             )
 
-            await write_pnl_to_redis(redis_client=redis_client, key=key, value=json.dumps(pnl_data))
+            await write_pnl_to_redis(
+                redis_client=redis_client,
+                key=key,
+                value=json.dumps(pnl_data),
+                ttl=900 if bot_info.stopped_at is None else None,
+            )
 
         return {"data": pnl_data if value is None else value}
 
@@ -374,9 +379,12 @@ async def read_pnl_from_redis(redis_client, key):
         return None
 
 
-async def write_pnl_to_redis(redis_client, key, value):
+async def write_pnl_to_redis(redis_client, key, value, ttl=900):
     try:
-        await redis_client.set(key, value, ex=900)  # Set with 15 minutes expiration
+        if ttl:
+            await redis_client.set(key, value, ex=ttl)
+        else:
+            await redis_client.set(key, value)
     except Exception as e:
         logging.error(e)
         return None
