@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Cookies from "js-cookie";
 import { TradingDataContext } from "@/common/hooks/TradingDataContext";
-import { toast } from "react-toastify";
 
 const SignButton: React.FC = () => {
   const navigate = useNavigate();
@@ -16,7 +15,8 @@ const SignButton: React.FC = () => {
       try {
         Cookies.remove("access_token");
         Cookies.remove("user_id");
-        toast.success("下次見！掰掰 👋");
+        Cookies.remove("username");
+        // toast.success("下次見！掰掰 👋");
         window.location.replace("/");
       } catch (error) {
         console.error("Error signing out:", error);

@@ -156,6 +156,7 @@ async def login(
             "access_token": access_token,
             "refresh_token": refresh_token,
             "user_id": user.id,
+            "username": user.name,
         }
     except HTTPException as http_ex:
         raise http_ex

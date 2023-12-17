@@ -9,6 +9,7 @@ class TokenSchema(BaseModel):
     access_token: str
     refresh_token: str
     user_id: int
+    username: str
 
 
 class TokenPayload(BaseModel):

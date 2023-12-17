@@ -24,11 +24,8 @@ export function UserAuthForm() {
   const [email, setEmail] = useState<string>("test@test.com");
   const [password, setPassword] = useState<string>("string");
   const [name, setName] = useState<string>("test");
-  // const [setAccessToken] = useCookie("access_token", "");
-  // const [setUserId] = useCookie("user_id", "");
   const navigate = useNavigate();
   const { setAuth } = React.useContext(TradingDataContext);
-  // TODO: add validation for name, email and password
   function validateInput(name: string, email: string, password: string) {
     if (!name.trim() || !email.trim() || !password.trim()) {
       throw new Error("請填入所有欄位");
@@ -58,7 +55,7 @@ export function UserAuthForm() {
         signupData
       );
       console.log(response.data);
-      setAuth(true);
+
       toast.success("註冊成功，請登入後使用", {
         autoClose: 1000,
       });
@@ -92,6 +89,7 @@ export function UserAuthForm() {
       console.log(response.data);
       Cookies.set("access_token", response.data.access_token, { expires: 1 });
       Cookies.set("user_id", response.data.user_id, { expires: 1 });
+      Cookies.set("username", response.data.username, { expires: 1 });
       setAuth(true);
       toast.success("登入成功！", {
         autoClose: 1000,
@@ -120,9 +118,6 @@ export function UserAuthForm() {
           <Card>
             <CardHeader>
               <CardTitle>嗨！歡迎回來！</CardTitle>
-              {/* <CardDescription>
-                Make changes to your account here. Click save when you're done.
-              </CardDescription> */}
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="space-y-1">
@@ -173,9 +168,6 @@ export function UserAuthForm() {
           <Card>
             <CardHeader>
               <CardTitle>歡迎新朋朋加入！</CardTitle>
-              {/* <CardDescription>
-                Change your password here. After saving, you'll be logged out.
-              </CardDescription> */}
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="space-y-1">
@@ -237,70 +229,6 @@ export function UserAuthForm() {
           </Card>
         </TabsContent>
       </Tabs>
-
-      {/* <div className={cn("grid gap-6", className)} {...props}>
-        <form handleLogin={handleLogin}>
-          <div className="grid gap-2">
-            <div className="grid gap-1">
-              <Label className="sr-only" htmlFor="email">
-                Email
-              </Label>
-              <Input
-                id="email"
-                placeholder="name@example.com"
-                type="email"
-                autoCapitalize="none"
-                autoComplete="email"
-                autoCorrect="off"
-                disabled={isLoading}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="grid gap-1">
-              <Label className="sr-only" htmlFor="password">
-                Password
-              </Label>
-              <Input
-                id="password"
-                placeholder="password"
-                type="password"
-                autoCapitalize="none"
-                autoCorrect="off"
-                disabled={isLoading}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <Button disabled={isLoading}>
-              {isLoading && (
-                <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              Sign In with Email
-            </Button>
-          </div>
-        </form>
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-black text-white px-2 text-muted-foreground">
-              Or continue with
-            </span>
-          </div>
-        </div>
-        <Button variant="outline" type="button" disabled={isLoading}>
-          {isLoading ? (
-            <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Icons.gitHub className="mr-2 h-4 w-4" />
-          )}{" "}
-          Github
-        </Button>
-      </div> */}
     </>
   );
 }
