@@ -65,7 +65,7 @@ const BacktestResult: React.FC<{ backtestData: BacktestData }> = ({
     strategy_name,
     symbol,
     t_frame,
-    // since,
+    since,
     // type,
     // params,
     plot_url,
@@ -112,10 +112,11 @@ const BacktestResult: React.FC<{ backtestData: BacktestData }> = ({
       {/* <h2 className="text-2xl font-bold mb-4">
         Backtest Results: {strategy_name}
       </h2> */}
-      <div className="flex gap-5 ml-5">策略結果詳情：
+      <div className="flex gap-5 ml-5">
         <p className="font-bold text-slate-300"> {strategy_name} </p>
         <p className="font-bold text-slate-300"> {symbol} </p>
         <p className="font-bold text-slate-300"> {t_frame} </p>
+        <p className="font-bold text-slate-300"> {since.split('T')[0]} ~ Now</p>
       </div>
 
       <iframe

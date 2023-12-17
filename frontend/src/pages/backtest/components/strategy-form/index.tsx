@@ -26,11 +26,11 @@ const symbolList = [
 ];
 
 interface StrategyFormProps {
-  loading: boolean;
   setLoading: (loading: boolean) => void;
+  setBacktestId: (id: number | undefined) => void;
 }
 
-const StrategyForm: React.FC<StrategyFormProps> = ({ setLoading }) => {
+const StrategyForm: React.FC<StrategyFormProps> = ({ setLoading, setBacktestId }) => {
   const backtest_api_base = `/api/v1/backtests/`;
   const strategy_api_base = `/api/v1/strategies/`;
   const [userId] = useCookie("user_id", "");
@@ -134,7 +134,6 @@ const StrategyForm: React.FC<StrategyFormProps> = ({ setLoading }) => {
 
   const handleSubmit = async (event: any) => {
     event.preventDefault();
-    console.log("Submitting Strategy", bt_strategy);
 
     try {
       const isoDateString = new Date(bt_strategy.since).toISOString();
@@ -146,6 +145,7 @@ const StrategyForm: React.FC<StrategyFormProps> = ({ setLoading }) => {
       console.log("submissionData", submissionData);
       const resp: any = await axios.post(backtest_api_base, submissionData);
       setLoading(true);
+      setBacktestId(undefined);
       console.log(resp.data.message);
       toast.info("計算中，喝杯茶稍等 🍵");
     } catch (error: any) {

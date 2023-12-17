@@ -51,7 +51,7 @@ const Backtest = () => {
   // updated_at: "2023-11-28T21:04:34.076388+08:00",
   // });
   const [backtestData, setBacktestData] = useState();
-  const [backtestId, setBacktestId] = useState();
+  const [backtestId, setBacktestId] = useState<number | undefined>();
   const [loading, setLoading] = useState<boolean>(false);
   const [userId] = useCookie("user_id", "");
   
@@ -118,7 +118,7 @@ const Backtest = () => {
   return (
     <div>
       {/* Render BacktestResults only if backtestData is available */}
-      <StrategyForm loading={loading} setLoading={setLoading} />
+      <StrategyForm setLoading={setLoading} setBacktestId={setBacktestId}/>
 
       <div className="mt-5">
         {loading ? (
