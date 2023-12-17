@@ -47,11 +47,14 @@ Base.metadata.create_all(bind=engine)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    try:
     # startup
-    app.state.redis = await get_redis_client()
-    yield
-    # shutdown
-    await app.state.redis.close()
+        app.state.redis = await get_redis_client()
+        yield
+        # shutdown
+        await app.state.redis.close()
+    except Exception as e:
+        logging.error("Redis connection error")
 
 
 app = FastAPI(lifespan=lifespan)
