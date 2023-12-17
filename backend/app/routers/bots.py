@@ -148,11 +148,12 @@ def stop_bot_for_user(
         print("find worker ip = ", worker_ip)
 
         user_bot = stop_user_bot(bot_id, worker_ip, db)
-        if user_bot.owner_id != user.id:
-            raise HTTPException(
-                status_code=403,
-                detail="You are not allowed to stop bot for other users.",
-            )
+        # TODO 寫錯了 應該要早檢查＠＠
+        # if user_bot.owner_id != user.id:
+        #     raise HTTPException(
+        #         status_code=403,
+        #         detail="You are not allowed to stop bot for other users.",
+        #     )
 
         update_worker_server_memory(
             db, user_bot.worker_instance_id, -user_bot.memory_usage
@@ -161,7 +162,7 @@ def stop_bot_for_user(
         if worker_scaling(db, worker_ip):
             update_worker_server_status(db, worker_ip=worker_ip)
             return {
-                "message": f"Bot #{bot_id} {user_bot.name} stopped ad worker server (ip={worker_ip}) stopped!"
+                "message": f"Bot #{bot_id} {user_bot.name} stopped and worker server (ip={worker_ip}) stopped!"
             }
 
         return {"message": f"Bot #{bot_id} {user_bot.name} stopped!"}

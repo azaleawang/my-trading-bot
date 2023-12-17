@@ -243,9 +243,12 @@ def update_worker_server_status(db: Session, worker_ip: str):
     worker_server = (
         db.query(WorkerServer).filter(WorkerServer.private_ip == worker_ip).first()
     )
-    if not worker_server:
-        raise HTTPException(status_code=404, detail=f"Worker server not found.")
+    
     worker_server.status = "stopped"
     worker_server.private_ip = None
     db.commit()
+    
+    if not worker_server:
+        raise HTTPException(status_code=404, detail=f"Worker server not found.")
+    
     return True
