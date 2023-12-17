@@ -164,7 +164,7 @@ class Backtest_Strategy(BaseModel):
     since: Union[str, None] = "2017-01-01T00:00:00Z"
     default_type: Union[str, None] = "future"
     params: Union[dict, None] = {"rsi_window": 20}
-
+    user_id: int
 
 class StrategyCreate(BaseModel):
     name: str

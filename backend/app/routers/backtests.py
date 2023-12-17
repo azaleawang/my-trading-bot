@@ -77,6 +77,8 @@ def receive_lambda_result(
         logging.info(f"Received data from Lambda: {data}")
         parsed_result = data.model_dump()
         print(parsed_result)
+        # TODO
+        client_id = int(parsed_result["user_id"])
         parsed_result["result"] = json.loads(parsed_result["result"])
         for key, value in  parsed_result["result"].items():
             if isinstance(value, float) and math.isnan(value):
@@ -86,7 +88,7 @@ def receive_lambda_result(
         bt_res_id = insert_backtest_result(parsed_result, db)
         print("get backtest result id = ", bt_res_id)
         # notify frontend to fetch new data or refresh page
-        asyncio.run(send_message({"id": bt_res_id}))
+        asyncio.run(send_message(client_id, {"id": bt_res_id}))
         return {
             "message": "Data received successfully",
         }
@@ -106,14 +108,8 @@ def get_strategy(bt_res_id: int, db: Session = Depends(get_db)):
     return db_backtest_result
 
 
-# 因為router.post 有資料格式parse的問題＠＠ 所以先用這個測試WS
-# @router.get("/results/test/{id}")
-# def get_strategy(id: int, db: Session = Depends(get_db)):
-#     asyncio.run(send_message({"id": id}))
-
-
-async def send_message(message={"data": "test"}):
-    uri = "ws://localhost:8000/ws/backtest_result"  # Use localhost when test locally
+async def send_message(client_id: int, message={"data": "test"}):
+    uri = f"ws://localhost:8000/ws/backtest_result/{client_id}"  # Use localhost when test locally
     async with websockets.connect(uri) as websocket:
         await websocket.send(json.dumps(message))
         greeting = await websocket.recv()

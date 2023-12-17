@@ -28,7 +28,7 @@ from .routers import backtests, users, bots, strategies, workers
 from app.models import Base
 from .src.config.database import SessionLocal, engine, get_db
 from starlette.websockets import WebSocketDisconnect
-from typing import List
+from typing import Any, Dict, List
 import logging
 from sqlalchemy.orm import Session
 from starlette.responses import FileResponse
@@ -40,6 +40,7 @@ from app.utils.auth import (
 )
 from contextlib import asynccontextmanager
 from app.utils.redis import get_redis_client
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 frontend_dir = os.path.join(current_dir, "../dist")
 Base.metadata.create_all(bind=engine)
@@ -48,7 +49,7 @@ Base.metadata.create_all(bind=engine)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
-    # startup
+        # startup
         app.state.redis = await get_redis_client()
         yield
         # shutdown
@@ -59,7 +60,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 # Dependency
-
 
 
 API_VER = "v1"
@@ -227,30 +227,66 @@ async def websocket_endpoint(websocket: WebSocket):
         print("Client disconnected")
 
 
-active_connections: List[WebSocket] = []
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: Dict[int, List[WebSocket]] = {}
+
+    async def connect(self, client_id: int, websocket: WebSocket):
+        await websocket.accept()
+        if client_id not in self.active_connections:
+            self.active_connections[client_id] = []
+        self.active_connections[client_id].append(websocket)
+        print("append client", client_id, websocket)
+
+    def disconnect(self, client_id: int, websocket: WebSocket):
+        if websocket in self.active_connections.get(client_id):
+            self.active_connections[client_id].remove(websocket)
+            if not self.active_connections.get(client_id):
+                # If the list is empty, remove the client_id from the dictionary
+                del self.active_connections[client_id]
+
+    async def send_personal_message(self, message: Any, client_id: int):
+        for websocket in self.active_connections.get(client_id):
+            await websocket.send_json(message)
 
 
-@app.websocket("/ws/backtest_result")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    active_connections.append(websocket)
+manager = ConnectionManager()
+
+@app.websocket("/ws/backtest_result/{client_id}")
+async def websocket_backtest_result_endpoint(websocket: WebSocket, client_id: int):
+    await manager.connect(client_id, websocket)
     try:
         while True:
-            # Replace this with your logic to fetch or generate data
             data = await websocket.receive_json()
-            print(f"Message received: {data}")
-            # await websocket.send_json("Message received")
-            await broadcast(data)
+            await manager.send_personal_message(data, client_id)
     except WebSocketDisconnect:
-        active_connections.remove(websocket)
-        print("Client disconnected")
+        manager.disconnect(client_id, websocket)
+        print(f"Client #{client_id} left the chat")
+
+
+# @app.websocket("/ws/backtest_result/{client_id}")
+# async def websocket_endpoint(websocket: WebSocket, client_id: int):
+#     await manager.connect(websocket)
+#     # await websocket.accept()
+#     # active_connections.append(websocket)
+#     try:
+#         while True:
+#             # Replace this with your logic to fetch or generate data
+#             data = await websocket.receive_json()
+#             print(f"Message received: {data}")
+#             await manager.send_personal_message(f"You wrote: {data}", websocket)
+#             # await websocket.send_json("Message received")
+#             # await broadcast(data)
+#     except WebSocketDisconnect:
+#         manager.disconnect(websocket)
+#         await manager.broadcast(f"Client #{client_id} left the chat")
 
 
 # TODO this should be casted to certain user rather than broadcast QQ
-async def broadcast(message: dict):
-    for connection in active_connections:
-        try:
-            await connection.send_json(message)
-        except WebSocketDisconnect as wsd:
-            # Handle disconnect during broadcast if needed
-            logging.error("Client disconnected during broadcast: %s", wsd)
+# async def broadcast(message: dict):
+#     for connection in active_connections:
+#         try:
+#             await connection.send_json(message)
+#         except WebSocketDisconnect as wsd:
+#             # Handle disconnect during broadcast if needed
+#             logging.error("Client disconnected during broadcast: %s", wsd)
