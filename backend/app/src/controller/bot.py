@@ -14,24 +14,30 @@ class Bot_Created_Resp(BaseModel):
 
 
 def stop_bot_container(container_id: str, worker_ip: str):
-    response = requests.put(f"{worker_ip}/stop-container?container_id={container_id}")
-    if response.status_code == 200:
-        print(response.json())
+    if worker_ip:
+        response = requests.put(f"{worker_ip}/stop-container?container_id={container_id}")
+        if response.status_code == 200:
+            print(response.json())
+        else:
+            raise HTTPException(
+                status_code=response.status_code,
+                detail="Failed to stop container in worker server.",
+            )
     else:
-        raise HTTPException(
-            status_code=response.status_code,
-            detail="Failed to stop container in worker server.",
-        )
+        print("Worker server ip not found")
 
 
 def delete_bot_container(container_id: str, worker_ip: str):
-    response = requests.delete(
-        f"{worker_ip}/delete-container?container_id={container_id}"
-    )
-    if response.status_code == 200:
-        print(response.json())
-    else:
-        raise HTTPException(
-            status_code=response.status_code,
-            detail="Failed to stop container in worker server.",
+    if worker_ip:
+        response = requests.delete(
+            f"{worker_ip}/delete-container?container_id={container_id}"
         )
+        if response.status_code == 200:
+            print(response.json())
+        else:
+            raise HTTPException(
+                status_code=response.status_code,
+                detail="Failed to delete container in worker server.",
+            )
+    else:
+        print("Worker server ip not found")
