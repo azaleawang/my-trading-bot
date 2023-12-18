@@ -160,11 +160,19 @@ def assign_worker_server(db: Session):
         return suitable_server
 
     else:
-        # First, check if there is any preparing server
+        # First, check if server <= 2
+        num = number_of_running_server(db)
+        print(f"{num} servers running Now")
+        if num > 2:
+            raise HTTPException(
+                status_code=400,
+                detail="超過系統服務上限，請稍後再試",
+            )
+        # Then, check if there is any preparing server
         preparing_server = (
             db.query(WorkerServer).filter(WorkerServer.status == "preparing").all()
         )
-        if preparing_server:
+        if preparing_server or not ALLOW_CREATE:
             raise HTTPException(
                 status_code=500,
                 detail="New server is Preparing. PLEASE TRY AGAIN LATER.",
