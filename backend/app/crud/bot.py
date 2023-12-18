@@ -163,7 +163,7 @@ def assign_worker_server(db: Session):
         # First, check if server <= 2
         num = number_of_running_server(db)
         print(f"{num} servers running Now")
-        if num > 2:
+        if num >= 2:
             raise HTTPException(
                 status_code=400,
                 detail="超過系統服務上限，請稍後再試",
