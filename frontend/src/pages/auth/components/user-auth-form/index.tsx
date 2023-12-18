@@ -30,6 +30,15 @@ export function UserAuthForm() {
     if (!name.trim() || !email.trim() || !password.trim()) {
       throw new Error("請填入所有欄位");
     }
+    const chineseRegex = /[\u4E00-\u9FFF]/;
+
+    if (chineseRegex.test(email) || chineseRegex.test(password)) {
+      throw new Error("不接受中文輸入");
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new Error("Email is not valid");
+    }
     if (name.trim().length < 2 || name.trim().length > 20) {
       throw new Error("Username must be between 2 to 20 characters");
     }
