@@ -163,24 +163,14 @@ def stop_bot_for_user(
 
         # Add the memory update and scaling logic to background tasks
         background_tasks.add_task(
-            update_worker_server_memory,
+            handle_memory_and_scaling,
             db,
+            worker_ip,
             user_bot.worker_instance_id,
             -user_bot.memory_usage,
+            bot_id,
+            user_bot.name,
         )
-        background_tasks.add_task(
-            check_and_update_worker_scaling, db, worker_ip, bot_id, user_bot.name
-        )
-
-        # update_worker_server_memory(
-        #     db, user_bot.worker_instance_id, -user_bot.memory_usage
-        # )
-        # # for auto-scaling: check whether the worker server need to be closed
-        # if worker_scaling(db, worker_ip):
-        #     update_worker_server_status(db, worker_ip=worker_ip)
-        #     return {
-        #         "message": f"Bot #{bot_id} {user_bot.name} stopped and worker server (ip={worker_ip}) stopped!"
-        #     }
 
         return {"message": f"Bot #{bot_id} {user_bot.name} stopped!"}
     except HTTPException as http_ex:
@@ -189,8 +179,11 @@ def stop_bot_for_user(
         raise HTTPException(status_code=500, detail="Error stopping bot." + str(e))
 
 
-def check_and_update_worker_scaling(db, worker_ip, bot_id, bot_name):
-    # Check whether the worker server needs to be closed and update status
+def handle_memory_and_scaling(
+    db, worker_ip, worker_instance_id, memory_usage, bot_id, bot_name
+):
+    update_worker_server_memory(db, worker_instance_id, memory_usage)
+
     if worker_scaling(db, worker_ip):
         update_worker_server_status(db, worker_ip=worker_ip)
         print(
