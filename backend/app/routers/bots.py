@@ -146,14 +146,19 @@ def stop_bot_for_user(
     try:
         worker_ip = find_worker_server(db, bot_id)
         print("find worker ip = ", worker_ip)
-
+        db_bot = get_bot_by_id(bot_id=bot_id, db=db)
+        if not db_bot:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Bot #{bot_id} not found.",
+            )
+        if db_bot.owner_id != user.id:
+            raise HTTPException(
+                status_code=403,
+                detail="You are not allowed to access this user's bot information.",
+            )
+            
         user_bot = stop_user_bot(bot_id, worker_ip, db)
-        # TODO 寫錯了 應該要早檢查＠＠
-        # if user_bot.owner_id != user.id:
-        #     raise HTTPException(
-        #         status_code=403,
-        #         detail="You are not allowed to stop bot for other users.",
-        #     )
 
         update_worker_server_memory(
             db, user_bot.worker_instance_id, -user_bot.memory_usage

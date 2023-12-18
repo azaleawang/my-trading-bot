@@ -135,7 +135,7 @@ const BotContainer: React.FC = () => {
   };
 
   const createBtn = (
-    <Button className="tracking-widest text-base p-0 w-[150px] m-auto bg-orange-300/80 hover:bg-orange-300">
+    <Button className="tracking-widest text-base p-0 w-[150px] m-auto bg-orange-300/70 hover:bg-orange-300/50">
       <CreateBotForm />
     </Button>
   );

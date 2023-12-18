@@ -229,6 +229,8 @@ const StrategyForm: React.FC<StrategyFormProps> = ({ setLoading, setBacktestId }
               value={bt_strategy.since}
               onChange={handleInputChange}
               className="text-white flex h-10 w-full items-center justify-between rounded-md border border-input bg-inherit px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1"
+              min="2018-01-01"
+              max={new Date().toISOString().split('T')[0]}
               required
             />
           </div>
