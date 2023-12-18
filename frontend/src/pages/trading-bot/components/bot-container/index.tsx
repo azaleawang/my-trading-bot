@@ -93,7 +93,9 @@ const BotContainer: React.FC = () => {
           }
         );
         console.log(resp.data);
-        toast.success("成功終止機器人");
+        toast.success("成功終止機器人", {
+          autoClose: 1000,
+        });
 
         setBots((prevBots) =>
           prevBots.map((bot) =>
@@ -121,7 +123,7 @@ const BotContainer: React.FC = () => {
           },
         });
         console.log(resp.data);
-        toast.success("Delete OK!", {
+        toast.success("移除成功", {
           autoClose: 1000,
         });
         setBots((prevBots) => prevBots.filter((bot) => bot.id !== botId));

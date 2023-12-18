@@ -3,7 +3,7 @@ import json, time
 import logging
 from typing import List, Union, Any
 from app.utils.redis import get_redis_client
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 import pandas as pd
 from pydantic import BaseModel
 import pytz
@@ -140,6 +140,7 @@ def create_bot_for_user(
 @router.put("/{bot_id}")
 def stop_bot_for_user(
     bot_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     user: schemas.User = Depends(get_current_user),
 ) -> dict:
@@ -157,24 +158,44 @@ def stop_bot_for_user(
                 status_code=403,
                 detail="You are not allowed to access this user's bot information.",
             )
-            
+
         user_bot = stop_user_bot(bot_id, worker_ip, db)
 
-        update_worker_server_memory(
-            db, user_bot.worker_instance_id, -user_bot.memory_usage
+        # Add the memory update and scaling logic to background tasks
+        background_tasks.add_task(
+            update_worker_server_memory,
+            db,
+            user_bot.worker_instance_id,
+            -user_bot.memory_usage,
         )
-        # for auto-scaling: check whether the worker server need to be closed
-        if worker_scaling(db, worker_ip):
-            update_worker_server_status(db, worker_ip=worker_ip)
-            return {
-                "message": f"Bot #{bot_id} {user_bot.name} stopped and worker server (ip={worker_ip}) stopped!"
-            }
+        background_tasks.add_task(
+            check_and_update_worker_scaling, db, worker_ip, bot_id, user_bot.name
+        )
+
+        # update_worker_server_memory(
+        #     db, user_bot.worker_instance_id, -user_bot.memory_usage
+        # )
+        # # for auto-scaling: check whether the worker server need to be closed
+        # if worker_scaling(db, worker_ip):
+        #     update_worker_server_status(db, worker_ip=worker_ip)
+        #     return {
+        #         "message": f"Bot #{bot_id} {user_bot.name} stopped and worker server (ip={worker_ip}) stopped!"
+        #     }
 
         return {"message": f"Bot #{bot_id} {user_bot.name} stopped!"}
     except HTTPException as http_ex:
         raise http_ex
     except Exception as e:
         raise HTTPException(status_code=500, detail="Error stopping bot." + str(e))
+
+
+def check_and_update_worker_scaling(db, worker_ip, bot_id, bot_name):
+    # Check whether the worker server needs to be closed and update status
+    if worker_scaling(db, worker_ip):
+        update_worker_server_status(db, worker_ip=worker_ip)
+        print(
+            f"Bot #{bot_id} {bot_name} stopped and worker server (ip={worker_ip}) stopped!"
+        )
 
 
 @router.delete("/{bot_id}")
