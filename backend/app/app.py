@@ -26,7 +26,7 @@ from app.crud.user import create_user, get_user_by_email
 from app.utils.deps import get_current_user
 from .routers import backtests, users, bots, strategies, workers
 from app.models import Base
-from .src.config.database import SessionLocal, engine, get_db
+from .utils.database import SessionLocal, engine, get_db
 from starlette.websockets import WebSocketDisconnect
 from typing import Any, Dict, List
 import logging

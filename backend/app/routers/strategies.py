@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.crud.strategy import *
 from app.src.schema import schemas
-from app.src.config.database import get_db
+from app.utils.database import get_db
 
 router = APIRouter()
 

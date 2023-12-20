@@ -23,7 +23,7 @@ from app.crud.bot import (
     worker_scaling,
 )
 from app.src.schema import schemas
-from app.src.config.database import get_db
+from app.utils.database import get_db
 from app.crud.trade_history import get_bot_trade_history
 from app.crud.bot_error import get_error_log_by_container
 from app.crud.container_status import (

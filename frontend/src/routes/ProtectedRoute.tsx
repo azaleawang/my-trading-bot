@@ -15,6 +15,7 @@ export default function ProtectedRoute() {
   const [access_token] = useCookie("access_token", "");
   const navigate = useNavigate();
   const location = useLocation();
+  // 直接抓auth state看有沒有權限 不用再抓profile 還有loading state也要移到context
 
   useEffect(() => {
     const checkAuthentication = async () => {

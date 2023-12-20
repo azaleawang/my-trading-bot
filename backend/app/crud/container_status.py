@@ -5,7 +5,7 @@ from fastapi import Depends, HTTPException
 from app.src.schema import schemas
 from sqlalchemy.sql import and_
 from app.models.container_status import ContainerStatus
-from app.src.config.database import SessionLocal
+from app.utils.database import SessionLocal
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
 

@@ -3,7 +3,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.src.schema import schemas
-from app.src.config.database import get_db
+from app.utils.database import get_db
 from app.crud.user import get_user, get_users
 from app.crud.bot import get_user_bots
 from app.crud.container_status import get_user_containers_status

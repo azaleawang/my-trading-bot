@@ -2,7 +2,7 @@ from typing import List, Union
 from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from app.src.schema import schemas
-from app.src.config.database import get_db
+from app.utils.database import get_db
 from app.crud.worker_server import register_worker_server, get_worker_servers
 import os
 

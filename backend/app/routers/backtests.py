@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Json
 import traceback, logging, json
 from app.crud.backtest import check_backtest_strategy, get_backtest_result, insert_backtest_result
-from app.src.config.database import get_db
+from app.utils.database import get_db
 from app.src.controller.sqs import send_sqs_message
 from app.src.schema.schemas import Backtest_Strategy, BacktestResultBase, Message_Resp
 import websockets

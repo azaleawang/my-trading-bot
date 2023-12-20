@@ -3,7 +3,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
 from app.crud.user import get_user_by_email
-from app.src.config.database import get_db
+from app.utils.database import get_db
 from .auth import ALGORITHM, JWT_SECRET_KEY
 from sqlalchemy.orm import Session
 
