@@ -31,8 +31,8 @@ from app.crud.container_status import (
     parse_and_store,
 )
 from app.crud.bot import assign_worker_server
-from app.history_chart.calculate import calculate_pnl
 from app.utils.deps import get_current_user
+from app.history_chart.calculate import calculate_pnl
 
 router = APIRouter()
 
