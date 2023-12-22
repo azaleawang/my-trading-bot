@@ -2,6 +2,7 @@ import React, { createContext, useState, ReactNode, useEffect } from "react";
 import { BotDetailsProps } from "../../pages/trading-bot/models";
 import axios from "axios";
 import useCookie from "./useCookie";
+import { useNavigate } from "react-router-dom";
 // import { Outlet, Navigate } from "react-router-dom";
 
 interface TradingDataContextProps {
@@ -11,13 +12,14 @@ interface TradingDataContextProps {
   setBotData: (data: BotDetailsProps[] | undefined) => void; // Function to update botData
   auth: boolean;
   setAuth: (auth: boolean) => void;
-  // profile: Profile | undefined;
+  loading: boolean;
+  setLoading: (loading: boolean) => void;
 }
-// interface Profile {
-//   id: number;
-//   name: string;
-//   email: string;
-// }
+interface Profile {
+  id: number;
+  name: string;
+  email: string;
+}
 
 const defaultState: TradingDataContextProps = {
   markPrice: null,
@@ -26,8 +28,8 @@ const defaultState: TradingDataContextProps = {
   setBotData: () => {},
   auth: false,
   setAuth: () => {},
-  // profile: undefined,
-  // setProfile: () => {},
+  loading: false,
+  setLoading: () => {},
 };
 
 export const TradingDataContext =
@@ -36,9 +38,11 @@ export const TradingDataContext =
 export const TradingDataProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
+  // const [error, setError] = useState<unknown>();
   const [markPrice, setMarkPrice] = useState<string[] | null>(null); // TODO 這個應該暫時用不到了
   const [botData, setBotData] = useState<BotDetailsProps[] | undefined>();
   const [auth, setAuth] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [access_token] = useCookie("access_token", "");
   // const [profile, setProfile] = useState<Profile>();
   const getProfile = async () => {
@@ -53,9 +57,16 @@ export const TradingDataProvider: React.FC<{ children: ReactNode }> = ({
           Authorization: `Bearer ${access_token}`,
         },
       });
-      console.log("jwt token is valid", "User = ", resp.data);
-      // setProfile(resp.data);
-      setAuth(true);
+
+      const profile: Profile = resp.data;
+
+      if (!profile) {
+        console.log("You are not authenticated!");
+      } else {
+        setAuth(true);
+        setLoading(false);
+        console.log("You are authenticated!");
+      }
     } catch (error) {
       console.error(error);
     }
@@ -74,7 +85,8 @@ export const TradingDataProvider: React.FC<{ children: ReactNode }> = ({
         setBotData,
         auth,
         setAuth,
-        // profile,
+        loading,
+        setLoading,
       }}
     >
       {children}

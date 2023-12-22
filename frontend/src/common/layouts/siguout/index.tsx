@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Cookies from "js-cookie";
@@ -6,7 +6,7 @@ import { TradingDataContext } from "@/common/hooks/TradingDataContext";
 
 const SignButton: React.FC = () => {
   const navigate = useNavigate();
-  const { auth } = React.useContext(TradingDataContext);
+  const { auth } = useContext(TradingDataContext);
   // const [user_id, updateCookie] = useCookie("user_id", "");
   // const [access_token, updateCookie] = useCookie("access_token", "");
   const handleSignout = (event: React.MouseEvent<HTMLButtonElement>) => {
