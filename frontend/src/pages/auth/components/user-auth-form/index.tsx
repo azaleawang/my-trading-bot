@@ -18,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { user_api_base } from "@/common/apis";
 
 export function UserAuthForm() {
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
@@ -25,25 +26,26 @@ export function UserAuthForm() {
   const [password, setPassword] = useState<string>("string");
   const [name, setName] = useState<string>("test");
   const navigate = useNavigate();
+  const user_api = user_api_base(undefined);
   const { setAuth } = React.useContext(TradingDataContext);
   function validateInput(name: string, email: string, password: string) {
     if (!name.trim() || !email.trim() || !password.trim()) {
-      throw new Error("請填入所有欄位");
+      throw new Error("請填入所有欄位🙏");
     }
     const chineseRegex = /[\u4E00-\u9FFF]/;
 
     if (chineseRegex.test(email) || chineseRegex.test(password)) {
-      throw new Error("不接受中文輸入");
+      throw new Error("不接受中文輸入🙏");
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      throw new Error("Email is not valid");
+      throw new Error("請輸入正確的信箱🙏");
     }
     if (name.trim().length < 2 || name.trim().length > 20) {
-      throw new Error("Username must be between 2 to 20 characters");
+      throw new Error("用戶暱稱必須介於2~20個字元🙏");
     }
     if (password.trim().length <= 3) {
-      throw new Error("Password must be longer than 3 characters");
+      throw new Error("密碼長度必須大於3個字元🙏");
     }
   }
 
@@ -60,21 +62,24 @@ export function UserAuthForm() {
 
       validateInput(signupData.name, signupData.email, signupData.password);
       const response = await axios.post(
-        `${import.meta.env.VITE_HOST}/signup`,
+        `${import.meta.env.VITE_HOST}${user_api}/signup`,
         signupData
       );
       console.log(response.data);
 
-      toast.success("註冊成功，請登入後使用", {
+      toast.success("註冊成功💯 請登入後使用", {
         autoClose: 1000,
       });
     } catch (error: any) {
       console.error("Sign in failed", error);
+      if (error.response?.status === 400) {
+        toast.error("該信箱已被註冊😅", {autoClose: 1000});
+      } else {
       toast.error(
         error.response?.data?.detail ||
           error.message ||
           "Something went wrong when signin"
-      );
+      );}
     } finally {
       setIsLoading(false);
     }
@@ -92,7 +97,7 @@ export function UserAuthForm() {
 
       validateInput("placeholder", loginData.email, loginData.password);
       const response = await axios.post(
-        `${import.meta.env.VITE_HOST}/login`,
+        `${import.meta.env.VITE_HOST}${user_api}/login`,
         loginData
       );
       console.log(response.data);
@@ -100,17 +105,12 @@ export function UserAuthForm() {
       Cookies.set("user_id", response.data.user_id, { expires: 1 });
       Cookies.set("username", response.data.username, { expires: 1 });
       setAuth(true);
-      toast.success("登入成功！", {
+      toast.success("登入成功😀", {
         autoClose: 1000,
       });
       navigate(-1);
     } catch (error: any) {
-      console.error("Sign in failed", error);
-      toast.error(
-        error.response?.data?.detail ||
-          error.message ||
-          "Something went wrong when signin"
-      );
+      toast.error("請輸入正確的帳號密碼🥺", {autoClose: 1000});
     } finally {
       setIsLoading(false);
     }
@@ -126,7 +126,7 @@ export function UserAuthForm() {
         <TabsContent value="account">
           <Card>
             <CardHeader>
-              <CardTitle>嗨！歡迎回來！</CardTitle>
+              <CardTitle>嗨👋 歡迎回來！</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="space-y-1">
@@ -176,7 +176,7 @@ export function UserAuthForm() {
         <TabsContent value="password">
           <Card>
             <CardHeader>
-              <CardTitle>歡迎新朋朋加入！</CardTitle>
+              <CardTitle>歡迎新朋朋加入🥰</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="space-y-1">

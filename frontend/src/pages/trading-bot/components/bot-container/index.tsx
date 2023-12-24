@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import axios from "axios";
 import { Bot, MarkPriceData } from "@/pages/trading-bot/models";
 import { useNavigate } from "react-router-dom";
@@ -18,7 +18,6 @@ import { Button } from "@/components/ui/button";
 import { Icons } from "@/components/ui/icons";
 import CreateBotForm from "@/pages/create-bot/components/form";
 import { toast } from "react-toastify";
-// import { Icons } from "@/components/ui/icons";
 const BotContainer: React.FC = () => {
   const [access_token] = useCookie("access_token", "");
   const [bots, setBots] = useState<Bot[]>([]); // const userId = 1;
@@ -28,11 +27,8 @@ const BotContainer: React.FC = () => {
   const [markAllPrice, setMarkAllPrice] = useState<MarkPriceData[] | null>(
     null
   );
-  // const { userId } = useParams<{ userId: string }>();
   const [userId] = useCookie("user_id", "");
-  // const [isLoading, setIsLoading] = React.useState<boolean>(false);
 
-  // const { markPrice } = useContext(TradingDataContext);
   const user_api = user_api_base(userId);
   const navigate = useNavigate();
   const [botLoading, setBotLoading] = useState<boolean>(true);
@@ -67,7 +63,7 @@ const BotContainer: React.FC = () => {
           },
         });
         const bots = response.data.data;
-        setBots(bots.filter((bot: Bot) => bot.status !== "deleted"));
+        setBots(bots?.filter((bot: Bot) => bot.status !== "deleted"));
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {

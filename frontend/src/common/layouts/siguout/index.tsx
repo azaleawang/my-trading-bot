@@ -16,7 +16,6 @@ const SignButton: React.FC = () => {
         Cookies.remove("access_token");
         Cookies.remove("user_id");
         Cookies.remove("username");
-        // toast.success("下次見！掰掰 👋");
         window.location.replace("/");
       } catch (error) {
         console.error("Error signing out:", error);
