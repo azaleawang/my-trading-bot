@@ -1,43 +1,29 @@
 """Module providing a function of FastAPI and WebSocket."""
-import json
+from fastapi.responses import JSONResponse
 from app.crud.trade_history import create_trade_history
 from fastapi import (
-    Depends,
     FastAPI,
-    HTTPException,
     Request,
     WebSocket,
     WebSocketDisconnect,
-    status,
-    Response,
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.src.schema.schemas import (
     BotErrorSchema,
-    LoginForm,
-    TokenSchema,
     TradeHistoryCreate,
 )
 from app.src.controller.trade import get_order_realizedPnl
-from app.src.schema import schemas
 from app.crud.bot_error import create_error_log
-from app.crud.user import create_user, get_user_by_email
-from app.utils.deps import get_current_user
 from .routers import backtests, users, bots, strategies, workers
 from app.models import Base
-from .utils.database import SessionLocal, engine, get_db
+from .utils.database import SessionLocal, engine
 from starlette.websockets import WebSocketDisconnect
 from typing import Any, Dict, List
 import logging
-from sqlalchemy.orm import Session
 from starlette.responses import FileResponse
+from .config import app_configs, API_VER
 import os
-from app.utils.auth import (
-    verify_password,
-    create_access_token,
-    create_refresh_token,
-)
 from contextlib import asynccontextmanager
 from app.utils.redis import get_redis_client
 
@@ -58,22 +44,19 @@ async def lifespan(app: FastAPI):
         logging.error("Redis connection error")
 
 
-app = FastAPI(lifespan=lifespan)
-# Dependency
+app = FastAPI(**app_configs, lifespan=lifespan)
 
+routes = [
+    (users.router, "users", "User"),
+    (bots.router, "bots", "Bot"),
+    (backtests.router, "backtests", "Backtest"),
+    (strategies.router, "strategies", "Strategy"),
+    (workers.router, "worker-servers", "Worker-Server"),
+]
 
-API_VER = "v1"
-app.include_router(users.router, prefix=f"/api/{API_VER}/users", tags=["User"])
-app.include_router(bots.router, prefix=f"/api/{API_VER}/bots", tags=["Bot"])
-app.include_router(
-    backtests.router, prefix=f"/api/{API_VER}/backtests", tags=["Backtest"]
-)
-app.include_router(
-    strategies.router, prefix=f"/api/{API_VER}/strategies", tags=["Strategy"]
-)
-app.include_router(
-    workers.router, prefix=f"/api/{API_VER}/worker-servers", tags=["Worker-Server"]
-)
+for router, path, tag in routes:
+    app.include_router(router, prefix=f"/api/{API_VER}/{path}", tags=[tag])
+
 app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
 
 app.add_middleware(
@@ -84,91 +67,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# data = [
-#     {"pnl": -6.66192551, "timestamp": 1702469949000},
-#     {"pnl": -6.645022917790003, "timestamp": 1702469952000},
-# ]
 
-
-async def read_item(key, cb):
-    value = await app.state.redis.get(key)
-    if value is None:
-        # get value from cb function
-        data = cb
-        value = json.dumps(data)
-        await app.state.redis.set(key, value)
-        print("set redis", key)
-
-    return json.loads(value)
-
-
-@app.get(
-    "/api/v1/user/profile",
-    summary="Get details of currently logged in user to authenticate user",
-    response_model=schemas.UserPublic,
-)
-async def get_me(user: schemas.User = Depends(get_current_user)):
-    return user
-
-
-@app.post("/signup", response_model=schemas.User)
-def create_new_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    try:
-        db_user = get_user_by_email(db, email=user.email)
-        if db_user:
-            raise HTTPException(status_code=400, detail="Email already registered")
-        return create_user(db=db, user=user)
-    except HTTPException as http_ex:
-        raise http_ex
-    except Exception as e:
-        print(e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e) or "Something broke when creating user!",
-        )
-
-
-@app.post(
-    "/login",
-    summary="Create access and refresh tokens for user",
-    response_model=TokenSchema,
-)
-async def login(
-    response: Response, form_data: LoginForm, db: Session = Depends(get_db)
-):
-    try:
-        user = get_user_by_email(db, form_data.email)
-        if user is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Incorrect email or password",
-            )
-
-        print("user want to login", user.name, user.email)
-        hashed_pass = user.hashed_password
-        if not verify_password(form_data.password, hashed_pass):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Incorrect email or password",
-            )
-
-        access_token = create_access_token(username=user.name, email=user.email)
-        refresh_token = create_refresh_token(username=user.name, email=user.email)
-
-        return {
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "user_id": user.id,
-            "username": user.name,
-        }
-    except HTTPException as http_ex:
-        raise http_ex
-    except Exception as e:
-        print(e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e) or "Something broke when login or creating JWT token!",
-        )
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500, content={"detail": "An unexpected error occurred!"}
+    )
 
 
 @app.get("/{full_path:path}")
