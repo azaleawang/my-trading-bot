@@ -1,6 +1,5 @@
-from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from app.src.schema import schemas
+from app.schema import worker as schemas
 from app.models.worker_server import WorkerServer
 
 

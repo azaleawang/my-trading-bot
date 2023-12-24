@@ -1,15 +1,12 @@
 from sqlalchemy.orm import Session
+from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from fastapi import HTTPException
 import logging
-from app.src.controller.bot import delete_bot_container, stop_bot_container
 from app.models.bot import Bot
 from app.models.worker_server import WorkerServer
-from app.src.schema import schemas
-from sqlalchemy.sql import and_
-from sqlalchemy.orm import joinedload
-
-from app.src.controller.ec2 import (
+from app.schema import bot as schemas
+from app.utils.ec2 import (
     create_ec2_instance,
     start_ec2_instance,
     stop_ec2_instance,
@@ -17,6 +14,14 @@ from app.src.controller.ec2 import (
 from datetime import datetime
 import pytz
 import re
+import requests
+
+from app.exceptions.bot import (
+    BotNameExisted,
+    BotNameInvalid,
+    BotNameTooLong,
+)
+
 ALLOW_CREATE = True
 
 
@@ -24,27 +29,21 @@ def get_bots(db: Session):
     return db.query(Bot).all()
 
 
-def check_name(db: Session, container_name: str, bot_name: str, user_id: int):
+def check_name(db: Session, bot_name: str, user_id: int):
     name_regex = re.compile(r"^[A-Za-z-_1234567890]+$")
     match = name_regex.match(bot_name)
+    # TODO 這裡應該用Pydantic class的validation
     if not match:
-        raise HTTPException(status_code=400, detail="名稱只能包含英文、數字、底線、減號，請重新命名！")
+        raise BotNameInvalid()
     if len(bot_name) < 0 or len(bot_name) > 20:
-        raise HTTPException(status_code=400, detail="名稱長度不符合規定，請重新命名！")
+        raise BotNameTooLong()
     if (
         db.query(Bot)
-        .filter(
-            and_(Bot.name == bot_name, Bot.owner_id == user_id, Bot.status != "deleted")
-        )
-        .first()
+        .filter(Bot.name == bot_name)
+        .filter(Bot.owner_id == user_id)
+        .filter(Bot.status != "deleted")
     ):
-        raise HTTPException(status_code=400, detail="名稱重複，請重新命名！")
-    if (
-        db.query(Bot)
-        .filter(and_(Bot.container_name == container_name, Bot.status != "deleted"))
-        .all()
-    ):
-        raise HTTPException(status_code=400, detail="Container name already exists.")
+        raise BotNameExisted()
 
 
 def get_user_bots(db: Session, user_id: int):
@@ -56,7 +55,6 @@ def get_user_bots(db: Session, user_id: int):
     )
 
 
-# get bot by bot id
 def get_bot_by_id(db: Session, bot_id: int):
     db_bot = db.query(Bot).filter(Bot.id == bot_id).first()
     return db_bot
@@ -66,7 +64,6 @@ def create_user_bot(db: Session, bot: schemas.BotCreate):
     # TODO 儲存失敗但docker已經開起來怎麼辦(應該要分兩次存)
     try:
         db_bot = Bot(**bot.model_dump())
-        # Check if the bot name registered
         db.add(db_bot)
         db.commit()
         db.refresh(db_bot)
@@ -128,7 +125,7 @@ def delete_user_bot(bot_id: int, worker_ip: str, db: Session):
         db.commit()
         if bot.worker_server.private_ip:
             delete_bot_container(bot.container_id, worker_ip)
-        
+
         return bot
     else:
         raise HTTPException(
@@ -239,7 +236,7 @@ def worker_scaling(db: Session, worker_ip: str):
         return False
     if worker_server.available_memory == worker_server.total_memory:
         print("Worker server need to be closed")
-        # First 
+        # First
         # True if stop successfully
         return stop_ec2_instance(instance_id=worker_server.instance_id)
 
@@ -250,12 +247,44 @@ def update_worker_server_status(db: Session, worker_ip: str):
     worker_server = (
         db.query(WorkerServer).filter(WorkerServer.private_ip == worker_ip).first()
     )
-    
+
     worker_server.status = "stopped"
     worker_server.private_ip = None
     db.commit()
-    
+
     if not worker_server:
         raise HTTPException(status_code=404, detail=f"Worker server not found.")
-    
+
     return True
+
+
+def stop_bot_container(container_id: str, worker_ip: str):
+    if worker_ip:
+        response = requests.put(
+            f"{worker_ip}/stop-container?container_id={container_id}"
+        )
+        if response.status_code == 200:
+            print(response.json())
+        else:
+            raise HTTPException(
+                status_code=response.status_code,
+                detail="Failed to stop container in worker server.",
+            )
+    else:
+        print("Worker server ip not found")
+
+
+def delete_bot_container(container_id: str, worker_ip: str):
+    if worker_ip:
+        response = requests.delete(
+            f"{worker_ip}/delete-container?container_id={container_id}"
+        )
+        if response.status_code == 200:
+            print(response.json())
+        else:
+            raise HTTPException(
+                status_code=response.status_code,
+                detail="Failed to delete container in worker server.",
+            )
+    else:
+        print("Worker server ip not found")

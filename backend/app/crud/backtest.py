@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException
 from app.utils.database import get_db
 from app.models.backtest import BacktestResult
-from app.src.schema import backtest as schemas
+from app.schema import backtest as schemas
 from sqlalchemy import text, func
 
 
