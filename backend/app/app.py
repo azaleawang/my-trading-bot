@@ -9,11 +9,8 @@ from fastapi import (
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.src.schema.schemas import (
-    BotErrorSchema,
-    TradeHistoryCreate,
-)
-from app.src.controller.trade import get_order_realizedPnl
+from app.schema import bot as schemas
+from app.utils.trade import get_order_realizedPnl
 from app.crud.bot_error import create_error_log
 from .routers import backtests, users, bots, strategies, workers
 from app.models import Base
@@ -104,7 +101,7 @@ async def websocket_endpoint(websocket: WebSocket):
                             realizedPnl = get_order_realizedPnl(
                                 data["data"]["orderId"], data["data"]["symbol"]
                             )
-                        trade_data = TradeHistoryCreate(**data)
+                        trade_data = schemas.TradeHistoryCreate(**data)
 
                         db_trade_history = create_trade_history(
                             db, trade_data, realizedPnl
@@ -118,7 +115,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 try:
                     print("error", data)
                     with SessionLocal() as db:
-                        error_data = BotErrorSchema(**data)
+                        error_data = schemas.BotError(**data)
                         error = create_error_log(error_data, db)
                         db.commit()
                         print("error: ", error)

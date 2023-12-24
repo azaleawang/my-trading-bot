@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from jose import jwt
 from pydantic import ValidationError
-from app.src.schema.schemas import TokenPayload
+from app.schema.user import TokenPayload
 
 reuseable_oauth = OAuth2PasswordBearer(tokenUrl="/login", scheme_name="JWT")
 
