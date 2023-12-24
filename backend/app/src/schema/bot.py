@@ -1,81 +1,37 @@
-from uuid import UUID
-from typing import Any, List, Union
+from typing import List, Union, Any
+from pydantic import BaseModel
 from datetime import datetime
-
-from pydantic import BaseModel, Field
-
-
-class TokenSchema(BaseModel):
-    access_token: str
-    refresh_token: str
-    user_id: int
-    username: str
-
-
-class TokenPayload(BaseModel):
-    username: str
-    email: str
-    exp: int = None
-
-
-# User schema
-class UserBase(BaseModel):
-    name: str
-    email: str
-
-
-class UserCreate(UserBase):
-    password: str
-
-
-class User(UserBase):
-    id: int
-
-    class Config:
-        from_attributes = True
-
-
-class UserPublic(UserBase):
-    id: int
-
-    class Config:
-        from_attributes = True
-
-
-# Bot schema
 
 
 class BotBase(BaseModel):
-    # container_id: str
-    # container_name
     name: str = "cool_bot"
     owner_id: int = 1
     strategy: str = "supertrend"
     symbol: str = "ETH/USDT"
     description: Union[str, None] = None
-    # created_at: datetime
     t_frame: str = "1d"
     quantity: float = 110
-    # status: str = 'running'
 
 
 class BotCreate(BotBase):
-    # owner_id: int
     container_id: str
     container_name: str
     status: str = "running"
     worker_instance_id: str
 
 
-# Backtest_result schema
-class BacktestResultBase(BaseModel):
-    info: dict
-    result: Any
+class BotCreateResp(BaseModel):
+    data: List[BotCreate]
 
 
-# 就是一般的message 回應格式
-class Message_Resp(BaseModel):
-    message: str = "some message"
+class BotCheck(BaseModel):
+    container_id: str
+    container_name: str
+    status: str = "running"
+
+
+class BotCheckResp(BaseModel):
+    data: List[BotCheck]
 
 
 class TradeHistoryCreate(BaseModel):
@@ -109,7 +65,7 @@ class TradeHistoryCreate(BaseModel):
     }
 
 
-class TradeHistory_Resp(BaseModel):
+class TradeHistoryResp(BaseModel):
     id: int = 5
     container_name: str = "User1_supertrend_cool_bot"
     order_id: int
@@ -150,48 +106,42 @@ class Bot(BotCreate):
     id: int
     created_at: datetime
     stopped_at: Any
-    trade_history: List[TradeHistory_Resp]
+    trade_history: List[TradeHistoryResp]
 
     class Config:
         from_attributes = True
 
 
-# req body of posting backtest
-class Backtest_Strategy(BaseModel):
-    name: str = "MaRsi"
-    symbols: list = ["BTC/USDT"]
-    t_frame: str = "1h"
-    since: Union[str, None] = "2017-01-01T00:00:00Z"
-    default_type: Union[str, None] = "future"
-    params: Union[dict, None] = {"rsi_window": 20}
-    user_id: int
-
-class StrategyCreate(BaseModel):
-    name: str
-    file_url: Union[str, None]
-    params: Union[dict, None]
-    provider_id: int
-    is_public: bool
+class BotCreatedResp(BaseModel):
+    data: Bot
 
 
-class Strategy(StrategyCreate):
-    id: int
-
-    class Config:
-        from_attributes = True
+class BotResp(BaseModel):
+    data: List[Bot]
 
 
-class BotErrorSchema(BaseModel):
+class BotHistoryResp(BaseModel):
+    data: List[TradeHistoryResp]
+
+
+class BotError(BaseModel):
     container_name: str
     error: str
 
 
-class BotError(BotErrorSchema):
+class BotError(BotError):
     id: int
     timestamp: Any
 
     class Config:
         from_attributes = True
+
+
+class PnlChart(BaseModel):
+    data: list = [
+        {"pnl": -4.83644, "timestamp": 1702080000000},
+        {"pnl": -6.04348, "timestamp": 1702111500000},
+    ]
 
 
 class ContainerState(BaseModel):
@@ -209,43 +159,12 @@ class ContainerStateDict(BaseModel):
     data: List[ContainerState]
 
 
-class LoginForm(BaseModel):
-    email: str
-    password: str
-
-
-class WorkerServerCreate(BaseModel):
-    instance_id: str
-    private_ip: str
-    total_memory: int = 550
-
-
-class WorkerServerRead(WorkerServerCreate):
-    id: int
-    private_ip: Union[str, None]
-    available_memory: int
-    status: str
-    updated_at: Any
-
-    class Config:
-        from_attributes = True
-
-
-class ContainerStatus_Resp(BaseModel):
+class ContainerStatusResp(BaseModel):
     container_id: str
     container_name: str
     state: str = "exited"
     status: str = "Exited (137) 39 hours ago"
     RunningFor: str = "39 hours ago"
-
-
-class ContainerLog_Resp(BaseModel):
-    container_id: str
-    container_name: str
-    logs: list = [
-        "20231130-180805: Checking for buy and sell signals",
-        "20231130-180905: symbol: BNB/USDT, timeframe: 30m, limit: 100, in_position: True, quantity_buy_sell: 0.1",
-    ]
 
 
 class ContainerInfoDict(BaseModel):
@@ -254,8 +173,10 @@ class ContainerInfoDict(BaseModel):
     ]
 
 
-class PnlChart(BaseModel):
-    data: list = [
-        {"pnl": -4.83644, "timestamp": 1702080000000},
-        {"pnl": -6.04348, "timestamp": 1702111500000},
+class ContainerLogResp(BaseModel):
+    container_id: str
+    container_name: str
+    logs: list = [
+        "20231130-180805: Checking for buy and sell signals",
+        "20231130-180905: symbol: BNB/USDT, timeframe: 30m, limit: 100, in_position: True, quantity_buy_sell: 0.1",
     ]
