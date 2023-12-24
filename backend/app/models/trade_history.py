@@ -7,7 +7,7 @@ from datetime import datetime
 from sqlalchemy.orm import relationship
 
 
-class Trade_History(Base):
+class TradeHistory(Base):
     __tablename__ = "trade_history"
 
     id = Column(BIGINT, primary_key=True)

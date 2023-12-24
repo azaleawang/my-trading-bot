@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 
-class Bot_Error(Base):
+class BotError(Base):
     __tablename__ = 'bot_error'
 
     id = Column(Integer, primary_key=True, index=True)

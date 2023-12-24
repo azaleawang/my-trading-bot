@@ -6,7 +6,7 @@ from .base import Base
 from datetime import datetime
 
 
-class Backtest_Result(Base):
+class BacktestResult(Base):
     __tablename__ = "backtest_results"
 
     id = Column(BIGINT, primary_key=True)

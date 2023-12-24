@@ -2,7 +2,7 @@ import logging
 from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException
 from app.utils.database import get_db
-from app.models.backtest import Backtest_Result
+from app.models.backtest import BacktestResult
 from app.src.schema import schemas
 from sqlalchemy import text, func
 
@@ -11,15 +11,15 @@ def check_backtest_strategy(
     strategy, db: Session = Depends(get_db)):
     try:
         backtest_existed = (
-            db.query(Backtest_Result)
+            db.query(BacktestResult)
             .filter(
-                Backtest_Result.strategy_name == strategy.get('name'),
-                Backtest_Result.symbol == strategy.get('symbols')[0],
-                Backtest_Result.t_frame == strategy.get('t_frame'),
-                Backtest_Result.since == strategy.get('since'),
-                Backtest_Result.type == strategy.get('default_type'),
-                Backtest_Result.params == strategy.get('params'),
-                Backtest_Result.updated_at + text("'1 day'::interval") > func.now(),
+                BacktestResult.strategy_name == strategy.get('name'),
+                BacktestResult.symbol == strategy.get('symbols')[0],
+                BacktestResult.t_frame == strategy.get('t_frame'),
+                BacktestResult.since == strategy.get('since'),
+                BacktestResult.type == strategy.get('default_type'),
+                BacktestResult.params == strategy.get('params'),
+                BacktestResult.updated_at + text("'1 day'::interval") > func.now(),
             )
             .first()
         )
@@ -44,14 +44,14 @@ def check_backtest_result(
 ):
     try:
         backtest_existed = (
-            db.query(Backtest_Result)
+            db.query(BacktestResult)
             .filter(
-                Backtest_Result.strategy_name == bt_res.get("info").get("name"),
-                Backtest_Result.symbol == bt_res.get("info").get("symbols")[0],
-                Backtest_Result.t_frame == bt_res.get("info").get("t_frame"),
-                Backtest_Result.since == bt_res.get("info").get("since"),
-                Backtest_Result.type == bt_res.get("info").get("default_type"),
-                Backtest_Result.params == bt_res.get("info").get("params"),
+                BacktestResult.strategy_name == bt_res.get("info").get("name"),
+                BacktestResult.symbol == bt_res.get("info").get("symbols")[0],
+                BacktestResult.t_frame == bt_res.get("info").get("t_frame"),
+                BacktestResult.since == bt_res.get("info").get("since"),
+                BacktestResult.type == bt_res.get("info").get("default_type"),
+                BacktestResult.params == bt_res.get("info").get("params"),
             )
             .first()
         )
@@ -75,12 +75,12 @@ def insert_backtest_result(
         if existed_id:
             # update plot url and result details
             updated_result = (
-                db.query(Backtest_Result)
-                .filter(Backtest_Result.id == existed_id)
+                db.query(BacktestResult)
+                .filter(BacktestResult.id == existed_id)
                 .update(
                     {
-                        Backtest_Result.plot_url: bt_res.get("result").get("plot"),
-                        Backtest_Result.details: bt_res.get("result"),
+                        BacktestResult.plot_url: bt_res.get("result").get("plot"),
+                        BacktestResult.details: bt_res.get("result"),
                     }
                 )
             )
@@ -92,12 +92,12 @@ def insert_backtest_result(
                 )
             return existed_id
             # return (
-            #     db.query(Backtest_Result)
-            #     .filter(Backtest_Result.id == existed_id)
+            #     db.query(BacktestResult)
+            #     .filter(BacktestResult.id == existed_id)
             #     .first()
             # )
 
-        backtest_result = Backtest_Result(
+        backtest_result = BacktestResult(
             strategy_name=bt_res.get("info").get("name"),
             symbol=bt_res.get("info").get("symbols")[0],
             t_frame=bt_res.get("info").get("t_frame"),
@@ -120,4 +120,4 @@ def insert_backtest_result(
 
 # read backtest result by strategy id
 def get_backtest_result(db: Session, backtest_id: int):
-    return db.query(Backtest_Result).filter(Backtest_Result.id == backtest_id).first()
+    return db.query(BacktestResult).filter(BacktestResult.id == backtest_id).first()

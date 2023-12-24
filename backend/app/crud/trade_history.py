@@ -4,14 +4,14 @@ from typing import Union
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 from app.src.schema import schemas
-from app.models.trade_history import Trade_History
+from app.models.trade_history import TradeHistory
 from app.models.bot import Bot
 
 
 def create_trade_history(db: Session, trade_data: schemas.TradeHistoryCreate, realizedPnl: Union[None, float]):
     
     
-    new_trade = Trade_History(
+    new_trade = TradeHistory(
         container_name=trade_data.container_name,
         order_id=int(trade_data.data["orderId"]),
         qty=float(trade_data.data["cumQty"]),
