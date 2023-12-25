@@ -51,24 +51,6 @@ const CreateBotForm: React.FC = () => {
     setBotData({ ...botData, [e.target.name]: e.target.value?.trim() });
   };
 
-  // function debounce(fn: any, delay = 500) {
-  //   let timer: any;
-
-  //   // debounce function 最終會回傳一個 function
-  //   return (...args: any) => {
-  //     // 每一次 debounce function 被觸發時，會先清除之前的 timer，避免觸發先前的 fn 函式
-  //     // 因此只要在 delay 時間內觸發 debounce function，就會一直清除先前的 timer，避免 fn 一直被執行
-  //     clearTimeout(timer);
-  //     // 清除之後，再重新計時
-  //     // 當 delay 時間到時，執行 fn
-  //     timer = setTimeout(() => {
-  //       fn(...args);
-  //     }, delay);
-  //   };
-  // }
-
-  // updateDebounceText 會在延遲 500 ms 後執行 console.log('call api get search result')
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
@@ -122,17 +104,11 @@ const CreateBotForm: React.FC = () => {
     }
   };
 
-  // const debouncedSubmit = debounce(handleSubmit);
-  // const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-  //   e.preventDefault(); // 在这里调用 preventDefault
-  //   debouncedSubmit();   // 然后调用防抖函数
-  // };
 
   return (
     // <div className="w-8/12 max-w-[500px] p-5 m-auto text-white">
     <Dialog>
       <DialogTrigger className="md:tracking-widest text-base m-0 w-full flex items-center justify-center gap-2">
-        {/* <PlusSquare size={28} /> */}
         <Plus size={20} /> 機器人
       </DialogTrigger>
       <DialogContent>
@@ -188,16 +164,14 @@ const CreateBotForm: React.FC = () => {
                   <SelectValue placeholder="交易對" />
                 </SelectTrigger>
                 <SelectContent className="">
-                  {symbols.map((symbol) => (
-                    <SelectItem value={symbol}>{symbol}</SelectItem>
+                  {symbols.map((symbol, i) => (
+                    <SelectItem value={symbol} key={i}>{symbol}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="mb-4">
-              {/* <Slider defaultValue={[33]} max={100} step={1} /> */}
-
               <label htmlFor="quantity" className="block mb-2">
                 每次買入 (USDT)
               </label>
@@ -222,7 +196,6 @@ const CreateBotForm: React.FC = () => {
         </DialogHeader>
       </DialogContent>
     </Dialog>
-    // </div>
   );
 };
 

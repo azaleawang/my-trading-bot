@@ -9,7 +9,6 @@ import { Player } from "@lottiefiles/react-lottie-player";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
@@ -20,7 +19,7 @@ import CreateBotForm from "@/pages/create-bot/components/form";
 import { toast } from "react-toastify";
 const BotContainer: React.FC = () => {
   const [access_token] = useCookie("access_token", "");
-  const [bots, setBots] = useState<Bot[]>([]); // const userId = 1;
+  const [bots, setBots] = useState<Bot[]>([]);
   const [loadingStates, setLoadingStates] = useState<{
     [key: number]: boolean;
   }>({});
@@ -44,7 +43,6 @@ const BotContainer: React.FC = () => {
 
     markPriceWs.onmessage = (event) => {
       const message: MarkPriceData[] = JSON.parse(event.data);
-      // console.log("Hi from binance ws", message[0]);
       setMarkAllPrice(message);
     };
 
@@ -132,12 +130,6 @@ const BotContainer: React.FC = () => {
     }
   };
 
-  const createBtn = (
-    <Button className="tracking-widest text-base p-0 w-[150px] m-auto bg-orange-300/70 hover:bg-orange-300/50">
-      <CreateBotForm />
-    </Button>
-  );
-
   const calculateTotalPnl = (bot: Bot): number => {
     let totalRealizedPnl = bot.trade_history.reduce(
       (sum, trade) => sum + (trade.realizedPnl || 0),
@@ -177,24 +169,23 @@ const BotContainer: React.FC = () => {
               loop
               src="https://lottie.host/5debc6b1-ed25-493f-8ec6-1951aea44469/KXcHRm0dhd.json"
               style={{ height: "150px", width: "150px" }}
-            >
-              {/* <Controls visible={true} buttons={['play', 'repeat', 'frame', 'debug']} /> */}
-            </Player>
+            ></Player>
             <h1 className="mt-5 m-auto">尚無機器人，快來新增一個看看吧！</h1>
-            {createBtn}
+            <div className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-base p-0 h-[35px] w-[150px] m-auto bg-orange-300/60 hover:bg-orange-300/50">
+              <CreateBotForm />
+            </div>
           </div>
         ) : (
           <>
             <div className=" flex fixed right-0 top-20">
-              <Button className="text-base mr-5 w-[100px] p-0 bg-inherit border-2 border-zinc-300">
+              <div className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-base p-0 h-[35px] mr-5 w-[100px] p-0 bg-inherit border-2 border-zinc-300 hover:bg-black">
                 <CreateBotForm />
-              </Button>
+              </div>
             </div>
             {bots.map((bot, i) => (
               <Card
                 key={i}
                 className="flex flex-col flex-wrap min-h-[250px] md:h-[280px] bg-zinc-900 justify-between rounded-lg border-0 text-slate-200 w-full md:w-1/2 md:max-w-[450px]"
-                // style={{ backgroundColor: "#222831" }}
               >
                 <CardHeader className="flex flex-col">
                   <CardTitle className=" flex flex-wrap justify-between tracking-wide gap-1">
@@ -208,10 +199,10 @@ const BotContainer: React.FC = () => {
                       {bot.status.toUpperCase()}
                     </div>
                   </CardTitle>
-                  <CardDescription className="flex gap-3">
+                  <div className="flex gap-3">
                     <p className="text-gray-300">{bot.symbol}</p>
                     <p className="text-gray-300">{bot.strategy} 策略</p>
-                  </CardDescription>
+                  </div>
                 </CardHeader>
                 <CardContent className="text-gray-300">
                   <div className="flex gap-5 text-lg">
