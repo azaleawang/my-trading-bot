@@ -1,5 +1,0 @@
-ta
-schedule
-ccxt
-pandas
-numpy

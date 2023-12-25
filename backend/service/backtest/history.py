@@ -3,7 +3,7 @@ import pandas as pd
 import time
 # https://api.binance.com/api/v3/klines?symbol=ETHUSDT&interval=4h&limit=500
 # https://fapi.binance.com/fapi/v1/klines?symbol=BTCUSDT&interval=1d&startTime=1640966400000&limit=1500
-# default config
+
 
 def history_data(exch='binance', symbols=['BTC/USDT'], t_frame='4h', 
                     since='2017-01-01T00:00:00Z', default_type='future'):        
@@ -18,9 +18,6 @@ def history_data(exch='binance', symbols=['BTC/USDT'], t_frame='4h',
                 }
             }
         )
-
-        # if hasattr(exchange, 'set_sandbox_mode'):
-        #     exchange.set_sandbox_mode(sandbox_mode)
 
     except AttributeError:
         print(f'Exchange "{exch}" not found.')
