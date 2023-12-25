@@ -1,14 +1,6 @@
-import json
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
-from fastapi import Depends, HTTPException
-from app.src.schema import schemas
-from sqlalchemy.sql import and_
 from app.models.container_status import ContainerStatus
 from app.utils.database import SessionLocal
-from sqlalchemy.orm import Session
-from sqlalchemy.orm import joinedload
-
 from app.models.bot import Bot
 
 
@@ -35,6 +27,7 @@ def get_user_containers_status(db: Session, user_id: int):
         )
         .all()
     )
+    
     return user_container_status
 
 
@@ -84,8 +77,6 @@ def check_bot_status_consistency(db, container_id, db_record):
         )
         print(f"Container {container_id} status updated to {db_record.status}")
         db.commit() 
-    # else:
-    #     print(f"Bot status is consistent with container status")
     return
 
 
