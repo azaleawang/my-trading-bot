@@ -1,14 +1,12 @@
 import pytest
 from fastapi import HTTPException
 from unittest.mock import patch
-
 from app.src.controller.bot import delete_bot_container, stop_bot_container
-# TODO 問子華這樣做是不是對的
+
 @patch('app.src.controller.bot.requests.put')
 def test_stop_bot_container_success(mock_put):
     # Set up the mock response
     mock_put.return_value.status_code = 200
-    mock_put.return_value.json.return_value = {"message": "Container stopped"}
 
     # Call the function
     stop_bot_container("container123", "http://worker-ip")
