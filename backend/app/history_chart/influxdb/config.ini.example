@@ -1,6 +1,0 @@
-[influx2]
-url=http://localhost:8086
-org=
-token=
-timeout=6000
-verify_ssl=False

@@ -27,4 +27,5 @@ jobs:
             git switch develop
             git pull
             pm2 reload ecosystem.config.js
-          # pm2 reload worker.config.js
+            cd /home/ubuntu/my-trading-bot/backend/livedata_worker/livedata.py
+            docker-compose up -d
