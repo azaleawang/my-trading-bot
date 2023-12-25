@@ -11,6 +11,7 @@ router = APIRouter()
 
 @router.post("/", response_model=WorkerServerRead)
 def create_worker_server(worker_server: WorkerServerCreate, db: Session = Depends(get_db), Auth: Union[str, None] = Header(default=None)):
+    # If the header is empty, raise HTTPException
     if Auth != os.getenv("WORKER_SERVER_AUTH"):
         raise HTTPException(status_code=403, detail="You are not authorized to access this resource")
     return register_worker_server(db, worker_server)

@@ -55,15 +55,15 @@ def parse_and_store(container_data):
                 db.add(new_record)
 
 
-            db.commit()  # Commit changes for each container
+            db.commit()
 
-            # check if container status is different from bot status
+            # Check if container status is different from bot status
             check_bot_status_consistency(
                 db, container_id, existing_record or new_record
             )
 
         except Exception as e:
-            db.rollback()  # Rollback only affects the current container
+            db.rollback()
             print(f"Error processing container {container_id}: {e}")
 
     db.close()
@@ -87,7 +87,7 @@ def update_container(existing_record, container):
         existing_record.running_for = st.get("RunningFor", None)
         existing_record.full_state = st
 
-    existing_record.logs = container.get("log", [])  # Update logs
+    existing_record.logs = container.get("log", [])
 
 
 def get_bot_id_by_container_id(db: Session, container_id: str):
@@ -97,7 +97,6 @@ def get_bot_id_by_container_id(db: Session, container_id: str):
 
 
 def create_new_container_record(bot_id, container):
-    # bot_id
     new_record = ContainerStatus(container_id=container["container_id"])
     for st in container["state"]:
         new_record.container_name = st.get("Names", None)

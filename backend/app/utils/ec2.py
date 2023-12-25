@@ -47,9 +47,8 @@ def create_ec2_instance(
 
 def start_ec2_instance(instance_id: str):
     try:
-        print("starting ec2, instance id = ", instance_id)
-        response = ec2.start_instances(InstanceIds=[instance_id], DryRun=False)
-        print(response)
+        logging.info("starting ec2, instance id = ", instance_id)
+        ec2.start_instances(InstanceIds=[instance_id], DryRun=False)
         return True
     except ClientError as err:
         logging.error(
@@ -59,15 +58,14 @@ def start_ec2_instance(instance_id: str):
             err.response["Error"]["Code"],
             err.response["Error"]["Message"],
         )
-        raise HTTPException(status_code=500, detail="Couldn't start instance: " + str(err.response["Error"]["Message"]))
+        raise HTTPException(status_code=500, detail="Couldn't start instance: ")
 
 
 
 def stop_ec2_instance(instance_id: str):
     try:
-        print("stopping ec2, instance id = ", instance_id)
-        response = ec2.stop_instances(InstanceIds=[instance_id], Hibernate=False, DryRun=False, Force=False)
-        print(response)
+        logging.info("stopping ec2, instance id = ", instance_id)
+        ec2.stop_instances(InstanceIds=[instance_id], Hibernate=False, DryRun=False, Force=False)
         return True
     except ClientError as err:
         logging.error(
@@ -77,4 +75,4 @@ def stop_ec2_instance(instance_id: str):
             err.response["Error"]["Code"],
             err.response["Error"]["Message"],
         )
-        raise HTTPException(status_code=500, detail="Couldn't stop instance: " + str(err.response["Error"]["Message"]))
+        raise HTTPException(status_code=500, detail="Couldn't stop instance")

@@ -1,7 +1,7 @@
 import uvicorn
 from dotenv import load_dotenv
 import os
-load_dotenv()  # This should be near the top of your main.py
+load_dotenv()
 
 if __name__ == "__main__":
     uvicorn.run(

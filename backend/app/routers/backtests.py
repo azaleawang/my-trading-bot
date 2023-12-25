@@ -64,9 +64,8 @@ def receive_lambda_result(
         raise UnexpectedError(detail="Error in processing received data from Lambda.")
 
 
-# get backtest result by id
 @router.get("/results/{bt_res_id}", responses={404: {"description": "Not found"}})
-def get_strategy(bt_res_id: int, db: Session = Depends(get_db)):
+def get_backtest_result_by_id(bt_res_id: int, db: Session = Depends(get_db)):
     db_backtest_result = get_backtest_result(db, bt_res_id)
     if not db_backtest_result:
         raise BacktestResultNotFound()

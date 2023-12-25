@@ -61,7 +61,6 @@ def get_bot_by_id(db: Session, bot_id: int):
 
 
 def create_user_bot(db: Session, bot: schemas.BotCreate):
-    # TODO 儲存失敗但docker已經開起來怎麼辦(應該要分兩次存)
     try:
         db_bot = Bot(**bot.model_dump())
         db.add(db_bot)
@@ -127,19 +126,14 @@ def delete_user_bot(bot_id: int, worker_ip: str, db: Session):
             delete_bot_container(bot.container_id, worker_ip)
 
         return bot
-    else:
-        raise HTTPException(
-            status_code=500,
-            detail=f"No operation on database during deleting bot: {bot.container_name}",
-        )
 
 
 def number_of_running_server(db: Session):
     return db.query(WorkerServer).filter(WorkerServer.status == "running").count()
 
 
+# TODO global ALLOW_CREATE 要怎麼處理
 def assign_worker_server(db: Session):
-    # try:
     # Find a worker server with enough available memory
     global ALLOW_CREATE
     suitable_server = (
@@ -236,9 +230,9 @@ def worker_scaling(db: Session, worker_ip: str):
         return False
     if worker_server.available_memory == worker_server.total_memory:
         print("Worker server need to be closed")
-        # First
-        # True if stop successfully
-        return stop_ec2_instance(instance_id=worker_server.instance_id)
+        return stop_ec2_instance(
+            instance_id=worker_server.instance_id
+        )  # True if stop successfully
 
     return False
 
@@ -248,43 +242,40 @@ def update_worker_server_status(db: Session, worker_ip: str):
         db.query(WorkerServer).filter(WorkerServer.private_ip == worker_ip).first()
     )
 
+    if not worker_server:
+        raise HTTPException(status_code=404, detail=f"Worker server not found.")
+
     worker_server.status = "stopped"
     worker_server.private_ip = None
     db.commit()
-
-    if not worker_server:
-        raise HTTPException(status_code=404, detail=f"Worker server not found.")
 
     return True
 
 
 def stop_bot_container(container_id: str, worker_ip: str):
-    if worker_ip:
-        response = requests.put(
-            f"{worker_ip}/stop-container?container_id={container_id}"
+    if not worker_ip:
+        print("No Worker server ip provided")
+        return
+    response = requests.put(f"{worker_ip}/stop-container?container_id={container_id}")
+    if response.status_code != 200:
+        logging.error(
+            f"Failed to stop container {container_id} in worker server {worker_ip}"
         )
-        if response.status_code == 200:
-            print(response.json())
-        else:
-            raise HTTPException(
-                status_code=response.status_code,
-                detail="Failed to stop container in worker server.",
-            )
-    else:
-        print("Worker server ip not found")
+        raise HTTPException(
+            status_code=response.status_code,
+            detail="Failed to stop container in worker server.",
+        )
 
 
 def delete_bot_container(container_id: str, worker_ip: str):
-    if worker_ip:
-        response = requests.delete(
-            f"{worker_ip}/delete-container?container_id={container_id}"
+    if not worker_ip:
+        print("No Worker server ip provided")
+        return
+    response = requests.delete(
+        f"{worker_ip}/delete-container?container_id={container_id}"
+    )
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=response.status_code,
+            detail="Failed to delete container in worker server.",
         )
-        if response.status_code == 200:
-            print(response.json())
-        else:
-            raise HTTPException(
-                status_code=response.status_code,
-                detail="Failed to delete container in worker server.",
-            )
-    else:
-        print("Worker server ip not found")
