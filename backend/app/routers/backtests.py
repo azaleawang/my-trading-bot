@@ -9,9 +9,9 @@ from app.crud.backtest import (
     insert_backtest_result,
 )
 from app.utils.database import get_db
-from app.src.controller.sqs import send_sqs_message
-from app.src.schema.commons import MessageResp
-from app.src.schema.backtest import BacktestResultBase, BacktestStrategy
+from app.utils.sqs import send_sqs_message
+from app.schema.commons import MessageResp
+from app.schema.backtest import BacktestResultBase, BacktestStrategy
 import websockets
 import math
 from app.constants import BACKTEST_RESULT_EXAMPLE as bt_res
