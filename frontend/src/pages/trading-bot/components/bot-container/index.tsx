@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Bot, MarkPriceData } from "@/pages/trading-bot/models";
 import { useNavigate } from "react-router-dom";
@@ -198,7 +198,6 @@ const BotContainer: React.FC = () => {
               >
                 <CardHeader className="flex flex-col">
                   <CardTitle className=" flex flex-wrap justify-between tracking-wide gap-1">
-                    {/* 可能要限制一下字數要不然會很醜  */}
                     <p className="text-2xl md:tracking-widest break-all ">
                       {bot.name}
                     </p>

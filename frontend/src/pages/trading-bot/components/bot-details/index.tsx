@@ -75,7 +75,6 @@ const BotDetails: React.FC = () => {
   useEffect(() => {
     const fetchContainerData = async () => {
       try {
-        // TODO 這樣一直重複打資料庫真的好嘛？外面已經撈過全部的資料了
         const response = await axios.get(`${bot_api}/container-monitoring`, {
           headers: {
             Authorization: `Bearer ${access_token}`,
