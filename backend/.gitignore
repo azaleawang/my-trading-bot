@@ -10,3 +10,4 @@ trade/*/config.py
 *.log
 nohup.out
 migrations/versions/
+influx.config.ini
