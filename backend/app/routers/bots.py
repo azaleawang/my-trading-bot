@@ -5,7 +5,6 @@ from typing import List
 from app.utils.redis import get_redis_client
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 import pandas as pd
-from pydantic import BaseModel
 import pytz
 import requests
 from sqlalchemy.orm import Session
@@ -20,18 +19,10 @@ from app.crud.bot import (
     update_worker_server_memory,
     update_worker_server_status,
     worker_scaling,
+    assign_worker_server, 
+    calculate_pnl
 )
-from app.schema.bot import (
-    BotBase,
-    BotCreate,
-    BotError,
-    BotHistoryResp,
-    BotCheckResp,
-    BotCreatedResp,
-    ContainerInfoDict,
-    ContainerStateDict,
-    PnlChart,
-)
+from app.schema import bot as schemas
 from app.schema.user import User
 from app.utils.database import get_db
 from app.crud.trade_history import get_bot_trade_history
@@ -40,14 +31,12 @@ from app.crud.container_status import (
     get_container_status,
     parse_and_store,
 )
-from app.crud.bot import assign_worker_server
 from app.utils.deps import get_current_user
-from app.history_chart.calculate import calculate_pnl
 
 router = APIRouter()
 
 
-@router.get("/admin", response_model=BotCheckResp)
+@router.get("/admin", response_model=schemas.BotCheckResp)
 def get_all_bots(db: Session = Depends(get_db)):
     try:
         db_all_bots = get_bots(db)
@@ -57,9 +46,9 @@ def get_all_bots(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Error fetching bots." + str(e))
 
 
-@router.post("/", response_model=BotCreatedResp)
+@router.post("/", response_model=schemas.BotCreatedResp)
 def create_bot_for_user(
-    bot: BotBase,
+    bot: schemas.BotBase,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
@@ -90,7 +79,7 @@ def create_bot_for_user(
             )
 
         bot_dict = bot.model_dump()
-        bot_create = BotCreate(
+        bot_create = schemas.BotCreate(
             **bot_dict, **bot_docker_info, worker_instance_id=worker_server.instance_id
         )
         db_bot = create_user_bot(db, bot_create)
@@ -190,7 +179,7 @@ def delete_bot_for_user(
         raise HTTPException(status_code=500, detail="Error stopping bot." + str(e))
 
 
-@router.get("/{bot_id}/trade-history", response_model=BotHistoryResp)
+@router.get("/{bot_id}/trade-history", response_model=schemas.BotHistoryResp)
 def read_bot_trade_history(
     bot_id: int,
     db: Session = Depends(get_db),
@@ -207,7 +196,7 @@ def read_bot_trade_history(
     return {"data": db_bot_history}
 
 
-@router.get("/{bot_id}/bot-error", response_model=List[BotError])
+@router.get("/{bot_id}/bot-error", response_model=List[schemas.BotError])
 def read_bot_error_for_user(
     bot_id: int,
     db: Session = Depends(get_db),
@@ -236,7 +225,7 @@ def read_bot_error_for_user(
 
 
 @router.post("/container-monitoring")
-def receive_and_store_container_monitoring_info(data: ContainerInfoDict):
+def receive_and_store_container_monitoring_info(data: schemas.ContainerInfoDict):
     try:
         parse_and_store(container_data=data.data)
         return {"message": "Data from docker-monitoring worker received successfully"}
@@ -244,7 +233,7 @@ def receive_and_store_container_monitoring_info(data: ContainerInfoDict):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("/{bot_id}/container-monitoring", response_model=ContainerStateDict)
+@router.get("/{bot_id}/container-monitoring", response_model=schemas.ContainerStateDict)
 def get_container_monitoring_logs(
     bot_id: int,
     db: Session = Depends(get_db),
@@ -273,7 +262,7 @@ def get_container_monitoring_logs(
 
 #
 # api for getting bot's pnl chart
-@router.get("/{bot_id}/pnl-chart", response_model=PnlChart)
+@router.get("/{bot_id}/pnl-chart", response_model=schemas.PnlChart)
 async def get_bot_pnl_chart(
     bot_id: int,
     db: Session = Depends(get_db),

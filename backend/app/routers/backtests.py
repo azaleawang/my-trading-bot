@@ -9,7 +9,7 @@ from app.crud.backtest import (
     insert_backtest_result,
 )
 from app.utils.database import get_db
-from app.utils.sqs import send_sqs_message
+from app.crud.backtest import send_sqs_message
 from app.schema.commons import MessageResp
 from app.schema.backtest import BacktestResultBase, BacktestStrategy
 import websockets

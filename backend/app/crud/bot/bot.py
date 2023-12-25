@@ -6,7 +6,7 @@ import logging
 from app.models.bot import Bot
 from app.models.worker_server import WorkerServer
 from app.schema import bot as schemas
-from app.utils.ec2 import (
+from .ec2 import (
     create_ec2_instance,
     start_ec2_instance,
     stop_ec2_instance,
