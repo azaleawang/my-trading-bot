@@ -1,3 +1,4 @@
+import json
 from aioredis import Redis
 import logging
 import os
@@ -27,4 +28,26 @@ async def get_redis_client():
         return redis
     except:
         logging.error("Redis connection error")
+        return None
+
+
+async def read_pnl_from_redis(redis_client, key):
+    try:
+        value = await redis_client.get(key)
+        if value is None:
+            return None
+        return json.loads(value)
+    except Exception as e:
+        logging.error(e)
+        return None
+
+
+async def write_pnl_to_redis(redis_client, key, value, ttl=900):
+    try:
+        if ttl:
+            await redis_client.set(key, value, ex=ttl)
+        else:
+            await redis_client.set(key, value)
+    except Exception as e:
+        logging.error(e)
         return None

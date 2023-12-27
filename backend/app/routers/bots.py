@@ -2,14 +2,14 @@ from datetime import datetime
 import json, time
 import logging
 from typing import List
-from app.utils.redis import get_redis_client
+
+from app.utils.redis import get_redis_client, read_pnl_from_redis, write_pnl_to_redis
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 import pandas as pd
 import pytz
 import requests
 from sqlalchemy.orm import Session
 from app.crud.bot import (
-    check_name,
     create_user_bot,
     delete_user_bot,
     find_worker_server,
@@ -19,8 +19,9 @@ from app.crud.bot import (
     update_worker_server_memory,
     update_worker_server_status,
     worker_scaling,
-    assign_worker_server, 
-    calculate_pnl
+    assign_worker_server,
+    calculate_pnl,
+    check_bot_owner,
 )
 from app.schema import bot as schemas
 from app.schema.user import User
@@ -32,6 +33,7 @@ from app.crud.container_status import (
     parse_and_store,
 )
 from app.utils.deps import get_current_user
+from app.exceptions.bot import BotNotFound
 
 router = APIRouter()
 
@@ -53,16 +55,9 @@ def create_bot_for_user(
     user: User = Depends(get_current_user),
 ):
     try:
-        if bot.owner_id != user.id:
-            raise HTTPException(
-                status_code=403,
-                detail="You are not allowed to create bot for other users.",
-            )
+        check_bot_owner(bot, user)
         container_name = f"User{bot.owner_id}_{bot.strategy}_{bot.name}"
-        check_name(db, bot.name, bot.owner_id)
-        # TODO 可能會出現已經開啟container但資料庫儲存有問題
 
-        # TODO maybe need to check whether the worker server is open
         # get available worker server ip
         worker_server = assign_worker_server(db)
 
@@ -113,16 +108,9 @@ def stop_bot_for_user(
         worker_ip = find_worker_server(db, bot_id)
         print("find worker ip = ", worker_ip)
         db_bot = get_bot_by_id(bot_id=bot_id, db=db)
+        check_bot_owner(db_bot, user)
         if not db_bot:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Bot #{bot_id} not found.",
-            )
-        if db_bot.owner_id != user.id:
-            raise HTTPException(
-                status_code=403,
-                detail="You are not allowed to access this user's bot information.",
-            )
+            raise BotNotFound()
 
         user_bot = stop_user_bot(bot_id, worker_ip, db)
 
@@ -165,11 +153,8 @@ def delete_bot_for_user(
     try:
         worker_ip = find_worker_server(db, bot_id)
         user_bot = delete_user_bot(bot_id, worker_ip, db)
-        if user_bot.owner_id != user.id:
-            raise HTTPException(
-                status_code=403,
-                detail="You are not allowed to delete bot for other users.",
-            )
+
+        check_bot_owner(user_bot, user)
         return {
             "message": f"Bot #{bot_id} {user_bot.name} removed from Docker containers!"
         }
@@ -186,13 +171,10 @@ def read_bot_trade_history(
     user: User = Depends(get_current_user),
 ):
     db_bot, db_bot_history = get_bot_trade_history(db, bot_id)
+    check_bot_owner(db_bot, user)
     if db_bot_history is None:
         raise HTTPException(status_code=404, detail="Trading bot not found")
-    if db_bot.owner_id != user.id:
-        raise HTTPException(
-            status_code=403,
-            detail="You are not allowed to access this user's bot information.",
-        )
+
     return {"data": db_bot_history}
 
 
@@ -204,16 +186,10 @@ def read_bot_error_for_user(
 ):
     try:
         db_bot = get_bot_by_id(bot_id=bot_id, db=db)
+
         if not db_bot:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Bot #{bot_id} not found.",
-            )
-        if db_bot.owner_id != user.id:
-            raise HTTPException(
-                status_code=403,
-                detail="You are not allowed to access this user's bot information.",
-            )
+            raise BotNotFound()
+        check_bot_owner(db_bot, user)
         db_bot_error = get_error_log_by_container(bot_id, db)
         return db_bot_error
     except HTTPException as http_ex:
@@ -226,11 +202,8 @@ def read_bot_error_for_user(
 
 @router.post("/container-monitoring")
 def receive_and_store_container_monitoring_info(data: schemas.ContainerInfoDict):
-    try:
-        parse_and_store(container_data=data.data)
-        return {"message": "Data from docker-monitoring worker received successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    parse_and_store(container_data=data.data)
+    return {"message": "Data from docker-monitoring worker received successfully"}
 
 
 @router.get("/{bot_id}/container-monitoring", response_model=schemas.ContainerStateDict)
@@ -239,25 +212,13 @@ def get_container_monitoring_logs(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    try:
-        # get data from db
-        db_bot = get_bot_by_id(bot_id=bot_id, db=db)
-        if not db_bot:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Bot #{bot_id} not found.",
-            )
-        if db_bot.owner_id != user.id:
-            raise HTTPException(
-                status_code=403,
-                detail="You are not allowed to access this user's bot information.",
-            )
-        container_info = get_container_status(db, bot_id)
+    db_bot = get_bot_by_id(bot_id=bot_id, db=db)
+    if not db_bot:
+        raise BotNotFound()
+    check_bot_owner(db_bot, user)
+    container_info = get_container_status(db, bot_id)
 
-        return {"data": container_info}
-
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    return {"data": container_info}
 
 
 #
@@ -269,20 +230,13 @@ async def get_bot_pnl_chart(
     user: User = Depends(get_current_user),
 ):
     try:
-        # get data from db
         trade_data = []
         [bot_info, bot_trade_history] = get_bot_trade_history(db, bot_id)
         if not bot_info:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Bot #{bot_id} not found.",
-            )
-        if bot_info.owner_id != user.id:
-            raise HTTPException(
-                status_code=403,
-                detail="You are not allowed to access this user's bot information.",
-            )
-        # get buy/sell data from db
+            raise BotNotFound()
+        check_bot_owner(bot_info, user)
+
+        # Get buy/sell data from db
         for trade in bot_trade_history:
             trade_data.append(
                 {
@@ -309,13 +263,10 @@ async def get_bot_pnl_chart(
         )
         symbol = bot_info.symbol.replace("/", "")
 
-        # if over 15 min check redis
         redis_client = await get_redis_client()
-        if not redis_client or int(
-            time.time() - int(bot_info.created_at.timestamp()) <= 900
-        ):
+        creation_time = int(time.time() - int(bot_info.created_at.timestamp()))
+        if not redis_client or creation_time <= 900:
             # if created in 15 min then calculate pnl
-
             return {
                 "data": calculate_pnl(
                     symbol,
@@ -351,25 +302,3 @@ async def get_bot_pnl_chart(
         raise http_ex
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-async def read_pnl_from_redis(redis_client, key):
-    try:
-        value = await redis_client.get(key)
-        if value is None:
-            return None
-        return json.loads(value)
-    except Exception as e:
-        logging.error(e)
-        return None
-
-
-async def write_pnl_to_redis(redis_client, key, value, ttl=900):
-    try:
-        if ttl:
-            await redis_client.set(key, value, ex=ttl)
-        else:
-            await redis_client.set(key, value)
-    except Exception as e:
-        logging.error(e)
-        return None

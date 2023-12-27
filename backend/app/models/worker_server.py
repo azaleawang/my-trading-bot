@@ -19,4 +19,3 @@ class WorkerServer(Base):
         onupdate=lambda: datetime.now(pytz.timezone("Asia/Taipei")),
     )
     bots = relationship("Bot", back_populates="worker_server")
-    # TODO modify crud for separate worker server

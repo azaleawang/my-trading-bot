@@ -1,16 +1,30 @@
 from typing import List, Union, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, validator
 from datetime import datetime
+import re
 
+from app.exceptions.bot import BotNameInvalid
 
 class BotBase(BaseModel):
-    name: str = "cool_bot"
+    name: str = Field("cool_bot", min_length=3, max_length=20)
     owner_id: int = 1
     strategy: str = "supertrend"
     symbol: str = "ETH/USDT"
     description: Union[str, None] = None
     t_frame: str = "1d"
     quantity: float = 110
+    
+    @validator('name')
+    def remove_spaces(cls, v):
+        return v.replace(' ', '')
+    
+    @validator('name')
+    def validate_name(cls, v):
+        name_regex = re.compile(r"^[A-Za-z-_1234567890]+$")
+        match = name_regex.match(v)
+        if not match:
+            raise BotNameInvalid()
+        return v
 
 
 class BotCreate(BotBase):

@@ -6,6 +6,7 @@ import logging
 from app.models.bot import Bot
 from app.models.worker_server import WorkerServer
 from app.schema import bot as schemas
+from app.schema.user import User
 from .ec2 import (
     create_ec2_instance,
     start_ec2_instance,
@@ -13,13 +14,11 @@ from .ec2 import (
 )
 from datetime import datetime
 import pytz
-import re
 import requests
 
 from app.exceptions.bot import (
     BotNameExisted,
-    BotNameInvalid,
-    BotNameTooLong,
+    BotUnauthorized
 )
 
 ALLOW_CREATE = True
@@ -28,21 +27,20 @@ ALLOW_CREATE = True
 def get_bots(db: Session):
     return db.query(Bot).all()
 
-
+def check_bot_owner(bot, user: User):
+    if bot.owner_id != user.id:
+        raise BotUnauthorized()
+    
 def check_name(db: Session, bot_name: str, user_id: int):
-    name_regex = re.compile(r"^[A-Za-z-_1234567890]+$")
-    match = name_regex.match(bot_name)
-    # TODO 這裡應該用Pydantic class的validation
-    if not match:
-        raise BotNameInvalid()
-    if len(bot_name) < 0 or len(bot_name) > 20:
-        raise BotNameTooLong()
-    if (
+    existing_bot = (
         db.query(Bot)
         .filter(Bot.name == bot_name)
         .filter(Bot.owner_id == user_id)
         .filter(Bot.status != "deleted")
-    ):
+        .first()
+    )
+
+    if existing_bot:
         raise BotNameExisted()
 
 
