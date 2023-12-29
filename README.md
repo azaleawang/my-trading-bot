@@ -15,8 +15,7 @@
 
 ## Table of Content
 * [Tech Stack](#tech-stack)
-* [Architecture](#architecture)
-* [Main Features](#main-features)
+* [Architecture and Main Features](#architecture-and-main-features)
 * [Demo Video](#demo-video)
 * [Demo account](#demo-account)
   
@@ -60,34 +59,22 @@
 ![pytest](https://img.shields.io/badge/Pytest-0A9EDC.svg?style=for-the-badge&logo=Pytest&logoColor=white)
 ![swagger](https://img.shields.io/badge/Swagger-85EA2D.svg?style=for-the-badge&logo=Swagger&logoColor=black)
 
-## Architecture
-### Overview
-<div align="center">
-    <img src="https://github.com/azaleawang/my-trading-bot/assets/46614777/94787b69-acde-4356-bc92-cc816651be9a" alt="overview" width="800">
-</div>
-
-### Trading bot
-<div align="center">
-    <img src="https://github.com/azaleawang/my-trading-bot/assets/46614777/cc25173a-5244-4f20-9b43-455775d1d6a4" alt="overview" width="800">
-</div>
-
-### Real-time data processing
-<div align="center">
-    <img src="https://github.com/azaleawang/my-trading-bot/assets/46614777/2714e5ce-a4e0-49aa-890e-85bc9a00489c" alt="livedata" width="800">
-</div>
-
-### Strategy backtesting
-<div align="center">
-    <img src="https://github.com/azaleawang/my-trading-bot/assets/46614777/dc200d52-e2c3-45b0-826d-8c2919244978" alt="backtesting" width="800">
-</div>
-
 
 ### Networking
 - HTTPS
 - WebSocket
 - Domain Name System (DNS)
  
-## Main Features
+### CICD
+- Automated deployment on AWS EC2 using GitHub Actions CI/CD.
+
+
+## Architecture and Main Features
+### Overview
+<div align="center">
+    <img src="https://github.com/azaleawang/my-trading-bot/assets/46614777/94787b69-acde-4356-bc92-cc816651be9a" alt="overview" width="800">
+</div>
+
 ### Scalable Trading Bot
 - Implemented the deployment of trading bot scripts within isolated Docker containers, enhancing stability and ease of deployment.
 - Implemented a bot worker server to handle high RAM usage of trading bot, offloading the resources from main server.
@@ -95,18 +82,26 @@
 - Engineered a task management system handled by the main server, facilitating communication between the worker and main servers to optimize server utilization and idle time.
 - Established a regular collection of trading bot running statuses on worker servers, providing information on operational health.
 - Employed WebSocket to enable trade real-time notifications and data transmission to the main server.
+<div align="center">
+    <img src="https://github.com/azaleawang/my-trading-bot/assets/46614777/cc25173a-5244-4f20-9b43-455775d1d6a4" alt="overview" width="800">
+</div>
 
 ### Real-time Mark Price Processing
 - Developed a worker for real-time mark price streaming with Binanca WebSocket API.
 - Utilized InfluxDB for time-series data storage, aiding in real-time calculations of unrealized profits of trading bot.
+<div align="center">
+    <img src="https://github.com/azaleawang/my-trading-bot/assets/46614777/2714e5ce-a4e0-49aa-890e-85bc9a00489c" alt="livedata" width="800">
+</div>
 
 ### Serverless Computation of Strategy Backtesting
 - Utilized the Python `Backtesting.py` and `CCXT` API packages for history data retrieval and strategy backtesting.
 - Containerized Python environment specifically for backtesting using Docker image.
 - Deployed the containerized backtesting tasks within AWS Lambda, efficiently handling the high computational demands.
+<div align="center">
+    <img src="https://github.com/azaleawang/my-trading-bot/assets/46614777/dc200d52-e2c3-45b0-826d-8c2919244978" alt="backtesting" width="800">
+</div>
 
-### CICD
-- Automated deployment on AWS EC2 using GitHub Actions CI/CD.
+
 ## Demo Video
 ### Trading bot
 
