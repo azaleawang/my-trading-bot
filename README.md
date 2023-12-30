@@ -5,9 +5,7 @@
   </div>
   <strong>A platform providing long-term script execution and strategy backtesting tools for crypto traders.</strong>
   <div align="center">
-    <a href="https://azaleasites.online/">Home</a> | 
-    <a href="https://github.com/azaleawang"> GitHub</a>
-<!--     <a href="https://shift0965.github.io/portfolio/">About Me</a> -->
+    <a href="https://azaleasites.online/">Home</a> 
     <br>
     <br>
 </div>
