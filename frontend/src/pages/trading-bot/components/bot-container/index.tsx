@@ -162,7 +162,7 @@ const BotContainer: React.FC = () => {
   return (
     <div className="flex flex-col justify-between">
       <div className="flex flex-wrap gap-5 p-6 text-slate-200 mt-10">
-        {bots?.length == 0 ? (
+        {!bots || bots?.length == 0 ? (
           <div className="flex flex-col gap-5 mt-5 w-full">
             <Player
               autoplay
