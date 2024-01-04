@@ -5,7 +5,7 @@ name: Deploy Python fastapi server application to ec2
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "develop" ]
 permissions:
   contents: read
 
@@ -21,11 +21,11 @@ jobs:
           username: "${{ secrets.EC2_USERNAME }}"
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            echo "Hello from github action, start deploy main to ec2"
+            echo "Hello from github action, start deploy develop to ec2"
             source ~/trading-bot-env/bin/activate
             cd /home/ubuntu/my-trading-bot
-            git switch main
+            git switch develop
             git pull
             pm2 reload ecosystem.config.js
-            cd /home/ubuntu/my-trading-bot/backend/livedata_worker
+            cd /home/ubuntu/my-trading-bot/backend/livedata_worker/livedata.py
             docker-compose up -d
