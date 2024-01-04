@@ -16,6 +16,7 @@ services:
 
   worker:
     build: .
+    container_name: mark-price-worker
     depends_on:
       - influxdb
     environment:

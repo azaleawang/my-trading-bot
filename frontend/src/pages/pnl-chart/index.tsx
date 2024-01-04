@@ -22,16 +22,7 @@ interface PnlChartProps {
 }
 
 const PnlChart = ({ botId }: PnlChartProps) => {
-  const [pnlData, setPnlData] = useState<PnlData[]>([{
-    pnl: 1,
-    timestamp: 1702396800
-  }, {
-    pnl: 2,
-    timestamp: 1702396810
-  }, {
-    pnl: 3,
-    timestamp: 1702396900
-  }]); // const userId = 1;
+  const [pnlData, setPnlData] = useState<PnlData[]>(); // const userId = 1;
   const [loading, setLoading] = useState<boolean>(true);
   const [access_token] = useCookie("access_token", "");
 
