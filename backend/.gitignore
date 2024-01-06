@@ -11,3 +11,4 @@ trade/*/config.py
 nohup.out
 migrations/versions/
 influx.config.ini
+.env.test

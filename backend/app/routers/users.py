@@ -10,7 +10,7 @@ from app.crud.bot import get_user_bots
 from app.crud.container_status import get_user_containers_status
 from app.utils.deps import get_current_user
 from app.utils.auth import create_access_token, create_refresh_token, verify_password
-from app.exceptions import EmailExisted, UnexpectedError, LoginFailed
+from app.exceptions import PermissionDenied, EmailExisted, UnexpectedError, LoginFailed
 
 router = APIRouter()
 
@@ -59,20 +59,25 @@ async def login(form_data: LoginForm, db: Session = Depends(get_db)):
         raise UnexpectedError(detail="Error in login!")
 
 
-# TODO 可以把userid都拿掉了因為只會從token拿
 @router.get("/{user_id}/bots", response_model=BotResp)
 def get_user_bot_details(
+    user_id: int,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if user_id != user.id:
+        raise PermissionDenied
     db_bot = get_user_bots(user_id=user.id, db=db)
     return {"data": db_bot}
 
 
 @router.get("/{user_id}/bots/container-monitoring", response_model=ContainerStateDict)
 def get_user_container_monitoring(
+    user_id: int,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    if user_id != user.id:
+        raise PermissionDenied
     containers_info = get_user_containers_status(db, user.id)
     return {"data": containers_info}
