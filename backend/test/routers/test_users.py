@@ -1,8 +1,7 @@
-from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import sessionmaker
-from app.src.schema import schemas
 from app.app import app
+from app.schema import user as schemas
 from app.utils.deps import get_current_user  # replace with the path to your FastAPI app
 
 client = TestClient(app) 
