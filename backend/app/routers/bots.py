@@ -22,6 +22,7 @@ from app.crud.bot import (
     assign_worker_server,
     calculate_pnl,
     check_bot_owner,
+    check_name
 )
 from app.schema import bot as schemas
 from app.schema.user import User
@@ -61,6 +62,7 @@ def create_bot_for_user(
         # get available worker server ip
         worker_server = assign_worker_server(db)
 
+        check_name(db, bot.name, bot.owner_id)
         response = requests.post(
             f"{worker_server.private_ip}/start-container?container_name={container_name}",
             json=bot.model_dump(),
@@ -81,12 +83,7 @@ def create_bot_for_user(
         worker_server = update_worker_server_memory(
             db, worker_server.instance_id, db_bot.memory_usage
         )
-        print(
-            "Update server memory",
-            worker_server.available_memory,
-            "usage = ",
-            db_bot.memory_usage,
-        )
+
         return {
             "data": db_bot,
         }
