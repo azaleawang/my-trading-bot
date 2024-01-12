@@ -26,4 +26,6 @@ jobs:
             cd /home/ubuntu/my-trading-bot
             git switch main
             git pull
+            export NVM_DIR=~/.nvm
+            source ~/.nvm/nvm.sh
             pm2 reload ecosystem.config.js
