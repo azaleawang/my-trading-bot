@@ -12,3 +12,4 @@ nohup.out
 migrations/versions/
 influx.config.ini
 .env.test
+service/backtest/
