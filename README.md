@@ -75,7 +75,7 @@
 
 ### Scalable Trading Bot
 - Implemented the deployment of trading bot scripts within isolated Docker containers, enhancing stability and ease of deployment.
-- Implemented a bot worker server to handle high RAM usage of trading bot, offloading the resources from main server.
+- Implemented a [bot worker server](https://github.com/azaleawang/my-trading-bot-worker) to handle high RAM usage of trading bot, offloading the resources from main server.
 - Utilized AWS AMI for rapidly scaling worker servers, ensuring a responsive and adaptable system.
 - Engineered a task management system handled by the main server, facilitating communication between the worker and main servers to optimize server utilization and idle time.
 - Established a regular collection of trading bot running statuses on worker servers, providing information on operational health.
