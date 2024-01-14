@@ -6,6 +6,8 @@ name: Deploy Python fastapi server application to ec2
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - '**/README.md'
 permissions:
   contents: read
 
