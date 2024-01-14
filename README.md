@@ -92,6 +92,7 @@
 </div>
 
 ### Serverless Computation of Strategy Backtesting
+:octocat: [My code](https://github.com/azaleawang/strategy-backtesting-lambda)
 - Utilized the Python `Backtesting.py` and `CCXT` API packages for history data retrieval and strategy backtesting.
 - Containerized Python environment specifically for backtesting using Docker image.
 - Deployed the containerized backtesting tasks within AWS Lambda, efficiently handling the high computational demands.
