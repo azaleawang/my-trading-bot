@@ -16,10 +16,3 @@ def create_worker_server(worker_server: WorkerServerCreate, db: Session = Depend
         raise HTTPException(status_code=403, detail="You are not authorized to access this resource")
     return register_worker_server(db, worker_server)
 
-
-@router.get("/", response_model=List[WorkerServerRead])
-def read_all_worker_servers(db: Session = Depends(get_db)):
-    db_worker_server = get_worker_servers(db)
-    if db_worker_server is None:
-        raise HTTPException(status_code=404, detail="WorkerServer not found")
-    return db_worker_server

@@ -52,12 +52,3 @@ def test_create_worker_server_with_wrong_auth():
 
     # Check the response
     assert response.status_code == 403
-    
-    
-def test_read_all_worker_servers():
-    # Call the API endpoint
-    response = client.get("/api/v1/worker-servers/")
-
-    # Check the response
-    assert response.status_code == 200
-    assert isinstance(response.json(), list)
