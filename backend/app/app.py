@@ -119,7 +119,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 logger.info(f"Received message from trading-bot worker: {data}")
 
     except WebSocketDisconnect:
-        logger.info("Client disconnected")
+        pass
 
 
 class ConnectionManager:
