@@ -19,6 +19,4 @@ def setup_logger():
         logger.addHandler(cloudwatch_handler)
 
         
-    logger.error("Hi, logging test")
-
-# setup_logger()
+    logger.info("Hi, logging test")
