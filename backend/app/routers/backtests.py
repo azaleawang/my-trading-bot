@@ -73,8 +73,8 @@ def get_backtest_result_by_id(bt_res_id: int, db: Session = Depends(get_db)):
 
 
 async def send_message(client_id: int, message={"data": "test"}):
-    uri = f"ws://localhost:8000/ws/backtest_result/{client_id}"  # Use localhost when test locally
+    uri = f"ws://localhost:{os.getenv('PORT', 8000)}/ws/backtest_result/{client_id}"
     async with websockets.connect(uri) as websocket:
         await websocket.send(json.dumps(message))
-        reply = await websocket.recv()
-        print(f"<<< {reply}")
+        await websocket.recv()
+        

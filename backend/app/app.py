@@ -103,29 +103,25 @@ async def websocket_endpoint(websocket: WebSocket):
                             )
                         trade_data = schemas.TradeHistoryCreate(**data)
 
-                        db_trade_history = create_trade_history(
-                            db, trade_data, realizedPnl
-                        )
+                        create_trade_history(db, trade_data, realizedPnl)
                         db.commit()
-                        print("store: ", db_trade_history)
                 except Exception as e:
-                    print(f"Error: {e}")
+                    logging.error(f"{e}")
 
             elif data.get("error"):
                 try:
-                    print("error", data)
                     with SessionLocal() as db:
                         error_data = schemas.BotError(**data)
                         error = create_error_log(error_data, db)
                         db.commit()
-                        print("error: ", error)
+                        logging.error(error)
                 except Exception as e:
-                    print(f"Error logging failed: {e}")
+                    logging.error(f"Storing trading error logs failed: {e}")
             else:
-                print("message", data)
+                logging.info("message", data)
 
     except WebSocketDisconnect:
-        print("Client disconnected")
+        logging.info("Client disconnected")
 
 
 class ConnectionManager:
@@ -137,7 +133,6 @@ class ConnectionManager:
         if client_id not in self.active_connections:
             self.active_connections[client_id] = []
         self.active_connections[client_id].append(websocket)
-        print("append client", client_id, websocket)
 
     def disconnect(self, client_id: int, websocket: WebSocket):
         if websocket in self.active_connections.get(client_id):
@@ -162,4 +157,4 @@ async def websocket_backtest_result_endpoint(websocket: WebSocket, client_id: in
             await manager.send_personal_message(data, client_id)
     except WebSocketDisconnect:
         manager.disconnect(client_id, websocket)
-        print(f"Client #{client_id} left the chat")
+        logging.info(f"Client #{client_id} left the chat")

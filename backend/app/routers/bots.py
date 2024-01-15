@@ -103,7 +103,6 @@ def stop_bot_for_user(
 ) -> dict:
     try:
         worker_ip = find_worker_server(db, bot_id)
-        print("find worker ip = ", worker_ip)
         db_bot = get_bot_by_id(bot_id=bot_id, db=db)
         check_bot_owner(db_bot, user)
         if not db_bot:
@@ -136,7 +135,7 @@ def handle_memory_and_scaling(
 
     if worker_scaling(db, worker_ip):
         update_worker_server_status(db, worker_ip=worker_ip)
-        print(
+        logging.info(
             f"Bot #{bot_id} {bot_name} stopped and worker server (ip={worker_ip}) stopped!"
         )
 
@@ -277,7 +276,6 @@ async def get_bot_pnl_chart(
         key = f"pnldata:{bot_info.owner_id}:{bot_id}"
         value = await read_pnl_from_redis(redis_client=redis_client, key=key)
         if value is None:
-            print("not recorded in redis", key)
             pnl_data = calculate_pnl(
                 symbol,
                 bot_create_iso_str,
