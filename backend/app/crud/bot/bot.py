@@ -2,7 +2,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from fastapi import HTTPException
-import logging
 from app.models.bot import Bot
 from app.models.worker_server import WorkerServer
 from app.schema import bot as schemas
@@ -15,6 +14,7 @@ from .ec2 import (
 from datetime import datetime
 import pytz
 import requests
+from app.utils.logger import logger
 
 from app.exceptions.bot import (
     BotNameExisted,
@@ -67,13 +67,13 @@ def create_user_bot(db: Session, bot: schemas.BotCreate):
         return db_bot
     except IntegrityError as e:
         if "ForeignKeyViolation" in str(e):
-            logging.error(f"ForeignKeyViolation in storing bot creation: {e}")
+            logger.error(f"ForeignKeyViolation in storing bot creation: {e}")
             raise HTTPException(status_code=400, detail="Owner id not existed.")
         else:
-            logging.error(f"IntegrityError in storing bot creation: {e}")
+            logger.error(f"IntegrityError in storing bot creation: {e}")
             raise HTTPException(status_code=400, detail="Data integrity error.")
     except SQLAlchemyError as e:
-        logging.error(f"Error in storing bot creation: {e}")
+        logger.error(f"Error in storing bot creation: {e}")
         raise HTTPException(status_code=400, detail="Database error.")
 
 
@@ -145,13 +145,13 @@ def assign_worker_server(db: Session):
 
     if suitable_server:
         ALLOW_CREATE = True
-        logging.info(f"Assigning container to server {suitable_server.private_ip}")
+        logger.info(f"Assigning container to server {suitable_server.private_ip}")
         return suitable_server
 
     else:
         # First, check if server <= 2
         num = number_of_running_server(db)
-        logging.info(f"{num} servers running Now")
+        logger.info(f"{num} servers running Now")
         if num >= 2:
             raise HTTPException(
                 status_code=400,
@@ -174,7 +174,7 @@ def assign_worker_server(db: Session):
             .first()
         )
         if candidate_server:
-            logging.info(f"Starting server {candidate_server.instance_id}")
+            logger.info(f"Starting server {candidate_server.instance_id}")
             start_ec2_instance(instance_id=candidate_server.instance_id)
             candidate_server.status = "preparing"
             db.commit()
@@ -227,7 +227,7 @@ def worker_scaling(db: Session, worker_ip: str):
     if not worker_server:
         return False
     if worker_server.available_memory == worker_server.total_memory:
-        logging.info("Worker server need to be closed")
+        logger.info("Worker server need to be closed")
         return stop_ec2_instance(
             instance_id=worker_server.instance_id
         )  # True if stop successfully
@@ -252,11 +252,11 @@ def update_worker_server_status(db: Session, worker_ip: str):
 
 def stop_bot_container(container_id: str, worker_ip: str):
     if not worker_ip:
-        logging.error("No Worker server ip provided")
+        logger.error("No Worker server ip provided")
         return
     response = requests.put(f"{worker_ip}/stop-container?container_id={container_id}")
     if response.status_code != 200:
-        logging.error(
+        logger.error(
             f"Failed to stop container {container_id} in worker server {worker_ip}"
         )
         raise HTTPException(
@@ -267,7 +267,7 @@ def stop_bot_container(container_id: str, worker_ip: str):
 
 def delete_bot_container(container_id: str, worker_ip: str):
     if not worker_ip:
-        logging.error("No Worker server ip provided")
+        logger.error("No Worker server ip provided")
         return
     response = requests.delete(
         f"{worker_ip}/delete-container?container_id={container_id}"

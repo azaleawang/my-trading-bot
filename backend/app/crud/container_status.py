@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from app.models.container_status import ContainerStatus
 from app.utils.database import SessionLocal
 from app.models.bot import Bot
-import logging
+from app.utils.logger import logger
 
 def get_container_status(db: Session, bot_id: int):
     # Query all containers for the user
@@ -64,7 +64,7 @@ def parse_and_store(container_data):
 
         except Exception as e:
             db.rollback()
-            logging.error(f"Error processing container {container_id}: {e}")
+            logger.error(f"Error processing container {container_id}: {e}")
 
     db.close()
 
@@ -75,7 +75,7 @@ def check_bot_status_consistency(db, container_id, db_record):
         db.query(Bot).filter(Bot.container_id == container_id).update(
             {"status": db_record.state}
         )
-        logging.info(f"Container {container_id} status updated to {db_record.status}")
+        logger.info(f"Container {container_id} status updated to {db_record.status}")
         db.commit() 
     return
 

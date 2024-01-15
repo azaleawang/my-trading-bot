@@ -2,7 +2,8 @@ import asyncio
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 import os
-import traceback, logging, json
+from app.utils.logger import logger
+import traceback, json
 from app.crud.backtest import (
     check_backtest_strategy,
     get_backtest_result,
@@ -60,7 +61,7 @@ def receive_lambda_result(
         raise http_ex
     except Exception as e:
         traceback.print_exc()
-        logging.error(f"Error in receive_lambda_result: {e}")
+        logger.error(f"Error in receive_lambda_result: {e}")
         raise UnexpectedError(detail="Error in processing received data from Lambda.")
 
 

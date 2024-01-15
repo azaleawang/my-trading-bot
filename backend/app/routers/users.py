@@ -1,4 +1,4 @@
-import logging
+from app.utils.logger import logger
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -55,7 +55,7 @@ async def login(form_data: LoginForm, db: Session = Depends(get_db)):
     except HTTPException as http_ex:
         raise http_ex
     except Exception as e:
-        logging.error(f"Error in login: {e}")
+        logger.error(f"Error in login: {e}")
         raise UnexpectedError(detail="Error in login!")
 
 

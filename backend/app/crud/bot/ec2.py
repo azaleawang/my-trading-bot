@@ -2,6 +2,7 @@ import boto3
 from botocore.exceptions import ClientError
 import os
 import logging
+from app.utils.logger import logger
 
 from fastapi import HTTPException
 
@@ -30,7 +31,7 @@ def create_ec2_instance(
         instance = ec2.run_instances(**instance_params, MinCount=1, MaxCount=1)
 
     except ClientError as err:
-        logging.error(
+        logger.error(
             "Couldn't create instance with image %s, instance type %s, and key %s. "
             "Here's why: %s: %s",
             image_id,
@@ -46,11 +47,11 @@ def create_ec2_instance(
 
 def start_ec2_instance(instance_id: str):
     try:
-        logging.info("starting ec2, instance id = ", instance_id)
+        logger.info("starting ec2, instance id = ", instance_id)
         ec2.start_instances(InstanceIds=[instance_id], DryRun=False)
         return True
     except ClientError as err:
-        logging.error(
+        logger.error(
             "Couldn't start instance id %s"
             "Here's why: %s: %s",
             instance_id,
@@ -63,11 +64,11 @@ def start_ec2_instance(instance_id: str):
 
 def stop_ec2_instance(instance_id: str):
     try:
-        logging.info("stopping ec2, instance id = ", instance_id)
+        logger.info("stopping ec2, instance id = ", instance_id)
         ec2.stop_instances(InstanceIds=[instance_id], Hibernate=False, DryRun=False, Force=False)
         return True
     except ClientError as err:
-        logging.error(
+        logger.error(
             "Couldn't stop instance id %s"
             "Here's why: %s: %s",
             instance_id,

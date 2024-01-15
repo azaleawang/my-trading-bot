@@ -1,6 +1,6 @@
 from datetime import datetime
 import json, time
-import logging
+from app.utils.logger import logger
 from typing import List
 
 from app.utils.redis import get_redis_client, read_pnl_from_redis, write_pnl_to_redis
@@ -45,7 +45,7 @@ def get_all_bots(db: Session = Depends(get_db)):
         db_all_bots = get_bots(db)
         return {"data": db_all_bots}
     except Exception as e:
-        logging.error(f"Error in get_all_bots: {e}")
+        logger.error(f"Error in get_all_bots: {e}")
         raise HTTPException(status_code=500, detail="Error fetching bots." + str(e))
 
 
@@ -90,7 +90,7 @@ def create_bot_for_user(
     except HTTPException as http_ex:
         raise http_ex
     except Exception as e:
-        logging.error(f"Error in create_bot_for_user: {e}")
+        logger.error(f"Error in create_bot_for_user: {e}")
         raise HTTPException(status_code=500, detail="Error creating bot." + str(e))
 
 
@@ -135,7 +135,7 @@ def handle_memory_and_scaling(
 
     if worker_scaling(db, worker_ip):
         update_worker_server_status(db, worker_ip=worker_ip)
-        logging.info(
+        logger.info(
             f"Bot #{bot_id} {bot_name} stopped and worker server (ip={worker_ip}) stopped!"
         )
 

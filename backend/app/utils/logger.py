@@ -17,6 +17,7 @@ def setup_logger():
         cloudwatch_handler = watchtower.CloudWatchLogHandler(log_group='AutoMate-main')
         cloudwatch_handler.setFormatter(formatter)
         logger.addHandler(cloudwatch_handler)
+    
+    return logger
 
-        
-    logger.info("Hi, logging test")
+logger = setup_logger()

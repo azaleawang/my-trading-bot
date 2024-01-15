@@ -1,8 +1,8 @@
-import logging
 import boto3
 import json
 import os
 from botocore.exceptions import ClientError
+from app.utils.logger import logger
 
 from app.exceptions import SQSError, UnexpectedError
 
@@ -25,14 +25,14 @@ def send_sqs_message(sqs_url: str = sqs_url, message_body: dict = {}):
     except ClientError as e:
         error_code = e.response["Error"]["Code"]
         if error_code == "QueueDoesNotExist":
-            logging.error("The specified queue does not exist.")
+            logger.error("The specified queue does not exist.")
         else:
-            logging.error("An SQS ClientError occurred:", e)
+            logger.error("An SQS ClientError occurred:", e)
         raise SQSError()
 
     except Exception as e:
         # Handle other non-SQS errors
-        logging.error("A non-SQS error occurred:", e)
+        logger.error("A non-SQS error occurred:", e)
         raise UnexpectedError(detail="Backtesting job failed to push into SQS.")
 
 
