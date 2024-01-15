@@ -28,7 +28,6 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 frontend_dir = os.path.join(current_dir, "../dist")
 Base.metadata.create_all(bind=engine)
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
@@ -38,7 +37,7 @@ async def lifespan(app: FastAPI):
         # shutdown
         await app.state.redis.close()
     except Exception as e:
-        logging.error("Redis connection error")
+        logging.error(f"Redis connection error: {e}")
 
 
 app = FastAPI(**app_configs, lifespan=lifespan)
@@ -118,7 +117,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 except Exception as e:
                     logging.error(f"Storing trading error logs failed: {e}")
             else:
-                logging.info("message", data)
+                logging.error(f"Unexcepted message from trading-bot worker: {data}")
 
     except WebSocketDisconnect:
         logging.info("Client disconnected")

@@ -24,7 +24,7 @@ async def get_redis_client():
             )
         
         pong = await redis.ping()
-        logging.info("Redis connection established", pong)
+        logging.info(f"Redis connection established: {pong}")
         return redis
     except:
         logging.error("Redis connection error")
