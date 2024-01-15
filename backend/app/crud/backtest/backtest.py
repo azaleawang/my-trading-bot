@@ -1,11 +1,10 @@
-import logging
 from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException
 from app.utils.database import get_db
 from app.models.backtest import BacktestResult
 from app.schema import backtest as schemas
 from sqlalchemy import text, func
-
+from app.utils.logger import logger
 
 # If the strategy has been tested before, return the strategy backtest result
 def check_backtest_strategy(
@@ -29,7 +28,7 @@ def check_backtest_strategy(
         return backtest_existed.id if backtest_existed else None
 
     except Exception as e:
-        logging.error("Error in checking backtest strategy history: %s", e)
+        logger.error("Error in checking backtest strategy history: %s", e)
         raise HTTPException(
             status_code=500, detail="Check backtest strategy history failed."
         ) from e
@@ -80,7 +79,7 @@ def insert_backtest_result(bt_res, db: Session = Depends(get_db)):
         db.refresh(backtest_result)
         return backtest_result.id
     except Exception as e:
-        logging.error("Error in inserting backtest result: %s", e)
+        logger.error("Error in inserting backtest result: %s", e)
         raise HTTPException(
             status_code=500, detail="Insert backtest result failed."
         )

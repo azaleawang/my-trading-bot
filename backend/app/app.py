@@ -17,13 +17,12 @@ from app.models import Base
 from .utils.database import SessionLocal, engine
 from starlette.websockets import WebSocketDisconnect
 from typing import Any, Dict, List
-import logging
 from starlette.responses import FileResponse
 from .config import app_configs, API_VER
 import os
 from contextlib import asynccontextmanager
 from app.utils.redis import get_redis_client
-
+from app.utils.logger import logger
 current_dir = os.path.dirname(os.path.abspath(__file__))
 frontend_dir = os.path.join(current_dir, "../dist")
 Base.metadata.create_all(bind=engine)
@@ -37,7 +36,7 @@ async def lifespan(app: FastAPI):
         # shutdown
         await app.state.redis.close()
     except Exception as e:
-        logging.error(f"Redis connection error: {e}")
+        logger.error(f"Redis connection error: {e}")
 
 
 app = FastAPI(**app_configs, lifespan=lifespan)
@@ -105,7 +104,7 @@ async def websocket_endpoint(websocket: WebSocket):
                         create_trade_history(db, trade_data, realizedPnl)
                         db.commit()
                 except Exception as e:
-                    logging.error(f"{e}")
+                    logger.error(f"{e}")
 
             elif data.get("error"):
                 try:
@@ -113,14 +112,14 @@ async def websocket_endpoint(websocket: WebSocket):
                         error_data = schemas.BotError(**data)
                         error = create_error_log(error_data, db)
                         db.commit()
-                        logging.error(error)
+                        logger.error(error)
                 except Exception as e:
-                    logging.error(f"Storing trading error logs failed: {e}")
+                    logger.error(f"Storing trading error logs failed: {e}")
             else:
-                logging.error(f"Unexcepted message from trading-bot worker: {data}")
+                logger.info(f"Received message from trading-bot worker: {data}")
 
     except WebSocketDisconnect:
-        logging.info("Client disconnected")
+        logger.info("Client disconnected")
 
 
 class ConnectionManager:
@@ -156,4 +155,3 @@ async def websocket_backtest_result_endpoint(websocket: WebSocket, client_id: in
             await manager.send_personal_message(data, client_id)
     except WebSocketDisconnect:
         manager.disconnect(client_id, websocket)
-        logging.info(f"Client #{client_id} left the chat")
