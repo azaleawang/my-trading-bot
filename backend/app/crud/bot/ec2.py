@@ -28,7 +28,6 @@ def create_ec2_instance(
         if security_groups is not None:
             instance_params["SecurityGroupIds"] = [sg for sg in security_groups]
         instance = ec2.run_instances(**instance_params, MinCount=1, MaxCount=1)
-        print("waiting for running ec2")
 
     except ClientError as err:
         logging.error(
