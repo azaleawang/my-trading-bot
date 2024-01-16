@@ -14,7 +14,6 @@ def test_create_worker_server_with_auth(monkeypatch):
     }
 
     # Call the API endpoint
-    # TODO Use test database table (使用測試模式的資料庫)
     response = client.post("/api/v1/worker-servers/", json=worker_server_data, headers={"Auth": "test_secret_password"})
 
     # Check the response
