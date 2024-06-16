@@ -5,7 +5,7 @@
   </div>
   <strong>A platform providing long-term script execution and strategy backtesting tools for crypto traders.</strong>
   <div align="center">
-    <a href="https://azaleasites.online/">Home</a>
+    <a href="https://azaleasites.online/"></a>
 
 </div>
 </div>
